@@ -7,14 +7,14 @@ module.exports = (app) => {
 
   // Fetch orders based on user role
   router.get("/role-based", verifyToken, orders.getOrdersByRole);
-  router.post('/create', orders.createOrder);
+    router.post('/', orders.createOrder);
+    router.get('/', orders.findAll);
+    router.get('/:id', orders.findOne);
+    router.put('/:id', orders.updateOrder);
+    router.delete('/:id', orders.deleteOrder);
+    router.get('/user/:user_id', orders.findByUserId);
+    router.get('/by-user', orders.getOrdersByUser);
 
-
-  // Other order routes
-  router.get("/", orders.findAll);
-  router.get("/user/:user_id", orders.findByUserId);
-  router.put('/:id', orders.updateOrder);
-  app.use("/api/orders", router);
-  router.get("/by-user", orders.getOrdersByUser);
+    app.use('/api/orders', router);
 
 };

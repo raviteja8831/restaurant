@@ -61,6 +61,59 @@ exports.login = async (req, res) => {
   }
 };
 
+// Create user (admin use)
+exports.create = async (req, res) => {
+  try {
+    const user = await User.create(req.body);
+    res.status(201).json(user);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Get all users
+exports.findAll = async (req, res) => {
+  try {
+    const users = await User.findAll();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get user by ID
+exports.findOne = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Update user
+exports.update = async (req, res) => {
+  try {
+    const [updated] = await User.update(req.body, { where: { id: req.params.id } });
+    if (!updated) return res.status(404).json({ error: 'User not found' });
+    res.json({ message: 'User updated' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Delete user
+exports.delete = async (req, res) => {
+  try {
+    const deleted = await User.destroy({ where: { id: req.params.id } });
+    if (!deleted) return res.status(404).json({ error: 'User not found' });
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // Middleware to verify token
 exports.verifyToken = (req, res, next) => {
   const token = req.headers["x-access-token"];
