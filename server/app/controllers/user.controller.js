@@ -130,5 +130,4 @@ exports.verifyToken = (req, res, next) => {
     next();
   });
 };
-const SupplyDate = db.supplydate;
 
