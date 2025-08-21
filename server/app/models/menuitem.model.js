@@ -1,9 +1,15 @@
-module.exports = (sequelize, DataTypes) => {
-  const MenuItem = sequelize.define('menuitem', {
-    name: { type: DataTypes.STRING, allowNull: false },
-    price: { type: DataTypes.FLOAT, allowNull: false },
-    type: { type: DataTypes.STRING }, // veg/non-veg
-    menuId: { type: DataTypes.INTEGER },
+module.exports = (sequelize, Sequelize) => {
+  const MenuItem = sequelize.define("menuitem", {
+    name: { type: Sequelize.STRING, allowNull: false },
+    price: { type: Sequelize.FLOAT, allowNull: false },
+    type: { type: Sequelize.STRING }, // veg/non-veg
+    menuId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: "menu",
+        key: "id",
+      },
+    },
   });
   return MenuItem;
 };

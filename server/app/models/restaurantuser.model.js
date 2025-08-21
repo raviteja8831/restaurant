@@ -1,11 +1,10 @@
 module.exports = (sequelize, Sequelize) => {
-  const User = sequelize.define("user", {
-    id: {
+  const RestaurantUser = sequelize.define("restaurantUser", {
+ id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-  // username removed
     phone: {
       type: Sequelize.STRING,
       unique: true,
@@ -24,8 +23,7 @@ module.exports = (sequelize, Sequelize) => {
       unique: true,
       allowNull: false,
     },
-  // email removed
-  // password removed
+
     role_id: {
       type: Sequelize.INTEGER,
       allowNull: true,
@@ -36,5 +34,5 @@ module.exports = (sequelize, Sequelize) => {
     },
   });
 
-  return User;
+  return RestaurantUser;
 };

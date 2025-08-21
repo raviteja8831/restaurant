@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-  const Menu = sequelize.define("menu", {
+  const Restaurant = sequelize.define("restaurant", {
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
@@ -9,14 +9,24 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    restaurantId: {
+    address: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+    typeId: {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
-        model: "restaurant",
+        model: "restaurantType",
         key: "id",
       },
     },
+    ambianceImage: {
+      type: Sequelize.STRING,
+    },
+    logoImage: {
+      type: Sequelize.STRING,
+    },
   });
-  return Menu;
+  return Restaurant;
 };

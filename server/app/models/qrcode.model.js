@@ -1,7 +1,13 @@
-module.exports = (sequelize, DataTypes) => {
-  const QRCode = sequelize.define('qrcode', {
-    value: { type: DataTypes.STRING, allowNull: false },
-    tableId: { type: DataTypes.INTEGER },
+module.exports = (sequelize, Sequelize) => {
+  const QRCode = sequelize.define("qrcode", {
+    value: { type: Sequelize.STRING, allowNull: false },
+    restTableId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: "restaurantTable",
+        key: "id",
+      },
+    },
   });
   return QRCode;
 };

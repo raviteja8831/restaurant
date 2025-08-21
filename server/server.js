@@ -2,7 +2,12 @@ const express = require("express");
 const cors = require("cors");
 
 const app = express();
+require("./app/routes/order.routes.js")(app);
+require("./app/routes/user.routes.js")(app);
 
+require("./app/routes/menu.routes.js")(app);
+require("./app/routes/menuitem.routes.js")(app);
+require("./app/routes/table.routes.js")(app);
 var corsOptions = {
   origin: "*"
 };
@@ -35,9 +40,7 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to  application." });
 });
 
-require("./app/routes/order.routes.js")(app);
-require("./app/routes/product.routes.js")(app);
-require("./app/routes/user.routes.js")(app);
+
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

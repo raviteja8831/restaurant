@@ -1,8 +1,8 @@
 module.exports = {
-  HOST: "database-2.cjsqyckyc8sg.ap-south-1.rds.amazonaws.com",
-  USER: "admin",
-  PASSWORD: "oGO1pAtKTehM3rIyWndQ",
-  DB: "frootcity_db",
+  HOST: "localhost",
+  USER: "root",
+  PASSWORD: "Sid@8387",
+  DB: "restaurant_service",
   dialect: "mysql",
   pool: {
     max: 5,

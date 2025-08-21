@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-  const Role = sequelize.define("role", {
+  const RestaurantType = sequelize.define("restauranttypes", {
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
@@ -10,5 +10,5 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
     },
   });
-  return Role;
+  return RestaurantType;
 };

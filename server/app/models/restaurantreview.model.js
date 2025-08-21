@@ -1,17 +1,9 @@
 module.exports = (sequelize, Sequelize) => {
-  const Order = sequelize.define("order", {
+  const RestaurantReview = sequelize.define("restaurantReview", {
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
       primaryKey: true,
-    },
-    userId: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      references: {
-        model: "user",
-        key: "id",
-      },
     },
     restaurantId: {
       type: Sequelize.INTEGER,
@@ -21,14 +13,18 @@ module.exports = (sequelize, Sequelize) => {
         key: "id",
       },
     },
-    total: {
-      type: Sequelize.FLOAT,
+    userId: {
+      type: Sequelize.INTEGER,
       allowNull: false,
+      references: {
+        model: "user",
+        key: "id",
+      },
     },
-    status: {
-      type: Sequelize.STRING,
+    review: {
+      type: Sequelize.TEXT,
       allowNull: false,
     },
   });
-  return Order;
+  return RestaurantReview;
 };

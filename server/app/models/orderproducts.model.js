@@ -3,17 +3,19 @@ module.exports = (sequelize, Sequelize) => {
     quantity: {
       type: Sequelize.INTEGER
     },
-    recieved_quantity: {
-      type: Sequelize.INTEGER
+    orderId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: "order",
+        key: "id",
+      },
     },
-    returned_quantity: {
-      type: Sequelize.INTEGER
-    },
-    order_id: {
-      type: Sequelize.INTEGER
-    },
-    product_id: {
-      type: Sequelize.INTEGER
+    productId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: "menuitem",
+        key: "id",
+      },
     }
   });
 
