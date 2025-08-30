@@ -102,19 +102,8 @@ function ChefStack() {
   );
 }
 
-const RootStack = createStackNavigator();
+
+// Directly render the ManagerRegisterScreen as the default export
 export default function AppNavigator() {
-  return (
-    <RootStack.Navigator initialRouteName="RoleSelect" screenOptions={{ headerShown: false }}>
-  <RootStack.Screen name="RoleSelect" component={wrapScreen(RoleSelectScreen)} />
-  <RootStack.Screen name="CustomerStack" component={CustomerStack} />
-  <RootStack.Screen name="ManagerStack" component={ManagerStack} />
-  <RootStack.Screen name="ChefStack" component={ChefStack} />
-  <RootStack.Screen name="CustomerRegister" component={wrapScreen(CustomerRegisterScreen)} />
-  <RootStack.Screen name="ManagerRegister" component={wrapScreen(ManagerRegisterScreen)} />
-  <RootStack.Screen name="Login" component={wrapScreen(LoginScreen)} />
-  {/* <RootStack.Screen name="ManagerLogin" component={ManagerLoginScreen} /> */}
-      {/* Add other global screens if needed */}
-    </RootStack.Navigator>
-  );
+  return <ManagerRegisterScreen />;
 }
