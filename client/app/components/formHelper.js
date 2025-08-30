@@ -2,11 +2,25 @@
 // Design: Material-like validation, unified UI for all forms
 // Usage: Import and use Form, FormInput, and useFormValidation in your screens
 
-import React, { useState } from 'react';
-import { View, StyleSheet, Switch, TouchableOpacity, Platform } from 'react-native';
-import { TextInput, Text, Checkbox, RadioButton, Button } from 'react-native-paper';
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
+import {
+  TextInput,
+  Text,
+  Checkbox,
+  RadioButton,
+  Button,
+} from "react-native-paper";
 let DateTimePicker;
-try { DateTimePicker = require('@react-native-community/datetimepicker').default; } catch {}
+try {
+  DateTimePicker = require("@react-native-community/datetimepicker").default;
+} catch {}
 
 // Validation hook
 export function useFormValidation(initialValues, validate) {
@@ -43,8 +57,6 @@ export function useFormValidation(initialValues, validate) {
   };
 }
 
-
-
 // Material-like input supporting all types
 export function FormInput(props) {
   const {
@@ -55,7 +67,7 @@ export function FormInput(props) {
     onBlur,
     error,
     touched,
-    type = 'text',
+    type = "text",
     customError,
     customLabel,
     options = [],
@@ -66,7 +78,7 @@ export function FormInput(props) {
   const showError = (customError || error) && touched;
   const labelText = customLabel || label;
 
-  if (type === 'switch') {
+  if (type === "switch") {
     inputComponent = (
       <View style={styles.switchRow}>
         <Text style={styles.switchLabel}>{labelText}</Text>
@@ -77,25 +89,28 @@ export function FormInput(props) {
         />
       </View>
     );
-  } else if (type === 'checkbox') {
+  } else if (type === "checkbox") {
     inputComponent = (
       <View style={styles.switchRow}>
         <Text style={styles.switchLabel}>{labelText}</Text>
         <Checkbox
-          status={!!value ? 'checked' : 'unchecked'}
+          status={!!value ? "checked" : "unchecked"}
           onPress={() => onChange(name, !value)}
           {...props}
         />
       </View>
     );
-  } else if (type === 'select') {
+  } else if (type === "select") {
     inputComponent = (
       <View style={styles.inputWrapper}>
         <Text style={styles.selectLabel}>{labelText}</Text>
         {options.map((opt) => (
           <TouchableOpacity
             key={opt.value}
-            style={[styles.selectOption, value === opt.value && styles.selectOptionActive]}
+            style={[
+              styles.selectOption,
+              value === opt.value && styles.selectOptionActive,
+            ]}
             onPress={() => onChange(name, opt.value)}
           >
             <Text style={styles.selectOptionText}>{opt.label}</Text>
@@ -103,11 +118,14 @@ export function FormInput(props) {
         ))}
       </View>
     );
-  } else if (type === 'radio') {
+  } else if (type === "radio") {
     inputComponent = (
       <View style={styles.inputWrapper}>
         <Text style={styles.selectLabel}>{labelText}</Text>
-        <RadioButton.Group onValueChange={val => onChange(name, val)} value={value}>
+        <RadioButton.Group
+          onValueChange={(val) => onChange(name, val)}
+          value={value}
+        >
           {options.map((opt) => (
             <View key={opt.value} style={styles.radioRow}>
               <RadioButton value={opt.value} />
@@ -117,7 +135,7 @@ export function FormInput(props) {
         </RadioButton.Group>
       </View>
     );
-  } else if (type === 'textarea') {
+  } else if (type === "textarea") {
     inputComponent = (
       <TextInput
         label={labelText}
@@ -131,20 +149,29 @@ export function FormInput(props) {
         {...props}
       />
     );
-  } else if (type === 'date') {
-    const displayValue = value ? new Date(value).toLocaleDateString() : '';
+  } else if (type === "date") {
+    const displayValue = value ? new Date(value).toLocaleDateString() : "";
     inputComponent = (
       <View>
-        <Button mode="outlined" onPress={() => setShowDate(true)}>{displayValue || labelText}</Button>
+        <Button mode="outlined" onPress={() => setShowDate(true)}>
+          {displayValue || labelText}
+        </Button>
         {showDate && DateTimePicker && (
           <DateTimePicker
             value={value ? new Date(value) : new Date()}
             mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            display={Platform.OS === "ios" ? "spinner" : "default"}
             onChange={(event, selectedDate) => {
               setShowDate(false);
-              if (selectedDate && selectedDate.nativeEvent && selectedDate.nativeEvent.timestamp) {
-                onChange(name, new Date(selectedDate.nativeEvent.timestamp).toISOString());
+              if (
+                selectedDate &&
+                selectedDate.nativeEvent &&
+                selectedDate.nativeEvent.timestamp
+              ) {
+                onChange(
+                  name,
+                  new Date(selectedDate.nativeEvent.timestamp).toISOString()
+                );
               } else if (selectedDate) {
                 onChange(name, selectedDate.toISOString());
               }
@@ -163,8 +190,14 @@ export function FormInput(props) {
         mode="outlined"
         error={!!showError}
         style={styles.input}
-        secureTextEntry={type === 'password'}
-        keyboardType={type === 'number' ? 'numeric' : type === 'email' ? 'email-address' : 'default'}
+        secureTextEntry={type === "password"}
+        keyboardType={
+          type === "number"
+            ? "numeric"
+            : type === "email"
+            ? "email-address"
+            : "default"
+        }
         {...props}
       />
     );
@@ -173,7 +206,9 @@ export function FormInput(props) {
   return (
     <View style={styles.inputWrapper}>
       {inputComponent}
-      {!!showError && <Text style={styles.errorText}>{customError || error}</Text>}
+      {!!showError && (
+        <Text style={styles.errorText}>{customError || error}</Text>
+      )}
     </View>
   );
 }
@@ -185,56 +220,56 @@ export function Form({ children, style }) {
 
 const styles = StyleSheet.create({
   form: {
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   inputWrapper: {
-    width: '90%',
+    width: "90%",
     marginBottom: 16,
   },
   input: {
-    backgroundColor: '#eae6ff',
+    backgroundColor: "#eae6ff",
   },
   errorText: {
-    color: 'red',
+    color: "red",
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
   },
   switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
     marginBottom: 8,
   },
   switchLabel: {
     fontSize: 15,
-    color: '#333',
+    color: "#333",
   },
   selectLabel: {
     fontSize: 15,
-    color: '#333',
+    color: "#333",
     marginBottom: 6,
   },
   selectOption: {
     padding: 10,
     borderRadius: 8,
-    backgroundColor: '#eae6ff',
+    backgroundColor: "#eae6ff",
     marginBottom: 6,
   },
   selectOptionActive: {
-    backgroundColor: '#d1c4e9',
-    borderColor: '#7b6eea',
+    backgroundColor: "#d1c4e9",
+    borderColor: "#7b6eea",
     borderWidth: 2,
   },
   selectOptionText: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   radioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 6,
   },
   radioCircle: {
@@ -242,11 +277,11 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: '#7b6eea',
+    borderColor: "#7b6eea",
     marginRight: 8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   radioCircleActive: {
-    backgroundColor: '#7b6eea',
+    backgroundColor: "#7b6eea",
   },
 });

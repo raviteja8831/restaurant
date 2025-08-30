@@ -1,9 +1,13 @@
-import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
-import { Text } from 'react-native-paper';
-import { useAlert } from '../services/alertService';
+import React from "react";
+import { View, StyleSheet, Image } from "react-native";
+import { Text } from "react-native-paper";
+import { useAlert } from "../services/alertService";
 
-export default function AppHeader({ title = 'Menutha', showLogo = true, rightMenu = null }) {
+export default function AppHeader({
+  title = "Menutha",
+  showLogo = true,
+  rightMenu = null,
+}) {
   const alert = useAlert();
   return (
     <View style={styles.headerContainer}>
@@ -20,27 +24,27 @@ export default function AppHeader({ title = 'Menutha', showLogo = true, rightMen
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: '#a6a6e7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: "#a6a6e7",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
     paddingTop: 40,
     paddingBottom: 10,
-    position: 'relative',
+    position: "relative",
   },
   logo: {
     width: 36,
     height: 36,
     marginRight: 10,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   headerTitle: {
-    fontFamily: 'monospace', // Replace with your custom font if needed
+    fontFamily: "monospace", // Replace with your custom font if needed
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#4b3c6e',
+    fontWeight: "bold",
+    color: "#4b3c6e",
     letterSpacing: 2,
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

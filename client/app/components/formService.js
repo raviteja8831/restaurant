@@ -1,11 +1,10 @@
 // formService.js
 // Dynamically renders a form using formHelper and a config, handles submit, and returns values/errors via callback.
 
-import React from 'react';
-import { View } from 'react-native';
-import { Form, FormInput, useFormValidation } from './formHelper.js';
-import { Button } from 'react-native-paper';
-
+import React from "react";
+import { View } from "react-native";
+import { Form, FormInput, useFormValidation } from "./formHelper.js";
+import { Button } from "react-native-paper";
 
 export default function FormService({
   config = [],
@@ -13,7 +12,7 @@ export default function FormService({
   setValues,
   validate,
   onSubmit,
-  submitLabel = 'Submit',
+  submitLabel = "Submit",
   loading = false,
   style = {},
   hiddenFields = [],
@@ -32,15 +31,17 @@ export default function FormService({
   const handleFormSubmit = () => {
     // Only validate fields present in the current config
     const formVals = {};
-    config.forEach(field => {
+    config.forEach((field) => {
       formVals[field.name] = values[field.name];
     });
-    console.log('Form values at submit:', formVals);
+    console.log("Form values at submit:", formVals);
     const validationErrors = validate ? validate(formVals) : {};
     setErrors(validationErrors);
-    setTouched(Object.keys(formVals).reduce((acc, k) => ({ ...acc, [k]: true }), {}));
+    setTouched(
+      Object.keys(formVals).reduce((acc, k) => ({ ...acc, [k]: true }), {})
+    );
     if (Object.keys(validationErrors).length > 0) {
-      console.log('Validation errors:', validationErrors);
+      console.log("Validation errors:", validationErrors);
     }
     if (Object.keys(validationErrors).length === 0 && onSubmit) {
       onSubmit(values); // submit full form state
@@ -50,7 +51,10 @@ export default function FormService({
   return (
     <Form style={style}>
       {config.map((field) => (
-        <View key={field.name} style={hiddenFields.includes(field.name) ? { display: 'none' } : {}}>
+        <View
+          key={field.name}
+          style={hiddenFields.includes(field.name) ? { display: "none" } : {}}
+        >
           <FormInput
             {...field}
             value={values[field.name]}
@@ -61,9 +65,17 @@ export default function FormService({
           />
         </View>
       ))}
-      <Button mode="contained" onPress={handleFormSubmit} loading={loading} disabled={loading} style={{ marginTop: 16 }}>
-        {submitLabel}
-      </Button>
+      {submitLabel ? (
+        <Button
+          mode="contained"
+          onPress={handleFormSubmit}
+          loading={loading}
+          disabled={loading}
+          style={{ marginTop: 16 }}
+        >
+          {submitLabel}
+        </Button>
+      ) : null}
     </Form>
   );
 }
