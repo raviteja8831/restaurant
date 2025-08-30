@@ -29,6 +29,8 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
+  }, {
+    tableName: 'Order'
   });
   return Order;
 };

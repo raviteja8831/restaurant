@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-
-const users = [
-  { name: 'Kiran', role: 'Chef', orders: 65, stats: '365/345' },
-  { name: 'Amit', role: 'Waiter', orders: 89, stats: '365/345' },
-  // ...more users
-];
+import { fetchManagedUsers } from '../api/managerApi';
+import { showApiError } from '../services/messagingService';
 
 export default function UsersListScreen({ navigation }) {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const data = await fetchManagedUsers();
+        setUsers(data.users || []);
+      } catch (err) {
+        showApiError(err);
+      }
+    };
+    loadUsers();
+  }, []);
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Users</Text>

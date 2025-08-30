@@ -30,10 +30,23 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: true,
       references: {
-        model: "roles", // Name of the roles table
+        model: "role", // Name of the roles table
         key: "id",      // Key in the roles table to reference
       },
     },
+    restaurantType: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      comment: 'Comma separated values for service types (table,self,both)',
+    },
+    foodType: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      comment: 'Comma separated values for food types (veg,nonveg,both)',
+    },
+  },
+   {
+    tableName: 'user'
   });
 
   return User;

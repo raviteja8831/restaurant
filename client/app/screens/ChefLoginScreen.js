@@ -1,9 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { chefLogin } from '../api/chefApi';
+import { showApiError } from '../services/messagingService';
 
 export default function ChefLoginScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      const res = await chefLogin({ phone, password });
+      Alert.alert('Success', 'Login successful');
+      navigation.replace('ChefHome');
+    } catch (err) {
+      showApiError(err);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -27,7 +39,7 @@ export default function ChefLoginScreen({ navigation }) {
       <TouchableOpacity style={styles.fingerprint}>
         <Text style={styles.fingerprintIcon}>🔒</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.replace('ChefHome')}>
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
     </View>

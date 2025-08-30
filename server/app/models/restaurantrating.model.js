@@ -25,6 +25,9 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.FLOAT,
       allowNull: false,
     },
+  }, {
+    tableName: 'RestaurantRating'
   });
+
   return RestaurantRating;
 };

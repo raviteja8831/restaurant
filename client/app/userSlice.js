@@ -1,14 +1,46 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-import { API_BASE_URL, MESSAGES } from './constants';
+import { MESSAGES } from './constants/constants';
+import { registerUser as registerUserApi, loginUser as loginUserApi, registerRestaurantUser as registerRestaurantUserApi, loginRestaurantUser as loginRestaurantUserApi } from './api/userApi';
+// Async thunk for restaurant manager registration
+export const registerRestaurantUser = createAsyncThunk(
+  'user/registerRestaurantUser',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await registerRestaurantUserApi(payload);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || MESSAGES.registrationFailed);
+    }
+  }
+);
+
+// Async thunk for restaurant manager login
+export const loginRestaurantUser = createAsyncThunk(
+  'user/loginRestaurantUser',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await loginRestaurantUserApi(payload);
+      if (response.data.token) {
+        localStorage.setItem('jwtToken', response.data.token);
+      }
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || MESSAGES.loginFailed);
+    }
+  }
+);
 
 // Async thunk for login
 export const loginUser = createAsyncThunk(
   'user/loginUser',
-  async ({ phone, otp, apiUrl }, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${apiUrl || API_BASE_URL}/auth/login`, { phone, otp });
+      const response = await loginUserApi(payload);
+      // Save JWT to localStorage
+      if (response.data.accessToken) {
+        localStorage.setItem('jwtToken', response.data.accessToken);
+      }
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || MESSAGES.loginFailed);
@@ -19,10 +51,10 @@ export const loginUser = createAsyncThunk(
 // Async thunk for registration
 export const registerUser = createAsyncThunk(
   'user/registerUser',
-  async ({ phone, roleName, apiUrl }, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
-      await axios.post(`${apiUrl || API_BASE_URL}/auth/register`, { phone, roleName });
-      return true;
+      const response = await registerUserApi(payload);
+      return response.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || MESSAGES.registrationFailed);
     }

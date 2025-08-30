@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text, Title, useTheme, Surface } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, selectLoading, selectError } from '../userSlice';
+import { loginUser, loginRestaurantUser, selectLoading, selectError } from '../userSlice';
 
 export default function LoginScreen({ navigation }) {
   const [phone, setPhone] = useState('');
@@ -29,16 +29,23 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     if (phone.length === 10 && otp.every(d => d.length === 1)) {
-      const resultAction = await dispatch(loginUser({ phone, otp: otp.join('') }));
-      if (loginUser.fulfilled.match(resultAction)) {
-        const { role } = resultAction.payload;
+      // Try manager login first
+      const resultAction = await dispatch(loginRestaurantUser({ phone, password: otp.join('') }));
+      if (loginRestaurantUser.fulfilled.match(resultAction)) {
+        navigation.replace('ManagerDashboard');
+        return;
+      }
+      // Fallback to user login
+      const userResult = await dispatch(loginUser({ phone, otp: otp.join('') }));
+      if (loginUser.fulfilled.match(userResult)) {
+        const { role } = userResult.payload;
         if (role === 'manager') {
-          navigation.replace('ManagerStack');
+          navigation.replace('ManagerDashboard');
         } else {
           navigation.replace('CustomerStack');
         }
       } else {
-        Alert.alert('Login Failed', resultAction.payload || 'Invalid credentials');
+        Alert.alert('Login Failed', userResult.payload || 'Invalid credentials');
       }
     } else {
       Alert.alert('Error', 'Please enter a valid phone and OTP');

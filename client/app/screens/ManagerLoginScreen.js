@@ -1,9 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { loginManager } from '../api/managerApi';
+import { showApiError } from '../services/messagingService';
 
 export default function ManagerLoginScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const [labCode, setLabCode] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      const res = await loginManager({ phone, labCode });
+      Alert.alert('Success', 'Login successful');
+      navigation.replace('ManagerDashboard');
+    } catch (err) {
+      showApiError(err);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -23,7 +35,7 @@ export default function ManagerLoginScreen({ navigation }) {
         value={labCode}
         onChangeText={setLabCode}
       />
-      <TouchableOpacity style={styles.button} onPress={() => navigation.replace('ManagerDashboard')}>
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Next</Text>
       </TouchableOpacity>
     </View>

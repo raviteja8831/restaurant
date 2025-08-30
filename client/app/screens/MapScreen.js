@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, Platform } from "react-native";
 import * as Location from "expo-location";
+
+// let MapView, Marker;
+// if (Platform.OS !== 'web') {
+//   const Maps = require('react-native-maps');
+//   MapView = Maps.default;
+//   Marker = Maps.Marker;
+// }
 
 // Mock restaurant data
 const mockRestaurants = [
@@ -58,28 +64,39 @@ export default function MapScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        showsUserLocation={true}
-      >
-        {mockRestaurants.map((restaurant) => (
-          <Marker
-            key={restaurant.id}
-            coordinate={{
-              latitude: restaurant.latitude,
-              longitude: restaurant.longitude,
-            }}
-            title={restaurant.name}
-            onPress={() => navigation.navigate('RestaurantDetailScreen', { id: restaurant.id })}
-          />
-        ))}
-      </MapView>
+      {Platform.OS !== 'web' ? (
+        // Only render MapView on native platforms
+        // <MapView
+        //   style={styles.map}
+        //   initialRegion={{
+        //     latitude: location.coords.latitude,
+        //     longitude: location.coords.longitude,
+        //     latitudeDelta: 0.01,
+        //     longitudeDelta: 0.01,
+        //   }}
+        //   showsUserLocation={true}
+        // >
+        //   {mockRestaurants.map((restaurant) => (
+        //     <Marker
+        //       key={restaurant.id}
+        //       coordinate={{
+        //         latitude: restaurant.latitude,
+        //         longitude: restaurant.longitude,
+        //       }}
+        //       title={restaurant.name}
+        //       onPress={() => navigation.navigate('RestaurantDetailScreen', { id: restaurant.id })}
+        //     />
+        //   ))}
+        // </MapView>
+              <View style={[styles.map, { justifyContent: 'center', alignItems: 'center' }]}> 
+          <Text>Map is not supported on web. Please use mobile app.</Text>
+        </View>
+      ) : (
+        // Fallback for web
+        <View style={[styles.map, { justifyContent: 'center', alignItems: 'center' }]}> 
+          <Text>Map is not supported on web. Please use mobile app.</Text>
+        </View>
+      )}
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Filter')}>
           Filter
@@ -91,72 +108,6 @@ export default function MapScreen({ navigation }) {
           Profile
         </TouchableOpacity>
       </View>
-    </View>
-  );
-}
-
-import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Dimensions, ActivityIndicator } from "react-native";
-import MapView, { Marker } from "react-native-maps";
-import * as Location from "expo-location";
-
-// Mock restaurant data
-
-export default function MapScreen({ navigation }) {
-  const [location, setLocation] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocation({
-          coords: {
-            latitude: 37.78825,
-            longitude: -122.4324,
-          },
-        }); // fallback
-        setLoading(false);
-        return;
-      }
-      let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc);
-      setLoading(false);
-    })();
-  }, []);
-
-  if (loading || !location) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        showsUserLocation={true}
-      >
-        {mockRestaurants.map((restaurant) => (
-          <Marker
-            key={restaurant.id}
-            coordinate={{
-              latitude: restaurant.latitude,
-              longitude: restaurant.longitude,
-            }}
-            title={restaurant.name}
-            onPress={() => navigation.navigate('RestaurantDetailScreen', { id: restaurant.id })}
-          />
-        ))}
-      </MapView>
     </View>
   );
 }

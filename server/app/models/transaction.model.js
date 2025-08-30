@@ -4,6 +4,8 @@ module.exports = (sequelize, DataTypes) => {
     amount: { type: DataTypes.FLOAT, allowNull: false },
     status: { type: DataTypes.STRING },
     date: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  }, {
+    tableName: 'transaction'
   });
   return Transaction;
 };

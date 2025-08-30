@@ -27,6 +27,8 @@ module.exports = (sequelize, Sequelize) => {
     logoImage: {
       type: Sequelize.STRING,
     },
+  }, {
+    tableName: 'restaurant'
   });
   return Restaurant;
 };

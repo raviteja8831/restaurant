@@ -23,16 +23,24 @@ module.exports = (sequelize, Sequelize) => {
       unique: true,
       allowNull: false,
     },
-
+    restaurantId: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: "restaurant",
+        key: "id",
+      },
+    },
     role_id: {
       type: Sequelize.INTEGER,
       allowNull: true,
       references: {
-        model: "roles", // Name of the roles table
+        model: "role", // Name of the roles table
         key: "id",      // Key in the roles table to reference
       },
-    },
+    }
+  }, {
+    tableName: 'restaurantUser'
   });
-
   return RestaurantUser;
 };

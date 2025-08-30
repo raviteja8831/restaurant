@@ -25,6 +25,8 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.TEXT,
       allowNull: false,
     },
+  }, {
+    tableName: 'restaurantReview'
   });
   return RestaurantReview;
 };

@@ -1,10 +1,28 @@
+
 const express = require("express");
 const cors = require("cors");
-
 const app = express();
+
+// Always set CORS headers for all responses (including errors)
+const allowAllCORS = (req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+};
+// Parse requests of content-type - application/json
+app.use(express.json());
+// Parse requests of content-type - application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
+// Place CORS and custom middleware after body parsers
+app.use(allowAllCORS);
+
+// Register routes after middleware
 require("./app/routes/order.routes.js")(app);
 require("./app/routes/user.routes.js")(app);
-
 require("./app/routes/menu.routes.js")(app);
 require("./app/routes/menuitem.routes.js")(app);
 require("./app/routes/table.routes.js")(app);
@@ -34,6 +52,14 @@ db.sequelize.sync()
 // db.sequelize.sync({ force: true }).then(() => {
 //   console.log("Drop and re-sync db.");
 // });
+
+
+// Serve images with CORS headers
+app.use('/assets/images', express.static(__dirname + '/app/assets/images', {
+  setHeaders: function (res, path, stat) {
+    res.set('Access-Control-Allow-Origin', '*');
+  }
+}));
 
 // simple route
 app.get("/", (req, res) => {

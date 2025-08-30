@@ -1,20 +1,25 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, ScrollView } from 'react-native';
 import { Card, Text, Avatar, useTheme, Surface, Title, Paragraph } from 'react-native-paper';
+import Header from '../components/Header';
+import { getHeading } from '../constants/headings';
 
 export default function ChefProfileScreen() {
   const theme = useTheme();
   return (
-    <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      <Avatar.Icon size={90} icon="chef-hat" style={styles.avatar} color={theme.colors.primary} />
-      <Title style={styles.name}>Chef Name</Title>
-      <StatsRow />
-      <Card style={styles.infoBox}>
-        <Card.Content style={{ alignItems: 'center' }}>
-          <Paragraph>Login Hours: 4 Hrs</Paragraph>
-        </Card.Content>
-      </Card>
-    </Surface>
+    <>
+      <Header title={getHeading('ChefProfileScreen')} />
+      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}> 
+        <Avatar.Icon size={90} icon="chef-hat" style={styles.avatar} color={theme.colors.primary} />
+        <Title style={styles.name}>Chef Name</Title>
+        <StatsRow />
+        <Card style={styles.infoBox}>
+          <Card.Content style={{ alignItems: 'center' }}>
+            <Paragraph>Login Hours: 4 Hrs</Paragraph>
+          </Card.Content>
+        </Card>
+      </ScrollView>
+    </>
   );
 }
 

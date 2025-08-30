@@ -12,10 +12,12 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
-        model: "restaurants",
+        model: "restaurant",
         key: "id",
       },
     },
+  }, {
+    tableName: 'RestaurantTable'
   });
   return RestaurantTable;
 };

@@ -4,6 +4,8 @@ module.exports = (sequelize, DataTypes) => {
     role: { type: DataTypes.STRING },
     phone: { type: DataTypes.STRING },
     password: { type: DataTypes.STRING },
+  }, {
+    tableName: 'staff'
   });
   return Staff;
 };

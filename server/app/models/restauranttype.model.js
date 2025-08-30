@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-  const RestaurantType = sequelize.define("restauranttypes", {
+  const RestaurantType = sequelize.define("restauranttype", {
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
@@ -9,6 +9,8 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-  });
+    }, {
+      tableName: 'restauranttype'
+    });
   return RestaurantType;
 };

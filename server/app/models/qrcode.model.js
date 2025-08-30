@@ -8,6 +8,8 @@ module.exports = (sequelize, Sequelize) => {
         key: "id",
       },
     },
+  }, {
+    tableName: 'qrcode'
   });
   return QRCode;
 };

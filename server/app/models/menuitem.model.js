@@ -10,6 +10,8 @@ module.exports = (sequelize, Sequelize) => {
         key: "id",
       },
     },
+  }, {
+    tableName: 'menuitem'
   });
   return MenuItem;
 };

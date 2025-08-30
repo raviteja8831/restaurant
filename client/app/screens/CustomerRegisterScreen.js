@@ -3,7 +3,7 @@ import { StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native'
 import { TextInput, Button, Text, Appbar, useTheme, Surface } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser, selectLoading, selectError } from '../userSlice';
-import { API_BASE_URL, MESSAGES } from '../constants';
+import { API_BASE_URL, MESSAGES } from '../constants/constants';
 
 export default function CustomerRegisterScreen({ navigation }) {
   const [step, setStep] = useState(1);
@@ -48,10 +48,10 @@ export default function CustomerRegisterScreen({ navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Surface style={[styles.container, { backgroundColor: '#a6a6e7' }]}> 
-        <Appbar.Header style={styles.appbar}>
+        {/* <Appbar.Header style={styles.appbar}>
           <Appbar.BackAction onPress={() => navigation.goBack()} />
           <Appbar.Content title="Customer Registration" titleStyle={styles.appbarTitle} />
-        </Appbar.Header>
+        </Appbar.Header> */}
         <Surface style={styles.formSurface}>
           {step === 1 ? (
             <>

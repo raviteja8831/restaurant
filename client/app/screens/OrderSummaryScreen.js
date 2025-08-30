@@ -1,28 +1,33 @@
 import React from 'react';
 import { StyleSheet, ScrollView } from 'react-native';
 import { Card, Title, Paragraph, Text, Button, useTheme, Divider } from 'react-native-paper';
+import Header from '../components/Header';
+import { getHeading } from '../constants/headings';
 
 export default function OrderSummaryScreen() {
   const theme = useTheme();
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      <Title style={styles.title}>Your Order</Title>
-      <Card style={styles.orderList}>
-        <Card.Content>
-          <OrderRow item="Tomato Soup" qty="4" price="₹80" />
-          <OrderRow item="Roti Manchurian" qty="2" price="₹150" />
-          <OrderRow item="Rice Platter" qty="1" price="₹250" />
-          <OrderRow item="Curd Rice" qty="2" price="₹100" />
-          <OrderRow item="Desserts" qty="5" price="₹250" />
-        </Card.Content>
-      </Card>
-      <Paragraph style={styles.total}>Total: ₹830</Paragraph>
-      <Paragraph style={styles.feedback}>Please Rate this Restaurant as a Feedback</Paragraph>
-      <Paragraph style={styles.stars}>⭐⭐⭐⭐⭐</Paragraph>
-      <Button mode="contained" style={styles.payButton} labelStyle={styles.payText} onPress={() => {}}>Pay</Button>
-      <Paragraph style={styles.paid}>PAID</Paragraph>
-      <Paragraph style={styles.thankyou}>Thank you!</Paragraph>
-    </ScrollView>
+    <>
+      <Header title={getHeading('OrderSummaryScreen')} />
+      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}> 
+        <Title style={styles.title}>Your Order</Title>
+        <Card style={styles.orderList}>
+          <Card.Content>
+            <OrderRow item="Tomato Soup" qty="4" price="₹80" />
+            <OrderRow item="Roti Manchurian" qty="2" price="₹150" />
+            <OrderRow item="Rice Platter" qty="1" price="₹250" />
+            <OrderRow item="Curd Rice" qty="2" price="₹100" />
+            <OrderRow item="Desserts" qty="5" price="₹250" />
+          </Card.Content>
+        </Card>
+        <Paragraph style={styles.total}>Total: ₹830</Paragraph>
+        <Paragraph style={styles.feedback}>Please Rate this Restaurant as a Feedback</Paragraph>
+        <Paragraph style={styles.stars}>⭐⭐⭐⭐⭐</Paragraph>
+        <Button mode="contained" style={styles.payButton} labelStyle={styles.payText} onPress={() => {}}>Pay</Button>
+        <Paragraph style={styles.paid}>PAID</Paragraph>
+        <Paragraph style={styles.thankyou}>Thank you!</Paragraph>
+      </ScrollView>
+    </>
   );
 }
 

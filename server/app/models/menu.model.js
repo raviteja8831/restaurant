@@ -17,6 +17,8 @@ module.exports = (sequelize, Sequelize) => {
         key: "id",
       },
     },
+  }, {
+    tableName: 'menu'
   });
   return Menu;
 };

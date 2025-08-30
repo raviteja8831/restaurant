@@ -8,6 +8,8 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import AppHeader from './components/AppHeader';
+import { AlertProvider } from './services/alertService';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -23,13 +25,16 @@ export default function RootLayout() {
   return (
     <ReduxProvider store={store}>
       <PaperProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="Login" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
+        <AlertProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <AppHeader />
+            <Stack>
+              {/* <Stack.Screen name="Login" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" /> */}
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </AlertProvider>
       </PaperProvider>
     </ReduxProvider>
   );

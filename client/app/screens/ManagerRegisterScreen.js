@@ -1,179 +1,263 @@
-import React, { useState } from 'react';
-import { StyleSheet, Alert, Image, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, Text, Appbar, useTheme, Surface, Chip } from 'react-native-paper';
+import React from 'react';
+import { StyleSheet, Alert, Image, KeyboardAvoidingView, Platform, View, TouchableOpacity } from 'react-native';
+import { Button, Text, Appbar, Surface } from 'react-native-paper';
+import { useAlert } from '../services/alertService';
 import * as ImagePicker from 'expo-image-picker';
-import { useDispatch, useSelector } from 'react-redux';
-import { registerUser, selectLoading, selectError } from '../userSlice';
-import { API_BASE_URL, MESSAGES } from '../constants';
+import { registerManager } from '../api/managerApi';
+import { showApiError } from '../services/messagingService';
+import FormService from '../components/formService';
+import { uploadImage } from '../api/imageApi';
 
+
+function validateStep1({ firstname, lastname }) {
+  const errors = {};
+  if (!firstname) errors.firstname = 'First name is required';
+  if (!lastname) errors.lastname = 'Last name is required';
+  return errors;
+}
+
+function validateStep2({ restaurantName, restaurantAddress }) {
+  const errors = {};
+  if (!restaurantName) errors.restaurantName = 'Restaurant name is required';
+  if (!restaurantAddress) errors.restaurantAddress = 'Restaurant address is required';
+  return errors;
+}
+
+const formConfig = [
+  {
+    label: 'First Name',
+    name: 'firstname',
+    type: 'text',
+  },
+  {
+    label: 'Last Name',
+    name: 'lastname',
+    type: 'text',
+  },
+  {
+    label: 'Restaurant Name',
+    name: 'restaurantName',
+    type: 'text',
+  },
+  {
+    label: 'Restaurant Address',
+    name: 'restaurantAddress',
+    type: 'textarea',
+    multiline: true,
+  },
+];
 
 export default function ManagerRegisterScreen({ navigation }) {
-  const [step, setStep] = useState(1);
-  const [firstname, setFirstname] = useState('');
-  const [lastname, setLastname] = useState('');
-  const [restaurantName, setRestaurantName] = useState('');
-  const [restaurantAddress, setRestaurantAddress] = useState('');
-  const [restaurantType, setRestaurantType] = useState('');
-  const [ambiancePhoto, setAmbiancePhoto] = useState(null);
-  const [logo, setLogo] = useState(null);
-  const dispatch = useDispatch();
-  const loading = useSelector(selectLoading);
-  const error = useSelector(selectError);
-  const theme = useTheme();
+  const alert = useAlert();
+  const [step, setStep] = React.useState(1);
+  const [tableService, setTableService] = React.useState(false);
+  const [selfService, setSelfService] = React.useState(false);
+  const [pureVeg, setPureVeg] = React.useState(false);
+  const [nonVeg, setNonVeg] = React.useState(false);
+  const [enableBuffet, setEnableBuffet] = React.useState(false);
+  const [ambianceImage, setAmbianceImage] = React.useState(null);
+  const [logo, setLogo] = React.useState(null);
+  // Remove parent error state for form steps
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
 
-  const typeOptions = [
-    { label: 'Veg', value: 'veg' },
-    { label: 'Non-Veg', value: 'non-veg' },
-    { label: 'Self Service', value: 'self-service' },
-    { label: 'Table Service', value: 'table-service' },
-    { label: 'Both', value: 'both' },
-  ];
-
-  const pickImage = async (setter) => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setter(result.assets[0].uri);
-    }
-  };
+  // Single form state for all fields
+  const [form, setForm] = React.useState({
+    firstname: '',
+    lastname: '',
+    restaurantName: '',
+    restaurantAddress: '',
+  });
 
   const handleNext = () => {
-    if (!firstname.trim() || !lastname.trim()) {
-      Alert.alert('Error', 'Please enter your first and last name');
-      return;
-    }
     setStep(2);
   };
 
+  const pickImage = async (type = 'ambiance') => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+      base64: false,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      const localUri = asset.uri;
+      const filename = localUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename ?? '');
+      const typeMime = match ? `image/${match[1]}` : `image`;
+      const file = {
+        uri: localUri,
+        name: filename,
+        type: typeMime,
+      };
+      try {
+        const data = await uploadImage(file);
+        // Prepend server URL if not already absolute
+        const SERVER_URL = 'http://localhost:8080'; // Change to your actual server address if needed
+        const imageUrl = data.url.startsWith('http') ? data.url : SERVER_URL + data.url;
+        if (type === 'ambiance') {
+          setAmbianceImage(imageUrl);
+        } else {
+          setLogo(imageUrl);
+        }
+      } catch (err) {
+        showApiError(err);
+      }
+    }
+  };
+
   const handleRegister = async () => {
-    if (!restaurantName.trim() || !restaurantAddress.trim() || !restaurantType) {
-      Alert.alert('Error', 'Please fill all restaurant details and select a type');
-      return;
+    setLoading(true);
+    setError('');
+    try {
+      // Service type: send array if both selected, else single value or empty
+      let restaurantType = '';
+      if (tableService && selfService) restaurantType = ['table', 'self'];
+      else if (tableService) restaurantType = ['table'];
+      else if (selfService) restaurantType = ['self'];
+      else restaurantType = [];
+
+      // Food type: send array if both selected, else single value or empty
+      let foodType = '';
+      if (pureVeg && nonVeg) foodType = ['veg', 'nonveg'];
+      else if (pureVeg) foodType = ['veg'];
+      else if (nonVeg) foodType = ['nonveg'];
+      else foodType = [];
+
+      // Only send ambianceImage if it is not empty
+      const payload = {
+        phone: '', // Add phone logic if needed
+        role_id: 1,
+        ...form,
+        restaurantType,
+        foodType,
+        ambianceImage: ambianceImage || '',
+        enableBuffet,
+      };
+      const data = await registerManager(payload);
+      alert.success(data.message || 'Registered successfully');
+      setTimeout(() => navigation.goBack(), 1200);
+    } catch (err) {
+      showApiError(err);
+      const msg = err?.response?.data?.message || err?.message || 'Registration failed';
+      setError(msg);
+      alert.error(msg);
     }
-    // Optionally check for images
-    const resultAction = await dispatch(registerUser({
-      firstname,
-      lastname,
-      restaurantName,
-      restaurantAddress,
-      restaurantType,
-      ambiancePhoto,
-      logo,
-      roleName: 'manager',
-      apiUrl: API_BASE_URL,
-    }));
-    if (registerUser.fulfilled.match(resultAction)) {
-      Alert.alert('Success', MESSAGES.registrationSuccess);
-      navigation.replace('Login');
-    } else {
-      Alert.alert(MESSAGES.registrationFailed, resultAction.payload || MESSAGES.registrationFailed);
-    }
+    setLoading(false);
   };
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Surface style={[styles.container, { backgroundColor: '#a6a6e7' }]}> 
-        <Appbar.Header style={styles.appbar}>
-          <Appbar.BackAction onPress={() => navigation.goBack()} />
-          <Appbar.Content title="Manager Registration" titleStyle={styles.appbarTitle} />
-        </Appbar.Header>
-        <Surface style={styles.formSurface}>
-          {step === 1 ? (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="First Name"
-                value={firstname}
-                onChangeText={setFirstname}
-                mode="outlined"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Last Name"
-                value={lastname}
-                onChangeText={setLastname}
-                mode="outlined"
-              />
-            </>
-          ) : (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="Restaurant Name"
-                value={restaurantName}
-                onChangeText={setRestaurantName}
-                mode="outlined"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Restaurant Address"
-                value={restaurantAddress}
-                onChangeText={setRestaurantAddress}
-                mode="outlined"
-              />
-              <Text style={styles.sectionTitle}>Restaurant Type</Text>
-              <Surface style={styles.typeRow}>
-                {typeOptions.map(opt => (
-                  <Chip
-                    key={opt.value}
-                    selected={restaurantType === opt.value}
-                    onPress={() => setRestaurantType(opt.value)}
-                    style={[styles.typeBox, restaurantType === opt.value && styles.typeBoxActive]}
-                  >
-                    {opt.label}
-                  </Chip>
-                ))}
-              </Surface>
-              <Button
-                mode="outlined"
-                style={styles.photoBtn}
-                onPress={() => pickImage(setAmbiancePhoto)}
-              >
-                {ambiancePhoto ? 'Change Ambiance Photo' : 'Upload Ambiance Photo'}
-              </Button>
-              {ambiancePhoto && <Image source={{ uri: ambiancePhoto }} style={styles.photoPreview} />}
-              <Button
-                mode="outlined"
-                style={styles.photoBtn}
-                onPress={() => pickImage(setLogo)}
-              >
-                {logo ? 'Change Restaurant Logo' : 'Upload Restaurant Logo'}
-              </Button>
-              {logo && <Image source={{ uri: logo }} style={styles.photoPreview} />}
-            </>
+      <Surface style={styles.formSurface}>
+        <View style={styles.formWrapper}>
+          {step === 1 && (
+            <View style={styles.stepBox}>
+              <View style={styles.stepFormArea}>
+                <FormService
+                  config={formConfig}
+                  values={form}
+                  setValues={setForm}
+                  validate={validateStep1}
+                  onSubmit={handleNext}
+                  submitLabel={null}
+                  loading={loading}
+                  hiddenFields={['restaurantName', 'restaurantAddress']}
+                  inputStyle={styles.inputStep}
+                  labelStyle={styles.labelStep}
+                />
+              </View>
+              <View style={styles.fixedBottomBarStep}>
+                <Button
+                  mode="contained"
+                  style={styles.bottomButtonStep}
+                  labelStyle={styles.buttonTextStep}
+                  onPress={handleNext}
+                  loading={loading}
+                  disabled={loading}
+                >
+                  Next
+                </Button>
+              </View>
+            </View>
           )}
-          {error ? <Text style={{ color: 'red', marginTop: 10 }}>{error}</Text> : null}
-        </Surface>
-        <Surface style={styles.bottomBar}>
-          {step === 1 ? (
-            <Button
-              mode="contained"
-              style={styles.bottomButton}
-              labelStyle={styles.buttonText}
-              onPress={handleNext}
-            >
-              Next
-            </Button>
-          ) : (
-            <Button
-              mode="contained"
-              style={styles.bottomButton}
-              labelStyle={styles.buttonText}
-              onPress={handleRegister}
-              loading={loading}
-              disabled={loading}
-            >
-              Register
-            </Button>
+          {step === 2 && (
+            <View style={styles.stepBox}>
+              <View style={styles.stepFormAreaStep2}>
+                <FormService
+                  config={formConfig}
+                  values={form}
+                  setValues={setForm}
+                  validate={validateStep2}
+                  onSubmit={() => {}}
+                  submitLabel={null}
+                  loading={loading}
+                  hiddenFields={['firstname', 'lastname']}
+                  inputStyle={styles.inputStep}
+                  labelStyle={styles.labelStep}
+                />
+                <Button
+                  mode="contained"
+                  style={styles.locationBtnStep2}
+                  icon="crosshairs-gps"
+                  onPress={() => Alert.alert('Location', 'Use Current Location feature coming soon!')}
+                >
+                  Use Current Location
+                </Button>
+                <Text style={styles.sectionTitleStep2}>Choose your Restaurant Type</Text>
+                <View style={styles.typeRowStep2}>
+                  <TouchableOpacity style={[styles.typeBoxStep2, tableService && styles.typeBoxActiveStep2]} onPress={() => setTableService(!tableService)}>
+                    <Image source={require('../../assets/images/table-service.png')} style={styles.typeIconStep2} />
+                    <Text style={styles.typeLabelStep2}>Table Service</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.typeBoxStep2, selfService && styles.typeBoxActiveStep2]} onPress={() => setSelfService(!selfService)}>
+                    <Image source={require('../../assets/images/self-service.png')} style={styles.typeIconStep2} />
+                    <Text style={styles.typeLabelStep2}>Self Service</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.foodTypeRowStep2}>
+                  <TouchableOpacity style={[styles.foodTypeBoxStep2, pureVeg && styles.foodTypeBoxActiveStep2]} onPress={() => setPureVeg(!pureVeg)}>
+                    <View style={[styles.foodCircleStep2, { backgroundColor: 'green' }]} />
+                    <Text style={styles.foodLabelStep2}>Pure Veg</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.foodTypeBoxStep2, nonVeg && styles.foodTypeBoxActiveStep2]} onPress={() => setNonVeg(!nonVeg)}>
+                    <View style={[styles.foodCircleStep2, { backgroundColor: 'red' }]} />
+                    <Text style={styles.foodLabelStep2}>Non Veg</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.enableTextStep2}>Enable Buffet</Text>
+                <TouchableOpacity style={styles.checkboxRowStep2} onPress={() => setEnableBuffet(!enableBuffet)}>
+                  <View style={[styles.checkboxStep2, enableBuffet && styles.checkboxActiveStep2]} />
+                  <Text style={styles.checkboxLabelStep2}>Enable Buffet</Text>
+                </TouchableOpacity>
+                <Text style={styles.sectionTitleStep2}>Upload Ambiance Photo</Text>
+                <TouchableOpacity style={styles.photoUploadBoxStep2} onPress={pickImage}>
+                  {ambianceImage ? (
+                    <Image source={{ uri: ambianceImage }} style={styles.photoPreviewStep2} />
+                  ) : (
+                    <Image source={require('../../assets/images/camera-icon.png')} style={styles.cameraIconStep2} />
+                  )}
+                </TouchableOpacity>
+              </View>
+              <View style={styles.fixedBottomBarStep}>
+                <Button
+                  mode="contained"
+                  style={styles.bottomButtonStep}
+                  labelStyle={styles.buttonTextStep}
+                  onPress={handleRegister}
+                  loading={loading}
+                  disabled={loading}
+                >
+                  Register
+                </Button>
+              </View>
+            </View>
           )}
-        </Surface>
+    </View>
       </Surface>
     </KeyboardAvoidingView>
   );
@@ -183,15 +267,244 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 0, backgroundColor: '#a6a6e7' },
   appbar: { backgroundColor: '#a6a6e7', elevation: 0 },
   appbarTitle: { fontWeight: 'bold', fontSize: 20, textAlign: 'center' },
-  formSurface: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: 'transparent', elevation: 0 },
+  formSurface: { flex: 1, justifyContent: 'flex-start', alignItems: 'center', padding: 0, backgroundColor: 'transparent', elevation: 0 },
+  formWrapper: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    padding: 24,
+    minHeight: 500,
+  },
   input: { width: 260, marginBottom: 15, alignSelf: 'center', backgroundColor: '#eae6ff' },
+  inputFullWidth: {
+    width: '100%',
+    minHeight: 48,
+    marginBottom: 18,
+    backgroundColor: '#eae6ff',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+  },
+  locationBtn: { marginBottom: 15, backgroundColor: '#7b6eea' },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', marginVertical: 10, textAlign: 'center', color: '#333' },
-  typeRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', width: '100%', marginBottom: 10, backgroundColor: 'transparent', elevation: 0 },
-  typeBox: { margin: 4 },
-  typeBoxActive: { borderColor: '#7b6eea', backgroundColor: '#d1c4e9' },
-  photoBtn: { borderRadius: 8, marginTop: 10, marginBottom: 10, width: 200, alignSelf: 'center' },
-  photoPreview: { width: 100, height: 100, borderRadius: 10, marginTop: 10, alignSelf: 'center' },
-  bottomBar: { padding: 16, backgroundColor: '#a6a6e7', borderTopLeftRadius: 24, borderTopRightRadius: 24, elevation: 8 },
-  bottomButton: { borderRadius: 24, width: '100%', alignSelf: 'center', paddingVertical: 10, backgroundColor: '#7b6eea' },
-  buttonText: { fontWeight: 'bold', fontSize: 18, color: '#fff' },
+  typeRow: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginBottom: 10 },
+  typeBox: { alignItems: 'center', padding: 10, borderRadius: 10, backgroundColor: '#eae6ff', marginHorizontal: 10 },
+  typeBoxActive: { borderColor: '#7b6eea', borderWidth: 2, backgroundColor: '#d1c4e9' },
+  typeIcon: { width: 60, height: 60, marginBottom: 5 },
+  typeLabel: { fontSize: 14, fontWeight: 'bold', color: '#333' },
+  enableText: { fontSize: 13, color: '#7b6eea', marginVertical: 5, textAlign: 'center' },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, alignSelf: 'center' },
+  checkbox: { width: 20, height: 20, borderRadius: 5, borderWidth: 2, borderColor: '#7b6eea', marginRight: 8, backgroundColor: '#fff' },
+  checkboxActive: { backgroundColor: '#7b6eea' },
+  checkboxLabel: { fontSize: 14, color: '#333' },
+  foodTypeRow: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginBottom: 10 },
+  foodTypeBox: { alignItems: 'center', padding: 10, borderRadius: 10, backgroundColor: '#eae6ff', marginHorizontal: 10 },
+  foodTypeBoxActive: { borderColor: '#7b6eea', borderWidth: 2, backgroundColor: '#d1c4e9' },
+  foodCircle: { width: 30, height: 30, borderRadius: 15, marginBottom: 5 },
+  foodLabel: { fontSize: 14, fontWeight: 'bold', color: '#333' },
+  photoUploadBox: { width: 180, height: 120, backgroundColor: '#eae6ff', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginVertical: 10 },
+  cameraIcon: { width: 60, height: 60 },
+  photoPreview: { width: 120, height: 100, borderRadius: 10 },
+  bottomBar: {
+    padding: 16,
+    backgroundColor: '#a6a6e7',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    elevation: 8,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    alignItems: 'center',
+  },
+  bottomButton: {
+    borderRadius: 24,
+    width: '95%',
+    alignSelf: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#7b6eea',
+    marginTop: 16,
+  },
+  outerStep1Box: {
+    width: '100%',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    elevation: 4,
+    marginBottom: 16,
+  },
+  innerStep1Box: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  stepTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+    color: '#333',
+  },
+  formFullWidth: {
+    width: '100%',
+    paddingHorizontal: 0,
+    marginBottom: 0,
+  },
+  buttonBar: {
+    display: 'none',
+  },
+  fixedBottomBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#a6a6e7',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    elevation: 8,
+    alignItems: 'center',
+    padding: 16,
+    zIndex: 10,
+  },
+    stepBox: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#a6a6e7',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 32,
+    paddingHorizontal: 0,
+  },
+  stepFormArea: {
+    width: '90%',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    marginBottom: 0,
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
+  inputStep: {
+    width: '100%',
+    minHeight: 44,
+    marginBottom: 24,
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    borderWidth: 0,
+    color: '#222',
+  },
+  labelStep: {
+    color: '#fff',
+    fontSize: 13,
+    marginBottom: 4,
+    marginLeft: 2,
+  },
+  fixedBottomBarStep: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#a6a6e7',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    alignItems: 'center',
+    padding: 12,
+    zIndex: 10,
+  },
+  bottomButtonStep: {
+    borderRadius: 14,
+    width: '92%',
+    alignSelf: 'center',
+    paddingVertical: 8,
+    backgroundColor: '#6c6cf2',
+    marginTop: 0,
+    marginBottom: 0,
+    elevation: 0,
+  },
+  buttonTextStep: {
+    fontSize: 26,
+    color: '#fff',
+    fontWeight: '400',
+    letterSpacing: 1,
+  },
+  stepFormAreaStep2: {
+    width: '92%',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    marginBottom: 0,
+    flex: 1,
+    justifyContent: 'flex-start'
+  },
+  locationBtnStep2: {
+    marginBottom: 18,
+    backgroundColor: '#7b6eea',
+    width: '100%',
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  sectionTitleStep2: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginVertical: 8,
+    textAlign: 'center',
+    color: '#fff',
+  },
+  typeRowStep2: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 10,
+  },
+  typeBoxStep2: {
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    marginHorizontal: 10,
+    borderWidth: 2,
+    borderColor: '#eae6ff',
+    width: 90,
+  },
+  typeBoxActiveStep2: {
+    borderColor: '#7b6eea',
+    backgroundColor: '#d1c4e9',
+  },
+  typeIconStep2: { width: 48, height: 48, marginBottom: 2 },
+  typeLabelStep2: { fontSize: 13, fontWeight: 'bold', color: '#333' },
+  foodTypeRowStep2: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 10,
+  },
+  foodTypeBoxStep2: {
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    marginHorizontal: 10,
+    borderWidth: 2,
+    borderColor: '#eae6ff',
+    width: 90,
+  },
+  foodTypeBoxActiveStep2: {
+    borderColor: '#7b6eea',
+    backgroundColor: '#d1c4e9',
+  },
+  foodCircleStep2: { width: 32, height: 32, borderRadius: 16, marginBottom: 2 },
+  foodLabelStep2: { fontSize: 13, fontWeight: 'bold', color: '#333' },
+  enableTextStep2: { fontSize: 13, color: '#fff', marginVertical: 5, textAlign: 'center' },
+  checkboxRowStep2: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, alignSelf: 'center' },
+  checkboxStep2: { width: 20, height: 20, borderRadius: 5, borderWidth: 2, borderColor: '#7b6eea', marginRight: 8, backgroundColor: '#fff' },
+  checkboxActiveStep2: { backgroundColor: '#7b6eea' },
+  checkboxLabelStep2: { fontSize: 14, color: '#fff' },
+  photoUploadBoxStep2: { width: 180, height: 120, backgroundColor: '#fff', borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginVertical: 10 },
+  cameraIconStep2: { width: 60, height: 60 },
+  photoPreviewStep2: { width: 120, height: 100, borderRadius: 10 },
+    
 });
