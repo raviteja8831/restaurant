@@ -1,10 +1,5 @@
-import AppNavigator from './navigation/AppNavigator';
-import { AlertProvider } from './services/alertService';
 
+// App.js is not needed with expo-router. Navigation is handled by the file system and _layout.tsx.
 export default function App() {
-	return (
-		<AlertProvider>
-			<AppNavigator />
-		</AlertProvider>
-	);
+	return null;
 }

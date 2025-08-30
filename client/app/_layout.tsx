@@ -3,7 +3,7 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { Provider as PaperProvider } from 'react-native-paper';
 import store from './store';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
@@ -29,10 +29,8 @@ export default function RootLayout() {
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <AppHeader />
             <Stack>
-              {/* <Stack.Screen name="Login" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" /> */}
+              <Slot />
             </Stack>
-            <StatusBar style="auto" />
           </ThemeProvider>
         </AlertProvider>
       </PaperProvider>
