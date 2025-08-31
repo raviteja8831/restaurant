@@ -8,15 +8,25 @@ import {
   Modal,
   ScrollView,
   Dimensions,
+  TextInput,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Appbar, Surface } from "react-native-paper";
 
 export default function ManagerDashboardScreenNew() {
-  // Dropdown state for orders period in Users tab
+  // Tab state management
+  const [activeTab, setActiveTab] = useState("Dashboard");
   const [showOrdersDropdown, setShowOrdersDropdown] = useState(false);
   const [ordersPeriodLabel, setOrdersPeriodLabel] = useState("Year");
+
+  // QR Code states
+  const [showNewQRModal, setShowNewQRModal] = useState(false);
+  const [showTableDetail, setShowTableDetail] = useState(false);
+  const [selectedTable, setSelectedTable] = useState(null);
+  const [qrFormData, setQrFormData] = useState({
+    name: "",
+  });
 
   // Demo values for each period (replace with real data as needed)
   const yearOrders = "365/345";
@@ -45,7 +55,6 @@ export default function ManagerDashboardScreenNew() {
 
   const [buffetVisible, setBuffetVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState("Dashboard");
 
   // Add User Modal state and config
   const [addUserModal, setAddUserModal] = useState(false);
@@ -113,6 +122,295 @@ export default function ManagerDashboardScreenNew() {
     { msg: "Oats Dosa 1 Nos to Table No 1", time: "9:08AM" },
     { msg: "Onion Dosa 6 Nos to Parcel Table", time: "9:00AM" },
   ];
+
+  // Mock transaction data for tables
+  const tableTransactions = [
+    {
+      name: "Prakash",
+      contact: "8660435235",
+      time: "07:12:00 AM",
+      amount: "600",
+      status: "Pending",
+    },
+    {
+      name: "Abhishek",
+      contact: "9660435235",
+      time: "07:12:00 AM",
+      amount: "350",
+      status: "Paid",
+    },
+    {
+      name: "Karthick",
+      contact: "7676869534",
+      time: "07:12:00 AM",
+      amount: "800",
+      status: "Paid",
+    },
+    {
+      name: "Amruth",
+      contact: "9868785564",
+      time: "07:12:00 AM",
+      amount: "1200",
+      status: "Paid",
+    },
+  ];
+
+  const handleTableClick = (tableNum) => {
+    setSelectedTable(tableNum);
+    setShowTableDetail(true);
+  };
+
+  const renderQRCodeTab = () => {
+    return (
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.qrContainer}>
+          <Text style={styles.qrTitle}>QR Code Generator / Statistics</Text>
+
+          {/* Large QR Code */}
+          <View style={styles.qrCodeBox}>
+            <MaterialCommunityIcons name="qrcode" size={120} color="#000" />
+          </View>
+
+          {/* New QR Code Button */}
+          <TouchableOpacity
+            style={styles.newQRButton}
+            onPress={() => setShowNewQRModal(true)}
+          >
+            <MaterialCommunityIcons
+              name="plus"
+              size={20}
+              color="#000"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.newQRButtonText}>New QR Code</Text>
+          </TouchableOpacity>
+
+          {/* Customer Statistics Section */}
+          <View style={styles.qrStatsContainer}>
+            <View style={styles.qrStatsRow}>
+              <TouchableOpacity style={styles.qrPeriodButton}>
+                <Text style={styles.qrPeriodButtonText}>Today</Text>
+                <MaterialCommunityIcons
+                  name="chevron-down"
+                  size={16}
+                  color="#000"
+                />
+              </TouchableOpacity>
+              <View style={styles.qrCustomerCountContainer}>
+                <Text style={styles.qrCustomerCountText}>
+                  No of Customers today : 50
+                </Text>
+              </View>
+            </View>
+
+            {/* Table Buttons */}
+            <View style={styles.qrTableButtons}>
+              {[1, 2, 3, 4, 5, 6].map((num) => (
+                <TouchableOpacity
+                  key={num}
+                  style={styles.qrTableButton}
+                  onPress={() => handleTableClick(num)}
+                >
+                  <Text style={styles.qrTableButtonText}>Table {num}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  };
+
+  const renderNewQRModal = () => {
+    return (
+      <Modal
+        visible={showNewQRModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowNewQRModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.newQRModalCard}>
+            {/* Small QR Code and Download Icon */}
+            <View style={styles.newQRHeader}>
+              <View style={styles.smallQRCode}>
+                <MaterialCommunityIcons name="qrcode" size={60} color="#000" />
+              </View>
+              <TouchableOpacity style={styles.downloadIcon}>
+                <MaterialCommunityIcons
+                  name="download"
+                  size={24}
+                  color="#000"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Name Input */}
+            <View style={styles.nameInputContainer}>
+              <Text style={styles.nameInputLabel}>Name:</Text>
+              <TextInput
+                style={styles.nameInput}
+                placeholder="Table No/ Room No"
+                placeholderTextColor="#999"
+                value={qrFormData.name}
+                onChangeText={(text) =>
+                  setQrFormData({ ...qrFormData, name: text })
+                }
+              />
+            </View>
+
+            {/* Plus Button */}
+            <TouchableOpacity style={styles.qrPlusButton}>
+              <MaterialCommunityIcons name="plus" size={24} color="#000" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const renderTableDetailModal = () => {
+    if (!selectedTable) return null;
+
+    return (
+      <Modal
+        visible={showTableDetail}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowTableDetail(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.tableDetailCard}>
+            {/* Header */}
+            <View style={styles.tableDetailHeader}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setShowTableDetail(false)}
+              >
+                <MaterialCommunityIcons
+                  name="arrow-left"
+                  size={24}
+                  color="#fff"
+                />
+              </TouchableOpacity>
+              <Text style={styles.tableDetailTitle}>Table {selectedTable}</Text>
+              <TouchableOpacity style={styles.weekDropdown}>
+                <Text style={styles.weekDropdownText}>Week</Text>
+                <MaterialCommunityIcons
+                  name="chevron-down"
+                  size={16}
+                  color="#fff"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Transaction Summary */}
+            <View style={styles.transactionSummary}>
+              <MaterialCommunityIcons name="pencil" size={20} color="#fff" />
+              <Text style={styles.transactionSummaryText}>
+                Total Transaction Week : 12566
+              </Text>
+            </View>
+
+            {/* Transactions Table */}
+            <View style={styles.transactionsTable}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderText, { flex: 1.2 }]}>
+                  Name
+                </Text>
+                <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>
+                  Contact
+                </Text>
+                <Text style={[styles.tableHeaderText, { flex: 1 }]}>Time</Text>
+                <Text style={[styles.tableHeaderText, { flex: 0.8 }]}>
+                  Amount
+                </Text>
+                <Text style={[styles.tableHeaderText, { flex: 1 }]}>
+                  Statues
+                </Text>
+                <MaterialCommunityIcons
+                  name="dots-vertical"
+                  size={20}
+                  color="#fff"
+                  style={{ flex: 0.5 }}
+                />
+              </View>
+
+              <ScrollView
+                style={styles.tableBody}
+                showsVerticalScrollIndicator={false}
+              >
+                {tableTransactions.map((transaction, index) => (
+                  <View key={index} style={styles.tableRow}>
+                    <Text style={[styles.tableCellText, { flex: 1.2 }]}>
+                      {transaction.name}
+                    </Text>
+                    <Text style={[styles.tableCellText, { flex: 1.5 }]}>
+                      {transaction.contact}
+                    </Text>
+                    <Text style={[styles.tableCellText, { flex: 1 }]}>
+                      {transaction.time}
+                    </Text>
+                    <Text style={[styles.tableCellText, { flex: 0.8 }]}>
+                      {transaction.amount}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCellText,
+                        {
+                          color:
+                            transaction.status === "Paid"
+                              ? "#90EE90"
+                              : "#FFD700",
+                          flex: 1,
+                        },
+                      ]}
+                    >
+                      {transaction.status}
+                    </Text>
+                  </View>
+                ))}
+                {/* Repeat data for scrolling effect */}
+                {tableTransactions.map((transaction, index) => (
+                  <View key={`repeat-${index}`} style={styles.tableRow}>
+                    <Text style={[styles.tableCellText, { flex: 1.2 }]}>
+                      {transaction.name}
+                    </Text>
+                    <Text style={[styles.tableCellText, { flex: 1.5 }]}>
+                      {transaction.contact}
+                    </Text>
+                    <Text style={[styles.tableCellText, { flex: 1 }]}>
+                      {transaction.time}
+                    </Text>
+                    <Text style={[styles.tableCellText, { flex: 0.8 }]}>
+                      {transaction.amount}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCellText,
+                        {
+                          color:
+                            transaction.status === "Paid"
+                              ? "#90EE90"
+                              : "#FFD700",
+                          flex: 1,
+                        },
+                      ]}
+                    >
+                      {transaction.status}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -191,8 +489,8 @@ export default function ManagerDashboardScreenNew() {
           {/* Orders Chart */}
           <Surface style={styles.chartCard}>
             <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>Orders Graph</Text>
-              <TouchableOpacity
+              <Text style={styles.chartTitle}>Produce Sales</Text>
+              {/*  <TouchableOpacity
                 style={styles.ordersPeriodPill}
                 onPress={() => setShowOrdersDropdown(!showOrdersDropdown)}
                 activeOpacity={0.7}
@@ -200,7 +498,7 @@ export default function ManagerDashboardScreenNew() {
                 <Text style={styles.ordersPeriodPillText}>
                   {ordersPeriodLabel}
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               {showOrdersDropdown && (
                 <View style={styles.usersOrdersDropdownMenuPopupFixed}>
                   {["Year", "Month", "Week"].map((label) => (
@@ -366,7 +664,7 @@ export default function ManagerDashboardScreenNew() {
             </View>
           </Modal>
         </ScrollView>
-      ) : (
+      ) : activeTab === "Users" ? (
         // USERS TAB UI
         <ScrollView
           contentContainerStyle={{ paddingBottom: 100 }}
@@ -464,7 +762,10 @@ export default function ManagerDashboardScreenNew() {
             <View style={styles.usersStatsColLeft}>
               <View style={styles.usersAllottedCard}>
                 <Text style={styles.usersAllottedTitle}>Allotted Dishes</Text>
-                <ScrollView style={{ maxHeight: 180 }}>
+                <ScrollView
+                  style={{ flex: 1 }}
+                  showsVerticalScrollIndicator={false}
+                >
                   {allottedDishes.map((dish, i) => (
                     <Text key={dish} style={styles.usersAllottedDish}>
                       • {dish}
@@ -490,37 +791,58 @@ export default function ManagerDashboardScreenNew() {
                     position: "relative",
                   }}
                 >
-                  <Text style={styles.usersOrdersSmallValue}>
-                    {ordersPeriodValue}
-                  </Text>
-                  <View style={{ position: "relative" }}>
-                    <TouchableOpacity
-                      style={styles.usersOrdersDropdownBtn}
-                      onPress={() => setShowOrdersDropdown(!showOrdersDropdown)}
-                      activeOpacity={0.7}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text
+                      style={[styles.usersOrdersSmallValue, { fontSize: 20 }]}
                     >
-                      <Text style={styles.usersOrdersSmallLabel}>
-                        {ordersPeriodLabel}
-                      </Text>
-                    </TouchableOpacity>
-                    {showOrdersDropdown && (
-                      <View style={styles.usersOrdersDropdownMenuPopupFixed}>
-                        {["Year", "Month", "Week"].map((label) => (
-                          <TouchableOpacity
-                            key={label}
-                            style={styles.usersOrdersDropdownItem}
-                            onPress={() => {
-                              setOrdersPeriodLabel(label);
-                              setShowOrdersDropdown(false);
-                            }}
-                          >
-                            <Text style={styles.usersOrdersDropdownItemText}>
-                              {label}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
+                      {ordersPeriodValue}
+                    </Text>
+                    <View style={{ position: "relative", marginLeft: 8 }}>
+                      <TouchableOpacity
+                        style={[
+                          styles.usersOrdersDropdownBtn,
+                          { backgroundColor: "#e8e8e8", minWidth: 70 },
+                        ]}
+                        onPress={() =>
+                          setShowOrdersDropdown(!showOrdersDropdown)
+                        }
+                        activeOpacity={0.7}
+                      >
+                        <Text
+                          style={[
+                            styles.usersOrdersSmallLabel,
+                            { color: "#666" },
+                          ]}
+                        >
+                          {ordersPeriodLabel}
+                        </Text>
+                      </TouchableOpacity>
+                      {showOrdersDropdown && (
+                        <View style={styles.usersOrdersDropdownMenuPopupFixed}>
+                          {["Year", "Month", "Week"].map((label) => (
+                            <TouchableOpacity
+                              key={label}
+                              style={styles.usersOrdersDropdownItem}
+                              onPress={() => {
+                                setOrdersPeriodLabel(label);
+                                setShowOrdersDropdown(false);
+                              }}
+                            >
+                              <Text style={styles.usersOrdersDropdownItemText}>
+                                {label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
                   </View>
                 </View>
               </View>
@@ -551,7 +873,12 @@ export default function ManagerDashboardScreenNew() {
           ))}
           <Text style={styles.usersHistoryTitle}>Yesterday</Text>
         </ScrollView>
+      ) : (
+        renderQRCodeTab()
       )}
+
+      {renderNewQRModal()}
+      {renderTableDetailModal()}
 
       {/* Bottom navigation bar */}
       <View style={styles.bottomNav}>
@@ -577,11 +904,23 @@ export default function ManagerDashboardScreenNew() {
             color={activeTab === "Users" ? "#6c63b5" : "#222"}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navBtn}>
-          <MaterialCommunityIcons name="qrcode-scan" size={32} color="#222" />
+        <TouchableOpacity
+          style={activeTab === "QRCode" ? styles.navBtnActive : styles.navBtn}
+          onPress={() => setActiveTab("QRCode")}
+        >
+          <MaterialCommunityIcons
+            name="qrcode"
+            size={32}
+            color={activeTab === "QRCode" ? "#6c63b5" : "#222"}
+          />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navBtn}>
-          <MaterialCommunityIcons name="bell" size={32} color="#222" />
+          <View style={styles.notificationContainer}>
+            <MaterialCommunityIcons name="bell" size={32} color="#222" />
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationText}>1</Text>
+            </View>
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -589,13 +928,279 @@ export default function ManagerDashboardScreenNew() {
 }
 
 const styles = StyleSheet.create({
+  // QR Code Tab Styles
+  qrContainer: {
+    flex: 1,
+    padding: 20,
+    alignItems: "center",
+    backgroundColor: "#d8bfd8",
+  },
+  qrTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 30,
+    textAlign: "center",
+  },
+  qrCodeBox: {
+    width: 200,
+    height: 200,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  newQRButton: {
+    backgroundColor: "#e8e8e8",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  newQRButtonText: {
+    color: "#000",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  qrStatsContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
+  qrStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  qrPeriodButton: {
+    backgroundColor: "#e8e8e8",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  qrPeriodButtonText: {
+    fontSize: 14,
+    color: "#000",
+    fontWeight: "bold",
+  },
+  qrCustomerCountContainer: {
+    marginLeft: 10,
+    backgroundColor: "#e8e8e8",
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  qrCustomerCountText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  qrTableButtons: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 10,
+  },
+  qrTableButton: {
+    backgroundColor: "#e8e8e8",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginHorizontal: 5,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  qrTableButtonText: {
+    color: "#000",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  // New QR Modal Styles
+  newQRModalCard: {
+    backgroundColor: "#ece9fa",
+    borderRadius: 24,
+    padding: 24,
+    width: 300,
+    alignItems: "center",
+    alignSelf: "center",
+    marginTop: 80,
+    elevation: 8,
+  },
+  newQRHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 20,
+  },
+  smallQRCode: {
+    width: 60,
+    height: 60,
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  downloadIcon: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 5,
+  },
+  nameInputContainer: {
+    width: "100%",
+    marginBottom: 20,
+  },
+  nameInputLabel: {
+    fontSize: 14,
+    color: "#6c63b5",
+    marginBottom: 8,
+    textAlign: "left",
+    alignSelf: "flex-start",
+  },
+  nameInput: {
+    width: "100%",
+    minHeight: 36,
+    backgroundColor: "#fff",
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    fontSize: 15,
+    borderWidth: 0,
+    color: "#222",
+  },
+  qrPlusButton: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
+  },
+  // Table Detail Modal Styles
+  tableDetailCard: {
+    backgroundColor: "#4a148c",
+    borderRadius: 24,
+    padding: 24,
+    width: "90%",
+    maxHeight: "80%",
+    alignSelf: "center",
+    marginTop: 80,
+    elevation: 8,
+  },
+  tableDetailHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  backButton: {
+    padding: 8,
+  },
+  tableDetailTitle: {
+    fontWeight: "bold",
+    fontSize: 20,
+    color: "#fff",
+  },
+  weekDropdown: {
+    backgroundColor: "transparent",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  weekDropdownText: {
+    fontSize: 14,
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  transactionSummary: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "transparent",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  transactionSummaryText: {
+    fontSize: 14,
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
+  transactionsTable: {
+    backgroundColor: "transparent",
+    borderRadius: 12,
+    padding: 12,
+    elevation: 2,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#fff",
+    marginBottom: 8,
+    alignItems: "center",
+  },
+  tableHeaderText: {
+    fontSize: 12,
+    color: "#fff",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  tableBody: {
+    maxHeight: 300,
+  },
+  tableRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#fff",
+    alignItems: "center",
+  },
+  tableCellText: {
+    fontSize: 12,
+    color: "#fff",
+    textAlign: "center",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#d8bfd8",
     paddingTop: 0,
   },
   appbar: {
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#d8bfd8",
     elevation: 0,
   },
   appbarTitle: {
@@ -765,26 +1370,27 @@ const styles = StyleSheet.create({
   },
   usersOrdersDropdownMenuPopupFixed: {
     position: "absolute",
-    top: 35,
+    top: 30,
     right: 0,
     backgroundColor: "#fff",
-    borderRadius: 8,
-    elevation: 8,
+    borderRadius: 4,
+    elevation: 999,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    zIndex: 100,
-    minWidth: 90,
-    paddingVertical: 4,
+    zIndex: 9999,
+    minWidth: 70,
+    paddingVertical: 0,
   },
   usersOrdersDropdownItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    backgroundColor: "#fff",
   },
   usersOrdersDropdownItemText: {
-    fontSize: 13,
-    color: "#222",
+    fontSize: 12,
+    color: "#666",
     textAlign: "center",
   },
   profileCard: {
@@ -833,6 +1439,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   // Users Tab Styles
   usersHeader: {
     paddingHorizontal: 18,
@@ -1003,6 +1610,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     marginBottom: 8,
+    height: 350, // Increased height to match right side cards
   },
   usersAllottedTitle: {
     fontWeight: "bold",
@@ -1018,10 +1626,11 @@ const styles = StyleSheet.create({
   usersOrdersCardImage2: {
     backgroundColor: "#d1c4e9",
     borderRadius: 16,
-    padding: 12,
+    padding: 16,
     alignItems: "center",
     marginBottom: 12,
-    width: 180,
+    width: "100%",
+    minHeight: 100,
     elevation: 4,
     shadowColor: "#b0aee7",
   },
@@ -1053,23 +1662,24 @@ const styles = StyleSheet.create({
   },
   usersOrdersSmallLabel: {
     fontWeight: "bold",
-    fontSize: 13,
+    fontSize: 11,
     color: "#222",
-    marginBottom: 2,
     textAlign: "center",
   },
   usersOrdersSmallValue: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "bold",
     color: "#222",
     textAlign: "center",
+    marginRight: 4,
   },
   usersOrdersDropdownBtn: {
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginLeft: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: 4,
+    minWidth: 50,
   },
   usersMsgInputRow: {
     flexDirection: "row",
@@ -1124,7 +1734,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#d8bfd8",
     paddingVertical: 8,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -1150,5 +1760,26 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#6c63b5",
     backgroundColor: "rgba(108,99,181,0.08)",
+  },
+  notificationContainer: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#ff0000",
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });
