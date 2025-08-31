@@ -104,7 +104,7 @@ exports.login = async (req, res) => {
   try {
     const { phone, otp } = req.body;
     // Find user by phone
-    const user = await User.findOne({
+    const user = await db.restaurantUser.findOne({
       where: { phone },
       include: {
         model: Role,

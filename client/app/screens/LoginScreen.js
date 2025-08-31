@@ -1,17 +1,14 @@
 import React, { useRef, useState } from 'react';
-import { StyleSheet, Alert } from 'react-native';
-import { TextInput, Button, Text, Title, useTheme, Surface } from 'react-native-paper';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, loginRestaurantUser, selectLoading, selectError } from '../userSlice';
+import { StyleSheet, Alert, View, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import { TextInput, Text } from 'react-native-paper';
+import axios from 'axios';
+import { useRouter } from 'expo-router';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '']);
   const otpInputs = [useRef(null), useRef(null), useRef(null), useRef(null)];
-  const dispatch = useDispatch();
-  const loading = useSelector(selectLoading);
-  const error = useSelector(selectError);
-  const theme = useTheme();
+  const router = useRouter();
 
   const handleOtpChange = (text, idx) => {
     if (/^\d?$/.test(text)) {
@@ -27,141 +24,143 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
-  const handleLogin = async () => {
-    if (phone.length === 10 && otp.every(d => d.length === 1)) {
-      // Try manager login first
-      const resultAction = await dispatch(loginRestaurantUser({ phone, password: otp.join('') }));
-      if (loginRestaurantUser.fulfilled.match(resultAction)) {
-        navigation.replace('ManagerDashboard');
-        return;
-      }
-      // Fallback to user login
-      const userResult = await dispatch(loginUser({ phone, otp: otp.join('') }));
-      if (loginUser.fulfilled.match(userResult)) {
-        const { role } = userResult.payload;
-        if (role === 'manager') {
-          navigation.replace('ManagerDashboard');
-        } else {
-          navigation.replace('CustomerStack');
-        }
-      } else {
-        Alert.alert('Login Failed', userResult.payload || 'Invalid credentials');
-      }
-    } else {
+  React.useEffect(() => {
+    if (otp.every(d => d.length === 1)) {
+      handleLogin(phone, otp);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp]);
+
+  const handleLogin = async (phoneValue, otpValue) => {
+    if (!phoneValue || otpValue.some(d => d.length !== 1)) {
       Alert.alert('Error', 'Please enter a valid phone and OTP');
+      return;
+    }
+    try {
+      const response = await axios.post('http://localhost:8080/api/users/login', {
+        phone: phoneValue,
+        otp: otpValue.join(''),
+      });
+      const user = response.data;
+      const role = user?.role?.toLowerCase();
+      Alert.alert('API user', JSON.stringify(user));
+      if (role === 'manager') {
+        router.push('/manager-dashboard');
+      } else if (role === 'chef') {
+        router.push('/chef-home');
+      } else {
+        Alert.alert('Login Failed', 'Unknown user role: ' + (user?.role || 'none'));
+      }
+    } catch (err) {
+      Alert.alert('Login Failed', err?.message || 'Invalid credentials');
     }
   };
 
   return (
-    <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      <Title style={styles.title}>Menutha Login</Title>
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number"
-        keyboardType="phone-pad"
-        value={phone}
-        onChangeText={setPhone}
-        maxLength={10}
-        mode="outlined"
-        left={<TextInput.Icon icon="phone" />}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >        
+      <Image
+        source={require('../../assets/images/logo.png')}
+        style={styles.logo}
+        resizeMode="contain"
       />
-      <OtpRow otp={otp} otpInputs={otpInputs} handleOtpChange={handleOtpChange} />
-      <Button
-        mode="contained"
-        style={styles.button}
-        labelStyle={styles.buttonText}
-        onPress={handleLogin}
-        loading={loading}
-        disabled={loading}
-      >
-        Login
-      </Button>
-      {error ? <Text style={{ color: 'red', marginTop: 10 }}>{error}</Text> : null}
-      <Button
-        mode="text"
-        style={styles.link}
-        labelStyle={styles.linkText}
-        onPress={() => navigation.navigate('Register')}
-      >
-        Don&#39;t have an account? Register
-      </Button>
-    </Surface>
+      <View style={styles.inputGroup}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter phone number"
+          keyboardType="phone-pad"
+          value={phone}
+          onChangeText={setPhone}
+          maxLength={10}
+          mode="flat"
+          underlineColor="#fff"
+          activeUnderlineColor="#1a237e"
+        />
+      </View>
+      <View style={styles.inputGroup}>
+        <View style={styles.otpRow}>
+          {otp.map((digit, idx) => (
+            <TextInput
+              key={idx}
+              ref={otpInputs[idx]}
+              style={styles.otpBox}
+              value={digit}
+              onChangeText={text => handleOtpChange(text, idx)}
+              keyboardType="number-pad"
+              maxLength={1}
+              returnKeyType={idx === 3 ? 'done' : 'next'}
+              mode="flat"
+              underlineColor="#fff"
+              activeUnderlineColor="#1a237e"
+            />
+          ))}
+        </View>
+      </View>
+      {/* No Login button, auto-submit on OTP complete */}
+
+    </KeyboardAvoidingView>
   );
 }
 
-function OtpRow({ otp, otpInputs, handleOtpChange }) {
-  return (
-    <Surface style={styles.otpRow}>
-      {otp.map((digit, idx) => (
-        <TextInput
-          key={idx}
-          ref={otpInputs[idx]}
-          style={styles.otpBox}
-          value={digit}
-          onChangeText={text => handleOtpChange(text, idx)}
-          keyboardType="number-pad"
-          maxLength={1}
-          returnKeyType={idx === 3 ? 'done' : 'next'}
-        />
-      ))}
-    </Surface>
-  );
-}
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 0,
+    backgroundColor: "#a6a6e7",
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-    elevation: 4,
+    justifyContent: 'flex-start',
+    marginTop: 25,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 40,
-    letterSpacing: 2,
-    textAlign: 'center',
+  // Removed formSurface and formWrapper for flat design
+  logo: {
+    width: 180,
+    height: 120,
+    marginBottom: 24,
+    alignSelf: 'center',
+  },
+  inputGroup: {
+    width: 260,
+    marginBottom: 22,
+    alignSelf: 'center',
+  },
+  label: {
+    fontSize: 15,
+    color: '#222',
+    marginBottom: 6,
+    marginLeft: 2,
+    fontWeight: '600',
   },
   input: {
-    width: 260,
-    marginBottom: 20,
-    alignSelf: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    fontSize: 18,
+    paddingHorizontal: 12,
+    height: 44,
+    borderWidth: 0,
+    marginBottom: 0,
+    elevation: 0,
   },
   otpRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: 200,
-    marginBottom: 20,
+    width: 210,
+    marginTop: 6,
+    marginBottom: 10,
     alignSelf: 'center',
-    backgroundColor: 'transparent',
-    elevation: 0,
   },
   otpBox: {
-    width: 45,
-    height: 45,
+    width: 44,
+    height: 44,
     borderRadius: 8,
     fontSize: 22,
     textAlign: 'center',
-    marginHorizontal: 5,
-    backgroundColor: undefined,
-  },
-  button: {
-    borderRadius: 8,
-    marginTop: 20,
-    width: 220,
-    alignSelf: 'center',
-  },
-  buttonText: {
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  link: {
-    marginTop: 20,
-    alignSelf: 'center',
-  },
-  linkText: {
-    textDecorationLine: 'underline',
-    fontSize: 16,
+    backgroundColor: '#fff',
+    marginHorizontal: 4,
+    borderWidth: 0,
+    elevation: 0,
   },
 });

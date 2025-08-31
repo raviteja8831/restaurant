@@ -15,14 +15,22 @@ export const registerRestaurantUser = createAsyncThunk(
   }
 );
 
-// Async thunk for restaurant manager login
-export const loginRestaurantUser = createAsyncThunk(
-  'user/loginRestaurantUser',
+// Unified login thunk for both manager and restaurant user
+export const loginUser = createAsyncThunk(
+  'user/loginUser',
   async (payload, { rejectWithValue }) => {
     try {
-      const response = await loginRestaurantUserApi(payload);
-      if (response.data.token) {
-        localStorage.setItem('jwtToken', response.data.token);
+      let response;
+      if (payload.type === 'restaurant') {
+        response = await loginRestaurantUserApi(payload);
+        if (response.data.token) {
+          localStorage.setItem('jwtToken', response.data.token);
+        }
+      } else {
+        response = await loginUserApi(payload);
+        if (response.data.accessToken) {
+          localStorage.setItem('jwtToken', response.data.accessToken);
+        }
       }
       return response.data;
     } catch (err) {
@@ -31,22 +39,6 @@ export const loginRestaurantUser = createAsyncThunk(
   }
 );
 
-// Async thunk for login
-export const loginUser = createAsyncThunk(
-  'user/loginUser',
-  async (payload, { rejectWithValue }) => {
-    try {
-      const response = await loginUserApi(payload);
-      // Save JWT to localStorage
-      if (response.data.accessToken) {
-        localStorage.setItem('jwtToken', response.data.accessToken);
-      }
-      return response.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || MESSAGES.loginFailed);
-    }
-  }
-);
 
 // Async thunk for registration
 export const registerUser = createAsyncThunk(
@@ -87,7 +79,7 @@ const userSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = { id: action.payload.id, phone: action.payload.phone, role: action.payload.role };
-        state.token = action.payload.accessToken;
+        state.token = action.payload.accessToken || action.payload.token;
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
