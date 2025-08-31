@@ -123,6 +123,28 @@ export default function ManagerDashboardScreenNew() {
     { msg: "Onion Dosa 6 Nos to Parcel Table", time: "9:00AM" },
   ];
 
+  // Reviews and Ratings mock data
+  const reviews = [
+    {
+      hotelName: "Sai Hotel (3 Star Hotel)",
+      description: "ssssssegegegwegg",
+      rating: 5,
+      status: "Excellent",
+    },
+    {
+      hotelName: "Kamat Hotel",
+      description: "asdafewqfewqc",
+      rating: 5,
+      status: "Excellent",
+    },
+    {
+      hotelName: "Udupi Kitchen Hotel",
+      description: "gafsvgregerqverqgrqegqergewg",
+      rating: 5,
+      status: "Excellent",
+    },
+  ];
+
   // Mock transaction data for tables
   const tableTransactions = [
     {
@@ -224,6 +246,70 @@ export default function ManagerDashboardScreenNew() {
     );
   };
 
+  const renderReviewsTab = () => {
+    return (
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.reviewsContainer}>
+          <View style={styles.reviewsHeader}>
+            <TouchableOpacity style={styles.filterIcon}>
+              <MaterialCommunityIcons
+                name="filter-variant"
+                size={24}
+                color="#6c63b5"
+              />
+            </TouchableOpacity>
+            <Text style={styles.reviewsTitle}>Reviews and Ratings</Text>
+          </View>
+
+          {/* Main Star */}
+          <View style={styles.mainStarContainer}>
+            <MaterialCommunityIcons
+              name="star"
+              size={80}
+              color="#FFD700"
+              style={styles.mainStar}
+            />
+          </View>
+
+          {/* Reviews List */}
+          <View style={styles.reviewsList}>
+            {reviews.map((review, index) => (
+              <View key={index} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <MaterialCommunityIcons
+                    name="star"
+                    size={16}
+                    color="#FFD700"
+                  />
+                  <Text style={styles.reviewHotelName}>{review.hotelName}</Text>
+                </View>
+                <Text style={styles.reviewDescription}>
+                  {review.description}
+                </Text>
+                <View style={styles.reviewFooter}>
+                  <View style={styles.reviewStars}>
+                    {[...Array(review.rating)].map((_, i) => (
+                      <MaterialCommunityIcons
+                        key={i}
+                        name="star"
+                        size={16}
+                        color="#FFD700"
+                      />
+                    ))}
+                  </View>
+                  <Text style={styles.reviewStatus}>{review.status}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    );
+  };
+
   const renderNewQRModal = () => {
     return (
       <Modal
@@ -234,6 +320,14 @@ export default function ManagerDashboardScreenNew() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.newQRModalCard}>
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowNewQRModal(false)}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="#6c63b5" />
+            </TouchableOpacity>
+
             {/* Small QR Code and Download Icon */}
             <View style={styles.newQRHeader}>
               <View style={styles.smallQRCode}>
@@ -873,6 +967,8 @@ export default function ManagerDashboardScreenNew() {
           ))}
           <Text style={styles.usersHistoryTitle}>Yesterday</Text>
         </ScrollView>
+      ) : activeTab === "Notifications" ? (
+        renderReviewsTab()
       ) : (
         renderQRCodeTab()
       )}
@@ -914,9 +1010,19 @@ export default function ManagerDashboardScreenNew() {
             color={activeTab === "QRCode" ? "#6c63b5" : "#222"}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navBtn}>
+
+        <TouchableOpacity
+          style={
+            activeTab === "Notifications" ? styles.navBtnActive : styles.navBtn
+          }
+          onPress={() => setActiveTab("Notifications")}
+        >
           <View style={styles.notificationContainer}>
-            <MaterialCommunityIcons name="bell" size={32} color="#222" />
+            <MaterialCommunityIcons
+              name="bell"
+              size={32}
+              color={activeTab === "Notifications" ? "#6c63b5" : "#222"}
+            />
             <View style={styles.notificationBadge}>
               <Text style={styles.notificationText}>1</Text>
             </View>
@@ -1051,6 +1157,14 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: 80,
     elevation: 8,
+    position: "relative",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    padding: 8,
+    zIndex: 1,
   },
   newQRHeader: {
     flexDirection: "row",
@@ -1780,6 +1894,78 @@ const styles = StyleSheet.create({
   notificationText: {
     color: "#fff",
     fontSize: 12,
+    fontWeight: "bold",
+  },
+  // Reviews Tab Styles
+  reviewsContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#d8bfd8",
+  },
+  reviewsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 30,
+  },
+  filterIcon: {
+    padding: 8,
+  },
+  reviewsTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000",
+    textAlign: "center",
+    flex: 1,
+  },
+  mainStarContainer: {
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  mainStar: {
+    borderWidth: 3,
+    borderColor: "#FF8C00",
+  },
+  reviewsList: {
+    width: "100%",
+  },
+  reviewCard: {
+    backgroundColor: "#c8a2c8",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    minHeight: 80,
+  },
+  reviewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  reviewHotelName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+    marginLeft: 8,
+    flex: 1,
+  },
+  reviewDescription: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  reviewFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  reviewStars: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  reviewStatus: {
+    fontSize: 14,
+    color: "#6c63b5",
     fontWeight: "bold",
   },
 });
