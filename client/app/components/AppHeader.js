@@ -14,7 +14,7 @@ export default function AppHeader({
       {/* {showLogo && (
         <Image source={require('../../assets/images/icon.png')} style={styles.logo} />
       )} */}
-      <Text style={styles.headerTitle}>{title}</Text>
+      {/* <Text style={styles.headerTitle}>{title}</Text> */}
       {/* {rightMenu} */}
       {/* Snackbar for alerts */}
       {/* The Snackbar is rendered by AlertProvider globally, so no need to duplicate here */}
