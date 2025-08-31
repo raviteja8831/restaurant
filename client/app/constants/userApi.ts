@@ -4,7 +4,7 @@ export const USER_API = {
   LOGIN: '/users/login',
   PROFILE: '/users',
   REGISTER_RESTAURANT_USER: '/users/registerRestaurantUser',
-  LOGIN_RESTAURANT_USER: '/users/loginRestaurantUser',
+  LOGIN_RESTAURANT_USER: '/users/login',
 };
 export interface UserUpdateRequest {
   name?: string;

@@ -63,6 +63,8 @@ db.qrCode.belongsTo(db.restaurantTable, { foreignKey: 'restTableId', as: 'restau
 db.restaurantTable.hasMany(db.qrCode, { foreignKey: 'restTableId', as: 'qrcodes' });
 db.restaurantUser.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
 db.restaurant.hasMany(db.restaurantUser, { foreignKey: 'restaurantId', as: 'restaurantUsers' });
+db.restaurantUser.belongsTo(db.roles, { foreignKey: 'role_id', as: 'role' });
+db.roles.hasMany(db.restaurantUser, { foreignKey: 'role_id', as: 'restaurantUsers' });
 
 // RestaurantRating associations
 db.restaurantRating.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
