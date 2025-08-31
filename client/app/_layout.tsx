@@ -27,8 +27,7 @@ export default function RootLayout() {
       <PaperProvider>
         <AlertProvider>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack >
-                <Stack.Screen name="manager-dashboard" options={{ headerShown: false }} />
+            <Stack screenOptions={{ headerShown: false }}>
 
               <Slot  />
             </Stack>
