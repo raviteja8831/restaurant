@@ -1,4 +1,5 @@
 import React from "react";
+import { useRouter } from 'expo-router';
 import {
   StyleSheet,
   Alert,
@@ -9,7 +10,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { Button, Text, Appbar, Surface } from "react-native-paper";
+import { Button, Text, Surface } from "react-native-paper";
 import { useAlert } from "../services/alertService";
 import * as ImagePicker from "expo-image-picker";
 import { registerManager } from "../api/managerApi";
@@ -17,21 +18,28 @@ import { showApiError } from "../services/messagingService";
 import FormService from "../components/formService";
 import { uploadImage } from "../api/imageApi";
 
-function validateStep1({ firstname, lastname }) {
-  const errors = {};
-  if (!firstname) errors.firstname = "First name is required";
-  if (!lastname) errors.lastname = "Last name is required";
-  return errors;
-}
 
-function validateStep2({ restaurantName, restaurantAddress }) {
-  const errors = {};
-  if (!restaurantName) errors.restaurantName = "Restaurant name is required";
-  if (!restaurantAddress)
-    errors.restaurantAddress = "Restaurant address is required";
-  return errors;
-}
 
+// Set a default Google address
+const DEFAULT_ADDRESS = "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA";
+
+
+export default function ManagerRegisterScreen() {
+  const [address] = React.useState(DEFAULT_ADDRESS);
+  const router = useRouter();
+  const alert = useAlert();
+  const [step, setStep] = React.useState(1);
+  const [tableService, setTableService] = React.useState(false);
+  const [selfService, setSelfService] = React.useState(false);
+  const [pureVeg, setPureVeg] = React.useState(false);
+  const [nonVeg, setNonVeg] = React.useState(false);
+  const [enableBuffet, setEnableBuffet] = React.useState(false);
+  const [enableBoth, setEnableBoth] = React.useState(false);
+  const [ambianceImage, setAmbianceImage] = React.useState(null);
+  // const [logo, setLogo] = React.useState(null); // Removed unused variable
+  // Remove parent error state for form steps
+  const [loading, setLoading] = React.useState(false);
+  // const [error, setError] = React.useState(""); // Removed unused variable
 const formConfig = [
   {
     label: "First Name",
@@ -44,47 +52,41 @@ const formConfig = [
     type: "text",
   },
   {
+    label: "Phone",
+    name: "phone",
+    type: "text",
+    keyboardType: "phone-pad",
+  },
+  {
     label: "Restaurant Name",
-    name: "restaurantName",
+    name: "name",
     type: "text",
   },
   {
     label: "Restaurant Address",
     name: "restaurantAddress",
     type: "textarea",
+    value: address,
     multiline: true,
   },
 ];
-
-export default function ManagerRegisterScreen({ navigation }) {
-  const alert = useAlert();
-  const [step, setStep] = React.useState(1);
-  const [tableService, setTableService] = React.useState(false);
-  const [selfService, setSelfService] = React.useState(false);
-  const [pureVeg, setPureVeg] = React.useState(false);
-  const [nonVeg, setNonVeg] = React.useState(false);
-  const [enableBuffet, setEnableBuffet] = React.useState(false);
-  const [enableBoth, setEnableBoth] = React.useState(false);
-  const [ambianceImage, setAmbianceImage] = React.useState(null);
-  const [logo, setLogo] = React.useState(null);
-  // Remove parent error state for form steps
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState("");
 
   // Single form state for all fields
   const [form, setFormState] = React.useState({
     firstname: "",
     lastname: "",
-    restaurantName: "",
-    restaurantAddress: "",
+    phone: "",
+    name: "",
+    restaurantAddress: DEFAULT_ADDRESS,
   });
+
 
   // Custom setForm to keep restaurantAddress equal to restaurantName
   const setForm = (updater) => {
     setFormState((prev) => {
       let next = typeof updater === "function" ? updater(prev) : updater;
       // If restaurantName is updated, set restaurantAddress to same value
-      if (next.restaurantName !== undefined) {
+      if (next.name !== undefined) {
         next = {
           ...next,
           restaurantAddress: next.restaurantAddress,
@@ -98,9 +100,39 @@ export default function ManagerRegisterScreen({ navigation }) {
     setStep(2);
   };
 
+// useEffect(() => {
+//     (async () => {
+//       // 1. Request location permission
+//       let { status } = await Location.requestForegroundPermissionsAsync();
+//       if (status !== 'granted') {
+//         Alert.alert('Permission to access location was denied');
+//         setAddress('Location permission denied');
+//         return;
+//       }
+//        // 2. Get current position
+//       try {
+//         let location = await Location.getCurrentPositionAsync({});
+//         const { latitude, longitude } = location.coords;
+
+//         // 3. Perform reverse geocoding
+//         let json = await Geocoder.from(latitude, longitude);
+
+//         if (json.results && json.results.length > 0) {
+//           const formattedAddress = json.results[0].formatted_address;
+//           setAddress(formattedAddress);
+//         } else {
+//           setAddress('Address not found');
+//         }
+
+//       } catch (error) {
+//         console.error(error);
+//         setAddress('Error fetching location or address');
+//       }
+//     })();
+//   }, []);
+
   const pickImage = async (type = "ambiance") => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -119,16 +151,20 @@ export default function ManagerRegisterScreen({ navigation }) {
       };
       try {
         const data = await uploadImage(file);
-        // Prepend server URL if not already absolute
-        const SERVER_URL = "http://localhost:8080"; // Change to your actual server address if needed
-        const imageUrl = data.url.startsWith("http")
-          ? data.url
-          : SERVER_URL + data.url;
+        // Always use absolute URL for image preview
+        const SERVER_URL = "http://localhost:8080"; // Change if needed
+        let imageUrl = data.url;
+        if (imageUrl && !imageUrl.startsWith("http")) {
+          if (imageUrl.startsWith("/")) {
+            imageUrl = SERVER_URL + imageUrl;
+          } else {
+            imageUrl = SERVER_URL + "/" + imageUrl;
+          }
+        }
         if (type === "ambiance") {
           setAmbianceImage(imageUrl);
-        } else {
-          setLogo(imageUrl);
-        }
+          console.log("[DEBUG] ambianceImage set to:", imageUrl);
+  }
       } catch (err) {
         showApiError(err);
       }
@@ -137,7 +173,7 @@ export default function ManagerRegisterScreen({ navigation }) {
 
   const handleRegister = async () => {
     setLoading(true);
-    setError("");
+  // setError("");
     try {
       // Service type: send array if both selected, else single value or empty
       let restaurantType = "";
@@ -165,12 +201,14 @@ export default function ManagerRegisterScreen({ navigation }) {
       };
       const data = await registerManager(payload);
       alert.success(data.message || "Registered successfully");
-      setTimeout(() => navigation.goBack(), 1200);
+      setTimeout(() => {
+        router.push('/login');
+      }, 1000);
     } catch (err) {
       showApiError(err);
       const msg =
         err?.response?.data?.message || err?.message || "Registration failed";
-      setError(msg);
+  // setError(msg);
       alert.error(msg);
     }
     setLoading(false);
@@ -196,11 +234,10 @@ export default function ManagerRegisterScreen({ navigation }) {
                     config={formConfig}
                     values={form}
                     setValues={setForm}
-                    validate={validateStep1}
                     onSubmit={handleNext}
                     submitLabel={null}
                     loading={loading}
-                    hiddenFields={["restaurantName", "restaurantAddress"]}
+                    hiddenFields={["name", "restaurantAddress"]}
                     inputStyle={styles.inputStep}
                     labelStyle={styles.labelStep}
                   />
@@ -210,152 +247,155 @@ export default function ManagerRegisterScreen({ navigation }) {
             {step === 2 && (
               <View style={styles.stepBox}>
                 <View style={styles.stepFormAreaScroll}>
+                  {/* Show only restaurant fields, styled like step 1 */}
                   <FormService
                     config={formConfig}
                     values={form}
                     setValues={setForm}
-                    validate={validateStep2}
                     onSubmit={() => {}}
                     submitLabel={null}
                     loading={loading}
-                    hiddenFields={["firstname", "lastname"]}
+                    hiddenFields={["firstname", "lastname", "phone"]}
                     inputStyle={styles.inputStep}
                     labelStyle={styles.labelStep}
                   />
-                  <Button
-                    mode="contained"
-                    style={styles.locationBtnStep2}
-                    icon="crosshairs-gps"
-                    onPress={() =>
-                      Alert.alert(
-                        "Location",
-                        "Use Current Location feature coming soon!"
-                      )
-                    }
-                  >
-                    Use Current Location
-                  </Button>
-                  <Text style={styles.sectionTitleStep2Grid}>
-                    Choose your Restaurant Type
-                  </Text>
-                  <View style={styles.typeFoodGridRow}>
-                    <View style={styles.typeFoodGridCol}>
+                  {/* Extra controls below the form, not inside it */}
+                  <View style={{ marginTop: 24 }}>
+                    <Button
+                      mode="contained"
+                      style={styles.locationBtnStep2}
+                      icon="crosshairs-gps"
+                      onPress={() =>
+                        Alert.alert(
+                          "Location",
+                          "Use Current Location feature coming soon!"
+                        )
+                      }
+                    >
+                      Use Current Location
+                    </Button>
+                    <Text style={styles.sectionTitleStep2Grid}>
+                      Choose your Restaurant Type
+                    </Text>
+                    <View style={styles.typeFoodGridRow}>
+                      <View style={styles.typeFoodGridCol}>
+                        <TouchableOpacity
+                          style={[
+                            styles.typeBoxStep2,
+                            tableService && styles.typeBoxActiveStep2,
+                          ]}
+                          onPress={() => setTableService(!tableService)}
+                        >
+                          <Image
+                            source={require("../../assets/images/table-service.png")}
+                            style={styles.typeIconStep2}
+                          />
+                          <Text style={styles.typeLabelStep2Small}>
+                            Table Service
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.typeFoodGridCol}>
+                        <TouchableOpacity
+                          style={[
+                            styles.typeBoxStep2,
+                            selfService && styles.typeBoxActiveStep2,
+                          ]}
+                          onPress={() => setSelfService(!selfService)}
+                        >
+                          <Image
+                            source={require("../../assets/images/self-service.jpg")}
+                            style={styles.typeIconStep2}
+                          />
+                          <Text style={styles.typeLabelStep2Small}>
+                            Self Service
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={styles.enableBothRowCenter}>
                       <TouchableOpacity
-                        style={[
-                          styles.typeBoxStep2,
-                          tableService && styles.typeBoxActiveStep2,
-                        ]}
-                        onPress={() => setTableService(!tableService)}
+                        style={styles.checkboxRowStep2Grid}
+                        onPress={() => setEnableBoth(!enableBoth)}
                       >
-                        <Image
-                          source={require("../../assets/images/table-service.png")}
-                          style={styles.typeIconStep2}
+                        <View
+                          style={[
+                            styles.checkboxStep2,
+                            enableBoth && styles.checkboxActiveStep2,
+                          ]}
                         />
-                        <Text style={styles.typeLabelStep2Small}>
-                          Table Service
+                        <Text style={styles.enableTextStep2Grid}>
+                          Enable Both
                         </Text>
                       </TouchableOpacity>
                     </View>
-                    <View style={styles.typeFoodGridCol}>
+                    <View style={styles.typeFoodGridRow}>
+                      <View style={styles.typeFoodGridCol}>
+                        <TouchableOpacity
+                          style={[
+                            styles.foodTypeBoxStep2,
+                            styles.foodTypeBoxVeg,
+                            pureVeg && styles.foodTypeBoxVegActive,
+                          ]}
+                          onPress={() => setPureVeg(!pureVeg)}
+                          activeOpacity={0.8}
+                        >
+                          <View style={styles.foodCircleVegStep2} />
+                          <Text style={styles.foodLabelStep2}>Pure Veg</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.typeFoodGridCol}>
+                        <TouchableOpacity
+                          style={[
+                            styles.foodTypeBoxStep2,
+                            styles.foodTypeBoxNonVeg,
+                            nonVeg && styles.foodTypeBoxNonVegActive,
+                          ]}
+                          onPress={() => setNonVeg(!nonVeg)}
+                          activeOpacity={0.8}
+                        >
+                          <View style={styles.foodCircleNonVegStep2} />
+                          <Text style={styles.foodLabelStep2}>Non Veg</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <View style={styles.buffetRowGrid}>
                       <TouchableOpacity
-                        style={[
-                          styles.typeBoxStep2,
-                          selfService && styles.typeBoxActiveStep2,
-                        ]}
-                        onPress={() => setSelfService(!selfService)}
+                        style={styles.checkboxRowStep2Grid}
+                        onPress={() => setEnableBuffet(!enableBuffet)}
                       >
-                        <Image
-                          source={require("../../assets/images/self-service.jpg")}
-                          style={styles.typeIconStep2}
+                        <View
+                          style={[
+                            styles.checkboxStep2,
+                            enableBuffet && styles.checkboxActiveStep2,
+                          ]}
                         />
-                        <Text style={styles.typeLabelStep2Small}>
-                          Self Service
+                        <Text style={styles.checkboxLabelStep2Grid}>
+                          Enable Buffet
                         </Text>
                       </TouchableOpacity>
                     </View>
-                  </View>
-                  <View style={styles.enableBothRowCenter}>
+                    <Text style={styles.sectionTitleStep2Grid}>
+                      Upload Ambiance Photo
+                    </Text>
                     <TouchableOpacity
-                      style={styles.checkboxRowStep2Grid}
-                      onPress={() => setEnableBoth(!enableBoth)}
+                      style={styles.photoUploadBoxStep2}
+                      onPress={pickImage}
                     >
-                      <View
-                        style={[
-                          styles.checkboxStep2,
-                          enableBoth && styles.checkboxActiveStep2,
-                        ]}
-                      />
-                      <Text style={styles.enableTextStep2Grid}>
-                        Enable Both
-                      </Text>
+                      {ambianceImage ? (
+                        <Image
+                          source={{ uri: ambianceImage }}
+                          style={styles.photoPreviewStep2}
+                          onError={() => alert.error("Image failed to load. Check the URL or server.")}
+                        />
+                      ) : (
+                        <Image
+                          source={require("../../assets/images/camera-icon.png")}
+                          style={styles.cameraIconStep2}
+                        />
+                      )}
                     </TouchableOpacity>
                   </View>
-                  <View style={styles.typeFoodGridRow}>
-                    <View style={styles.typeFoodGridCol}>
-                      <TouchableOpacity
-                        style={[
-                          styles.foodTypeBoxStep2,
-                          styles.foodTypeBoxVeg,
-                          pureVeg && styles.foodTypeBoxVegActive,
-                        ]}
-                        onPress={() => setPureVeg(!pureVeg)}
-                        activeOpacity={0.8}
-                      >
-                        <View style={styles.foodCircleVegStep2} />
-                        <Text style={styles.foodLabelStep2}>Pure Veg</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <View style={styles.typeFoodGridCol}>
-                      <TouchableOpacity
-                        style={[
-                          styles.foodTypeBoxStep2,
-                          styles.foodTypeBoxNonVeg,
-                          nonVeg && styles.foodTypeBoxNonVegActive,
-                        ]}
-                        onPress={() => setNonVeg(!nonVeg)}
-                        activeOpacity={0.8}
-                      >
-                        <View style={styles.foodCircleNonVegStep2} />
-                        <Text style={styles.foodLabelStep2}>Non Veg</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  <View style={styles.buffetRowGrid}>
-                    <TouchableOpacity
-                      style={styles.checkboxRowStep2Grid}
-                      onPress={() => setEnableBuffet(!enableBuffet)}
-                    >
-                      <View
-                        style={[
-                          styles.checkboxStep2,
-                          enableBuffet && styles.checkboxActiveStep2,
-                        ]}
-                      />
-                      <Text style={styles.checkboxLabelStep2Grid}>
-                        Enable Buffet
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <Text style={styles.sectionTitleStep2Grid}>
-                    Upload Ambiance Photo
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.photoUploadBoxStep2}
-                    onPress={pickImage}
-                  >
-                    {ambianceImage ? (
-                      <Image
-                        source={{ uri: ambianceImage }}
-                        style={styles.photoPreviewStep2}
-                      />
-                    ) : (
-                      <Image
-                        source={require("../../assets/images/camera-icon.png")}
-                        style={styles.cameraIconStep2}
-                      />
-                    )}
-                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -369,7 +409,6 @@ export default function ManagerRegisterScreen({ navigation }) {
                 labelStyle={styles.buttonTextStep}
                 onPress={handleNext}
                 loading={loading}
-                disabled={loading}
               >
                 Next
               </Button>
@@ -383,7 +422,6 @@ export default function ManagerRegisterScreen({ navigation }) {
                 labelStyle={styles.buttonTextStep}
                 onPress={handleRegister}
                 loading={loading}
-                disabled={loading}
               >
                 Register
               </Button>
@@ -649,6 +687,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "400",
     letterSpacing: 1,
+    // lineHeight removed for button text
   },
   stepFormAreaStep2: {
     width: "92%",
@@ -681,51 +720,21 @@ const styles = StyleSheet.create({
     color: "#fff",
     alignSelf: "center",
   },
-  typeFoodGridRow: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
-    width: "100%",
-    marginBottom: 10,
-    gap: 18,
-  },
+
   typeFoodGridCol: {
     flex: 1,
     flexDirection: "column",
     alignItems: "center",
     gap: 18,
   },
-  buffetRowGrid: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 10,
-    marginBottom: 10,
-    gap: 10,
-    width: "100%",
-    display: "flex",
-  },
+
   enableTextStep2Grid: {
     fontSize: 14,
     color: "#fff",
     marginRight: 8,
     fontWeight: "400",
   },
-  enableBothRowCenter: {
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    display: "flex",
-    marginBottom: 4,
-    flexDirection: "row",
-  },
-  checkboxRowStep2Grid: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 0,
-    alignSelf: "flex-start",
-    marginLeft: 0,
-  },
+
   checkboxLabelStep2Grid: {
     fontSize: 14,
     color: "#fff",
@@ -866,15 +875,7 @@ const styles = StyleSheet.create({
   },
   checkboxActiveStep2: { backgroundColor: "#7b6eea" },
   checkboxLabelStep2: { fontSize: 14, color: "#fff" },
-  photoUploadBoxStep2: {
-    width: 180,
-    height: 120,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: 10,
-  },
+
   cameraIconStep2: { width: 60, height: 60 },
   photoPreviewStep2: { width: 120, height: 100, borderRadius: 10 },
 });

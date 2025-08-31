@@ -13,13 +13,20 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    typeId: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      references: {
-        model: "restaurantType",
-        key: "id",
-      },
+    restaurantType: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      comment: 'Comma separated values for service types (table,self,both)',
+    },
+    foodType: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      comment: 'Comma separated values for food types (veg,nonveg,both)',
+    },
+    enableBuffet: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
     },
     ambianceImage: {
       type: Sequelize.STRING,
