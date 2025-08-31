@@ -138,14 +138,16 @@ export function FormInput(props) {
   } else if (type === "textarea") {
     inputComponent = (
       <TextInput
-        label={labelText}
+        // No floating label for textarea, placeholder instead
+        placeholder={labelText}
         value={value}
         onChangeText={(text) => onChange(name, text)}
         onBlur={() => onBlur(name)}
-        mode="outlined"
+        mode="flat"
         error={!!showError}
-        style={[styles.input, { minHeight: 80 }]}
+        style={[styles.input, { minWidth: 210 }]}
         multiline
+        numberOfLines={3}
         {...props}
       />
     );
@@ -187,7 +189,7 @@ export function FormInput(props) {
         value={value}
         onChangeText={(text) => onChange(name, text)}
         onBlur={() => onBlur(name)}
-        mode="outlined"
+        mode="float"
         error={!!showError}
         style={styles.input}
         secureTextEntry={type === "password"}
@@ -224,11 +226,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   inputWrapper: {
-    width: "90%",
+    width: "100%",
     marginBottom: 16,
   },
   input: {
     backgroundColor: "#eae6ff",
+    width: "100%",
+    borderRadius: 8,
+    fontSize: 16,
   },
   errorText: {
     color: "red",

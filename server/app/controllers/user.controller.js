@@ -48,14 +48,14 @@ exports.register = async (req, res) => {
   console.log('Request headers:', req.headers);
   console.log('Request body:', req.body);
   try {
-    const { phone, firstname, lastname, email, restaurantName, restaurantAddress, restaurantType, ambiancePhoto, logo, foodType } = req.body;
+  const { phone, firstname, lastname, email, name, restaurantAddress, restaurantType, ambiancePhoto, logo, foodType, enableBuffet } = req.body;
 
-    // Convert serviceType and foodType to comma-separated values if array
-    let serviceType = '';
+    // Convert restaurantType and foodType to comma-separated values if array
+    let restaurantTypeStr = '';
     if (Array.isArray(restaurantType)) {
-      serviceType = restaurantType.join(',');
+      restaurantTypeStr = restaurantType.join(',');
     } else {
-      serviceType = restaurantType;
+      restaurantTypeStr = restaurantType;
     }
     let foodTypeStr = '';
     if (Array.isArray(foodType)) {
@@ -75,9 +75,11 @@ exports.register = async (req, res) => {
 
     // Create restaurant first
     const restaurant = await db.restaurant.create({
-      name: restaurantName,
+      name: name,
       address: restaurantAddress,
-      typeId: 1, // You may want to map serviceType to typeId, or store serviceType as a string
+      restaurantType: restaurantTypeStr,
+      foodType: foodTypeStr,
+      enableBuffet: enableBuffet === true || enableBuffet === 'true',
       ambianceImage: ambianceImageUrl,
       logoImage: logoImageUrl
     });
@@ -87,11 +89,8 @@ exports.register = async (req, res) => {
       phone,
       firstname,
       lastname,
-      email,
       restaurantId: restaurant.id,
       role_id: 1, // 1 = manager
-      serviceType,
-      foodType: foodTypeStr
     });
 
     res.status(201).send({ message: "Manager and restaurant registered successfully!", managerUser, restaurant });

@@ -22,7 +22,7 @@ module.exports = (sequelize, Sequelize) => {
     email: {
       type: Sequelize.STRING,
       unique: true,
-      allowNull: false,
+      allowNull: true,
     },
   // email removed
   // password removed
