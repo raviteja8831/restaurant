@@ -1,2 +1,2 @@
-import ManagerDashboardScreen from './screens/ManagerDashboardScreen';
-export default ManagerDashboardScreen;
+import ManagerDashboardScreenNew from './screens/ManagerDashboardScreenNew';
+export default ManagerDashboardScreenNew;
