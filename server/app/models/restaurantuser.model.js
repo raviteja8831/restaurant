@@ -18,12 +18,12 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    // email: {
-    //   type: Sequelize.STRING,
-    //   unique: true,
-    //   allowNull: false,
-    //   defaultValue: "info@menu.com",
-    // },
+    password: {
+      type: Sequelize.STRING,
+      unique: true,
+      allowNull: false,
+      defaultValue: "123456",
+    },
     restaurantId: {
       type: Sequelize.INTEGER,
       allowNull: false,
