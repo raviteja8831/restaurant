@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { router } from "expo-router";
+import { Alert } from "react-native";
+import { addUserByManager } from "../api/managerApi";
 import FormService from "../components/formService";
 import {
   StyleSheet,
@@ -59,22 +62,15 @@ export default function ManagerDashboardScreenNew() {
   // Add User Modal state and config
   const [addUserModal, setAddUserModal] = useState(false);
   const [addUserForm, setAddUserForm] = useState({
-    firstname: "",
-    lastname: "",
-    restaurantName: "",
-    restaurantAddress: "",
+    name: "",
+    password: "",
+    role: "Chef",
+    phone: "",
+    showRoleDropdown: false,
   });
   const [addUserLoading, setAddUserLoading] = useState(false);
   const addUserFormConfig = [
-    { label: "First Name", name: "firstname", type: "text" },
-    { label: "Last Name", name: "lastname", type: "text" },
-    { label: "Restaurant Name", name: "restaurantName", type: "text" },
-    {
-      label: "Restaurant Address",
-      name: "restaurantAddress",
-      type: "textarea",
-      multiline: true,
-    },
+    // Not used anymore, form fields are now custom below
   ];
 
   // Users tab mock data
@@ -320,14 +316,13 @@ export default function ManagerDashboardScreenNew() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.newQRModalCard}>
-            {/* Close Button */}
+            {/* Close cross icon */}
             <TouchableOpacity
-              style={styles.closeButton}
+              style={{ position: "absolute", top: 10, right: 10, zIndex: 20 }}
               onPress={() => setShowNewQRModal(false)}
             >
-              <MaterialCommunityIcons name="close" size={24} color="#6c63b5" />
+              <MaterialCommunityIcons name="close" size={28} color="#222" />
             </TouchableOpacity>
-
             {/* Small QR Code and Download Icon */}
             <View style={styles.newQRHeader}>
               <View style={styles.smallQRCode}>
@@ -514,6 +509,13 @@ export default function ManagerDashboardScreenNew() {
           showsVerticalScrollIndicator={false}
         >
           <Appbar.Header style={styles.appbar}>
+            {/* Logout (power) icon at top left, like ChefHomeScreen */}
+            <TouchableOpacity
+              style={{ marginLeft: 8 }}
+              onPress={() => router.replace("/login")}
+            >
+              <MaterialCommunityIcons name="power" size={28} color="#6c63b5" />
+            </TouchableOpacity>
             <Appbar.Content
               title={restaurantName}
               titleStyle={styles.appbarTitle}
@@ -734,6 +736,18 @@ export default function ManagerDashboardScreenNew() {
           >
             <View style={styles.modalOverlay}>
               <View style={styles.profileCard}>
+                {/* Close cross icon */}
+                <TouchableOpacity
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    zIndex: 20,
+                  }}
+                  onPress={() => setProfileVisible(false)}
+                >
+                  <MaterialCommunityIcons name="close" size={28} color="#222" />
+                </TouchableOpacity>
                 <View style={styles.profileCircle}>
                   <MaterialCommunityIcons
                     name="account-circle"
@@ -806,24 +820,240 @@ export default function ManagerDashboardScreenNew() {
             onRequestClose={() => setAddUserModal(false)}
           >
             <View style={styles.modalOverlay}>
-              <View style={styles.addUserModalCard}>
-                <Text style={styles.addUserModalTitle}>New Profile</Text>
-                <FormService
-                  config={addUserFormConfig}
-                  values={addUserForm}
-                  setValues={setAddUserForm}
-                  onSubmit={() => setAddUserModal(false)}
-                  submitLabel={null}
-                  loading={addUserLoading}
-                  inputStyle={styles.addUserInput}
-                  labelStyle={styles.addUserLabel}
-                />
+              <View
+                style={[
+                  styles.addUserModalCard,
+                  { backgroundColor: "#bcb3f7" },
+                ]}
+              >
+                {" "}
+                {/* purple background */}
+                {/* Close cross icon */}
                 <TouchableOpacity
-                  style={styles.addUserSaveBtn}
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    zIndex: 20,
+                  }}
                   onPress={() => setAddUserModal(false)}
+                >
+                  <MaterialCommunityIcons name="close" size={28} color="#222" />
+                </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.addUserModalTitle,
+                    {
+                      color: "#222",
+                      fontWeight: "bold",
+                      fontSize: 18,
+                      marginBottom: 10,
+                    },
+                  ]}
+                >
+                  New Profile
+                </Text>
+                {/* Name Row */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                    Name:
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.addUserInput,
+                      { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
+                    ]}
+                    value={addUserForm.name}
+                    onChangeText={(text) =>
+                      setAddUserForm({ ...addUserForm, name: text })
+                    }
+                    placeholder="Enter name"
+                    placeholderTextColor="#888"
+                  />
+                </View>
+                {/* Password Row */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                    Password:
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.addUserInput,
+                      { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
+                    ]}
+                    value={addUserForm.password}
+                    onChangeText={(text) =>
+                      setAddUserForm({ ...addUserForm, password: text })
+                    }
+                    placeholder="Enter password"
+                    placeholderTextColor="#888"
+                    secureTextEntry
+                  />
+                </View>
+                {/* Role Row */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                    Role:
+                  </Text>
+                  <View style={{ flex: 1, justifyContent: "center" }}>
+                    <View
+                      style={{
+                        backgroundColor: "#fff",
+                        borderRadius: 6,
+                        height: 40,
+                        justifyContent: "center",
+                      }}
+                    >
+                      <TouchableOpacity
+                        style={{
+                          paddingHorizontal: 10,
+                          height: 40,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                        onPress={() =>
+                          setAddUserForm({
+                            ...addUserForm,
+                            showRoleDropdown: !addUserForm.showRoleDropdown,
+                          })
+                        }
+                      >
+                        <Text style={{ color: "#222", fontSize: 15 }}>
+                          {addUserForm.role}
+                        </Text>
+                        <MaterialCommunityIcons
+                          name="chevron-down"
+                          size={20}
+                          color="#222"
+                        />
+                      </TouchableOpacity>
+                      {addUserForm.showRoleDropdown && (
+                        <View
+                          style={{
+                            backgroundColor: "#fff",
+                            borderRadius: 6,
+                            position: "absolute",
+                            top: 40,
+                            left: 0,
+                            right: 0,
+                            zIndex: 10,
+                            elevation: 10,
+                          }}
+                        >
+                          {["Chef", "Manager"].map((role) => (
+                            <TouchableOpacity
+                              key={role}
+                              style={{ padding: 10 }}
+                              onPress={() =>
+                                setAddUserForm({
+                                  ...addUserForm,
+                                  role,
+                                  showRoleDropdown: false,
+                                })
+                              }
+                            >
+                              <Text style={{ color: "#222", fontSize: 15 }}>
+                                {role}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </View>
+                {/* Phone Row */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 18,
+                  }}
+                >
+                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                    Phone No:
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.addUserInput,
+                      { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
+                    ]}
+                    value={addUserForm.phone}
+                    onChangeText={(text) =>
+                      setAddUserForm({ ...addUserForm, phone: text })
+                    }
+                    placeholder="Enter phone number"
+                    placeholderTextColor="#888"
+                    keyboardType="phone-pad"
+                  />
+                </View>
+                {/* Save Button */}
+                <TouchableOpacity
+                  style={[
+                    styles.addUserSaveBtn,
+                    {
+                      backgroundColor: "#a9a1e2",
+                      width: 80,
+                      alignSelf: "flex-start",
+                    },
+                  ]}
+                  onPress={async () => {
+                    setAddUserLoading(true);
+                    try {
+                      const payload = {
+                        firstname: addUserForm.name,
+                        lastname: "",
+                        password: addUserForm.password,
+                        role_id: addUserForm.role === "Chef" ? 2 : 1,
+                        phone: addUserForm.phone,
+                        restaurant_id: "33", // Assuming restaurant_id is 1 for demo
+                      };
+                      await addUserByManager(payload);
+                      setAddUserModal(false);
+                      setAddUserForm({
+                        name: "",
+                        password: "",
+                        role: "Chef",
+                        phone: "",
+                        showRoleDropdown: false,
+                      });
+                      Alert.alert("Success", "User added successfully");
+                    } catch (err) {
+                      Alert.alert(
+                        "Error",
+                        err?.response?.data?.message ||
+                          err?.message ||
+                          "Failed to add user"
+                      );
+                    }
+                    setAddUserLoading(false);
+                  }}
                   disabled={addUserLoading}
                 >
-                  <Text style={styles.addUserSaveBtnText}>Save</Text>
+                  <Text
+                    style={{ color: "#fff", fontWeight: "bold", fontSize: 15 }}
+                  >
+                    {addUserLoading ? "Saving..." : "Save"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1010,7 +1240,6 @@ export default function ManagerDashboardScreenNew() {
             color={activeTab === "QRCode" ? "#6c63b5" : "#222"}
           />
         </TouchableOpacity>
-
         <TouchableOpacity
           style={
             activeTab === "Notifications" ? styles.navBtnActive : styles.navBtn
@@ -1018,6 +1247,11 @@ export default function ManagerDashboardScreenNew() {
           onPress={() => setActiveTab("Notifications")}
         >
           <View style={styles.notificationContainer}>
+            <MaterialCommunityIcons
+              name="bell"
+              size={32}
+              color={activeTab === "Notifications" ? "#6c63b5" : "#222"}
+            />
             <MaterialCommunityIcons
               name="bell"
               size={32}
@@ -1039,7 +1273,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#d8bfd8",
+    backgroundColor: "#a6a6e7",
   },
   qrTitle: {
     fontSize: 24,
@@ -1310,11 +1544,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#d8bfd8",
+    backgroundColor: "#a6a6e7",
     paddingTop: 0,
   },
   appbar: {
-    backgroundColor: "#d8bfd8",
+    backgroundColor: "#a6a6e7",
     elevation: 0,
   },
   appbarTitle: {
@@ -1848,7 +2082,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    backgroundColor: "#d8bfd8",
     paddingVertical: 8,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

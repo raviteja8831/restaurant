@@ -50,7 +50,7 @@ export const fetchManagedUsers = async () => {
 // Add a new user (by manager)
 export const addUserByManager = async (userData) => {
   try {
-    const res = await api.post(MANAGER_API.USERS, userData);
+    const res = await api.post('users/addRestaurantUser', userData);
     return res.data;
   } catch (error) {
     showApiError(error);

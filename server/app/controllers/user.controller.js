@@ -204,19 +204,34 @@ exports.verifyToken = (req, res, next) => {
 };
 exports.addRestaurantUser = async (req, res) => {
   try {
-    const { name, password, role, phone, restaurantId } = req.body;
-    if (!name || !password || !role || !phone || !restaurantId) {
+    // Accept both restaurant_id and restaurantId from request
+    const {
+      firstname,
+      lastname = "",
+      password,
+      phone,
+      restaurant_id,
+      restaurantId,
+      role_id
+    } = req.body;
+
+    // Use restaurant_id or restaurantId (prefer restaurant_id if both)
+    const restId = restaurant_id || restaurantId;
+
+    if (!firstname || !password || !role_id || !phone || !restId) {
       return res.status(400).send({ message: 'Missing required fields' });
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await db.restaurantUser.create({
-      firstname: name,
+      firstname: firstname,
+      lastname: lastname,
       password: hashedPassword,
-      role,
+      role_id: role_id,
       phone,
-      restaurantId
+      restaurantId: restId
     });
-    res.status(201).send({ message: 'User added successfully', user });
+    return res.status(201).send({ message: 'User added to existing restaurant successfully', user });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
