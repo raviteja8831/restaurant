@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { router } from 'expo-router';
+import { router } from "expo-router";
 import { Alert } from "react-native";
 import { addUserByManager } from "../api/managerApi";
 import FormService from "../components/formService";
@@ -119,6 +119,28 @@ export default function ManagerDashboardScreenNew() {
     { msg: "Onion Dosa 6 Nos to Parcel Table", time: "9:00AM" },
   ];
 
+  // Reviews and Ratings mock data
+  const reviews = [
+    {
+      hotelName: "Sai Hotel (3 Star Hotel)",
+      description: "ssssssegegegwegg",
+      rating: 5,
+      status: "Excellent",
+    },
+    {
+      hotelName: "Kamat Hotel",
+      description: "asdafewqfewqc",
+      rating: 5,
+      status: "Excellent",
+    },
+    {
+      hotelName: "Udupi Kitchen Hotel",
+      description: "gafsvgregerqverqgrqegqergewg",
+      rating: 5,
+      status: "Excellent",
+    },
+  ];
+
   // Mock transaction data for tables
   const tableTransactions = [
     {
@@ -220,6 +242,70 @@ export default function ManagerDashboardScreenNew() {
     );
   };
 
+  const renderReviewsTab = () => {
+    return (
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.reviewsContainer}>
+          <View style={styles.reviewsHeader}>
+            <TouchableOpacity style={styles.filterIcon}>
+              <MaterialCommunityIcons
+                name="filter-variant"
+                size={24}
+                color="#6c63b5"
+              />
+            </TouchableOpacity>
+            <Text style={styles.reviewsTitle}>Reviews and Ratings</Text>
+          </View>
+
+          {/* Main Star */}
+          <View style={styles.mainStarContainer}>
+            <MaterialCommunityIcons
+              name="star"
+              size={80}
+              color="#FFD700"
+              style={styles.mainStar}
+            />
+          </View>
+
+          {/* Reviews List */}
+          <View style={styles.reviewsList}>
+            {reviews.map((review, index) => (
+              <View key={index} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <MaterialCommunityIcons
+                    name="star"
+                    size={16}
+                    color="#FFD700"
+                  />
+                  <Text style={styles.reviewHotelName}>{review.hotelName}</Text>
+                </View>
+                <Text style={styles.reviewDescription}>
+                  {review.description}
+                </Text>
+                <View style={styles.reviewFooter}>
+                  <View style={styles.reviewStars}>
+                    {[...Array(review.rating)].map((_, i) => (
+                      <MaterialCommunityIcons
+                        key={i}
+                        name="star"
+                        size={16}
+                        color="#FFD700"
+                      />
+                    ))}
+                  </View>
+                  <Text style={styles.reviewStatus}>{review.status}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    );
+  };
+
   const renderNewQRModal = () => {
     return (
       <Modal
@@ -232,7 +318,7 @@ export default function ManagerDashboardScreenNew() {
           <View style={styles.newQRModalCard}>
             {/* Close cross icon */}
             <TouchableOpacity
-              style={{ position: 'absolute', top: 10, right: 10, zIndex: 20 }}
+              style={{ position: "absolute", top: 10, right: 10, zIndex: 20 }}
               onPress={() => setShowNewQRModal(false)}
             >
               <MaterialCommunityIcons name="close" size={28} color="#222" />
@@ -649,7 +735,12 @@ export default function ManagerDashboardScreenNew() {
               <View style={styles.profileCard}>
                 {/* Close cross icon */}
                 <TouchableOpacity
-                  style={{ position: 'absolute', top: 10, right: 10, zIndex: 20 }}
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    zIndex: 20,
+                  }}
                   onPress={() => setProfileVisible(false)}
                 >
                   <MaterialCommunityIcons name="close" size={28} color="#222" />
@@ -726,59 +817,160 @@ export default function ManagerDashboardScreenNew() {
             onRequestClose={() => setAddUserModal(false)}
           >
             <View style={styles.modalOverlay}>
-              <View style={[styles.addUserModalCard, { backgroundColor: '#bcb3f7' }]}> {/* purple background */}
+              <View
+                style={[
+                  styles.addUserModalCard,
+                  { backgroundColor: "#bcb3f7" },
+                ]}
+              >
+                {" "}
+                {/* purple background */}
                 {/* Close cross icon */}
                 <TouchableOpacity
-                  style={{ position: 'absolute', top: 10, right: 10, zIndex: 20 }}
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    zIndex: 20,
+                  }}
                   onPress={() => setAddUserModal(false)}
                 >
                   <MaterialCommunityIcons name="close" size={28} color="#222" />
                 </TouchableOpacity>
-                <Text style={[styles.addUserModalTitle, { color: '#222', fontWeight: 'bold', fontSize: 18, marginBottom: 10 }]}>New Profile</Text>
+                <Text
+                  style={[
+                    styles.addUserModalTitle,
+                    {
+                      color: "#222",
+                      fontWeight: "bold",
+                      fontSize: 18,
+                      marginBottom: 10,
+                    },
+                  ]}
+                >
+                  New Profile
+                </Text>
                 {/* Name Row */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                  <Text style={{ color: '#222', fontSize: 15, width: 80 }}>Name:</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                    Name:
+                  </Text>
                   <TextInput
-                    style={[styles.addUserInput, { backgroundColor: '#fff', flex: 1, marginBottom: 0 }]}
+                    style={[
+                      styles.addUserInput,
+                      { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
+                    ]}
                     value={addUserForm.name}
-                    onChangeText={text => setAddUserForm({ ...addUserForm, name: text })}
+                    onChangeText={(text) =>
+                      setAddUserForm({ ...addUserForm, name: text })
+                    }
                     placeholder="Enter name"
                     placeholderTextColor="#888"
                   />
                 </View>
                 {/* Password Row */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                  <Text style={{ color: '#222', fontSize: 15, width: 80 }}>Password:</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                    Password:
+                  </Text>
                   <TextInput
-                    style={[styles.addUserInput, { backgroundColor: '#fff', flex: 1, marginBottom: 0 }]}
+                    style={[
+                      styles.addUserInput,
+                      { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
+                    ]}
                     value={addUserForm.password}
-                    onChangeText={text => setAddUserForm({ ...addUserForm, password: text })}
+                    onChangeText={(text) =>
+                      setAddUserForm({ ...addUserForm, password: text })
+                    }
                     placeholder="Enter password"
                     placeholderTextColor="#888"
                     secureTextEntry
                   />
                 </View>
                 {/* Role Row */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                  <Text style={{ color: '#222', fontSize: 15, width: 80 }}>Role:</Text>
-                  <View style={{ flex: 1, justifyContent: 'center' }}>
-                    <View style={{ backgroundColor: '#fff', borderRadius: 6, height: 40, justifyContent: 'center' }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                    Role:
+                  </Text>
+                  <View style={{ flex: 1, justifyContent: "center" }}>
+                    <View
+                      style={{
+                        backgroundColor: "#fff",
+                        borderRadius: 6,
+                        height: 40,
+                        justifyContent: "center",
+                      }}
+                    >
                       <TouchableOpacity
-                        style={{ paddingHorizontal: 10, height: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-                        onPress={() => setAddUserForm({ ...addUserForm, showRoleDropdown: !addUserForm.showRoleDropdown })}
+                        style={{
+                          paddingHorizontal: 10,
+                          height: 40,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                        onPress={() =>
+                          setAddUserForm({
+                            ...addUserForm,
+                            showRoleDropdown: !addUserForm.showRoleDropdown,
+                          })
+                        }
                       >
-                        <Text style={{ color: '#222', fontSize: 15 }}>{addUserForm.role}</Text>
-                        <MaterialCommunityIcons name="chevron-down" size={20} color="#222" />
+                        <Text style={{ color: "#222", fontSize: 15 }}>
+                          {addUserForm.role}
+                        </Text>
+                        <MaterialCommunityIcons
+                          name="chevron-down"
+                          size={20}
+                          color="#222"
+                        />
                       </TouchableOpacity>
                       {addUserForm.showRoleDropdown && (
-                        <View style={{ backgroundColor: '#fff', borderRadius: 6, position: 'absolute', top: 40, left: 0, right: 0, zIndex: 10, elevation: 10 }}>
-                          {['Chef', 'Manager'].map(role => (
+                        <View
+                          style={{
+                            backgroundColor: "#fff",
+                            borderRadius: 6,
+                            position: "absolute",
+                            top: 40,
+                            left: 0,
+                            right: 0,
+                            zIndex: 10,
+                            elevation: 10,
+                          }}
+                        >
+                          {["Chef", "Manager"].map((role) => (
                             <TouchableOpacity
                               key={role}
                               style={{ padding: 10 }}
-                              onPress={() => setAddUserForm({ ...addUserForm, role, showRoleDropdown: false })}
+                              onPress={() =>
+                                setAddUserForm({
+                                  ...addUserForm,
+                                  role,
+                                  showRoleDropdown: false,
+                                })
+                              }
                             >
-                              <Text style={{ color: '#222', fontSize: 15 }}>{role}</Text>
+                              <Text style={{ color: "#222", fontSize: 15 }}>
+                                {role}
+                              </Text>
                             </TouchableOpacity>
                           ))}
                         </View>
@@ -787,12 +979,25 @@ export default function ManagerDashboardScreenNew() {
                   </View>
                 </View>
                 {/* Phone Row */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
-                  <Text style={{ color: '#222', fontSize: 15, width: 80 }}>Phone No:</Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 18,
+                  }}
+                >
+                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                    Phone No:
+                  </Text>
                   <TextInput
-                    style={[styles.addUserInput, { backgroundColor: '#fff', flex: 1, marginBottom: 0 }]}
+                    style={[
+                      styles.addUserInput,
+                      { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
+                    ]}
                     value={addUserForm.phone}
-                    onChangeText={text => setAddUserForm({ ...addUserForm, phone: text })}
+                    onChangeText={(text) =>
+                      setAddUserForm({ ...addUserForm, phone: text })
+                    }
                     placeholder="Enter phone number"
                     placeholderTextColor="#888"
                     keyboardType="phone-pad"
@@ -800,7 +1005,14 @@ export default function ManagerDashboardScreenNew() {
                 </View>
                 {/* Save Button */}
                 <TouchableOpacity
-                  style={[styles.addUserSaveBtn, { backgroundColor: '#a9a1e2', width: 80, alignSelf: 'flex-start' }]}
+                  style={[
+                    styles.addUserSaveBtn,
+                    {
+                      backgroundColor: "#a9a1e2",
+                      width: 80,
+                      alignSelf: "flex-start",
+                    },
+                  ]}
                   onPress={async () => {
                     setAddUserLoading(true);
                     try {
@@ -810,20 +1022,35 @@ export default function ManagerDashboardScreenNew() {
                         password: addUserForm.password,
                         role_id: addUserForm.role === "Chef" ? 2 : 1,
                         phone: addUserForm.phone,
-                        restaurant_id: '33', // Assuming restaurant_id is 1 for demo
+                        restaurant_id: "33", // Assuming restaurant_id is 1 for demo
                       };
                       await addUserByManager(payload);
                       setAddUserModal(false);
-                      setAddUserForm({ name: "", password: "", role: "Chef", phone: "", showRoleDropdown: false });
+                      setAddUserForm({
+                        name: "",
+                        password: "",
+                        role: "Chef",
+                        phone: "",
+                        showRoleDropdown: false,
+                      });
                       Alert.alert("Success", "User added successfully");
                     } catch (err) {
-                      Alert.alert("Error", err?.response?.data?.message || err?.message || "Failed to add user");
+                      Alert.alert(
+                        "Error",
+                        err?.response?.data?.message ||
+                          err?.message ||
+                          "Failed to add user"
+                      );
                     }
                     setAddUserLoading(false);
                   }}
                   disabled={addUserLoading}
                 >
-                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 15 }}>{addUserLoading ? "Saving..." : "Save"}</Text>
+                  <Text
+                    style={{ color: "#fff", fontWeight: "bold", fontSize: 15 }}
+                  >
+                    {addUserLoading ? "Saving..." : "Save"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -967,6 +1194,8 @@ export default function ManagerDashboardScreenNew() {
           ))}
           <Text style={styles.usersHistoryTitle}>Yesterday</Text>
         </ScrollView>
+      ) : activeTab === "Notifications" ? (
+        renderReviewsTab()
       ) : (
         renderQRCodeTab()
       )}
@@ -977,7 +1206,9 @@ export default function ManagerDashboardScreenNew() {
       {/* Bottom navigation bar */}
       <View style={styles.bottomNav}>
         <TouchableOpacity
-          style={activeTab === "Dashboard" ? styles.navBtnActive : styles.navBtn}
+          style={
+            activeTab === "Dashboard" ? styles.navBtnActive : styles.navBtn
+          }
           onPress={() => setActiveTab("Dashboard")}
         >
           <MaterialCommunityIcons
@@ -1007,11 +1238,22 @@ export default function ManagerDashboardScreenNew() {
           />
         </TouchableOpacity>
         <TouchableOpacity
-          style={activeTab === "Notifications" ? styles.navBtnActive : styles.navBtn}
+          style={
+            activeTab === "Notifications" ? styles.navBtnActive : styles.navBtn
+          }
           onPress={() => setActiveTab("Notifications")}
         >
           <View style={styles.notificationContainer}>
-            <MaterialCommunityIcons name="bell" size={32} color={activeTab === "Notifications" ? "#6c63b5" : "#222"} />
+            <MaterialCommunityIcons
+              name="bell"
+              size={32}
+              color={activeTab === "Notifications" ? "#6c63b5" : "#222"}
+            />
+            <MaterialCommunityIcons
+              name="bell"
+              size={32}
+              color={activeTab === "Notifications" ? "#6c63b5" : "#222"}
+            />
             <View style={styles.notificationBadge}>
               <Text style={styles.notificationText}>1</Text>
             </View>
@@ -1146,6 +1388,14 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: 80,
     elevation: 8,
+    position: "relative",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    padding: 8,
+    zIndex: 1,
   },
   newQRHeader: {
     flexDirection: "row",
@@ -1874,6 +2124,78 @@ const styles = StyleSheet.create({
   notificationText: {
     color: "#fff",
     fontSize: 12,
+    fontWeight: "bold",
+  },
+  // Reviews Tab Styles
+  reviewsContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#d8bfd8",
+  },
+  reviewsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 30,
+  },
+  filterIcon: {
+    padding: 8,
+  },
+  reviewsTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000",
+    textAlign: "center",
+    flex: 1,
+  },
+  mainStarContainer: {
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  mainStar: {
+    borderWidth: 3,
+    borderColor: "#FF8C00",
+  },
+  reviewsList: {
+    width: "100%",
+  },
+  reviewCard: {
+    backgroundColor: "#c8a2c8",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    minHeight: 80,
+  },
+  reviewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  reviewHotelName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#000",
+    marginLeft: 8,
+    flex: 1,
+  },
+  reviewDescription: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  reviewFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  reviewStars: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  reviewStatus: {
+    fontSize: 14,
+    color: "#6c63b5",
     fontWeight: "bold",
   },
 });
