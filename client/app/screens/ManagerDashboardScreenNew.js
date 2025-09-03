@@ -423,9 +423,9 @@ export default function ManagerDashboardScreenNew() {
           showsVerticalScrollIndicator={false}
         >
           <Appbar.Header style={styles.appbar}>
-            {/* Logout (power) icon at top left, like ChefHomeScreen */}
-            <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => router.replace('/login')}>
-              <MaterialCommunityIcons name="power" size={28} color="#6c63b5" />
+            {/* Food menu icon at top left instead of logout */}
+            <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => router.replace('/menu')}>
+              <MaterialCommunityIcons name="food" size={28} color="#6c63b5" />
             </TouchableOpacity>
             <Appbar.Content
               title={restaurantName}

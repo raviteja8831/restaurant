@@ -1,85 +1,194 @@
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { TextInput, Button, Surface, useTheme, Title } from 'react-native-paper';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Modal } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-export default function AddMenuItemScreen({ navigation }) {
+const categories = [
+  'Hot & Cold Beverages',
+  'Soups',
+  'Breakfast',
+  'Starter',
+  'Indian Bread',
+  'Main Course',
+  'Salads',
+  'Ice Cream & Desert',
+];
+
+export default function AddMenuItemScreen({ visible, onClose, onSave }) {
   const [category, setCategory] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [type, setType] = useState('');
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
 
-  const theme = useTheme();
   return (
-    <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}> 
-      <Title style={styles.title}>Add Menu Item</Title>
-      <TextInput
-        style={styles.input}
-        placeholder="Category"
-        value={category}
-        onChangeText={setCategory}
-        mode="outlined"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Type (Veg/Non-Veg)"
-        value={type}
-        onChangeText={setType}
-        mode="outlined"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-        mode="outlined"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Price"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="numeric"
-        mode="outlined"
-      />
-      <Button
-        mode="contained"
-        style={styles.button}
-        labelStyle={styles.buttonText}
-        onPress={() => navigation.goBack()}
-      >
-        Save
-      </Button>
-    </Surface>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalCard}>
+          <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+            <MaterialCommunityIcons name="close" size={28} color="#222" />
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Add Menu Item</Text>
+          {/* Category Dropdown */}
+          <Text style={styles.label}>category</Text>
+          <TouchableOpacity style={styles.dropdown} onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}>
+            <Text style={styles.dropdownText}>{category || 'Select category'}</Text>
+            <MaterialCommunityIcons name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={24} color="#222" />
+          </TouchableOpacity>
+          {showCategoryDropdown && (
+            <View style={styles.dropdownMenu}>
+              <Text style={styles.dropdownMenuTitle}>category</Text>
+              {categories.map((cat) => (
+                <TouchableOpacity key={cat} style={styles.dropdownMenuItem} onPress={() => { setCategory(cat); setShowCategoryDropdown(false); }}>
+                  <Text style={styles.dropdownMenuItemText}>• {cat}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          {/* Type */}
+          <Text style={styles.label}>Type</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Veg/Non-Veg"
+            value={type}
+            onChangeText={setType}
+            placeholderTextColor="#888"
+          />
+          {/* Name */}
+          <Text style={styles.label}>Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            value={name}
+            onChangeText={setName}
+            placeholderTextColor="#888"
+          />
+          {/* Price */}
+          <Text style={styles.label}>Price</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Price"
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="numeric"
+            placeholderTextColor="#888"
+          />
+          <TouchableOpacity style={styles.saveBtn} onPress={() => { onSave && onSave({ category, type, name, price }); onClose && onClose(); }}>
+            <Text style={styles.saveBtnText}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modalOverlay: {
     flex: 1,
-    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
-    padding: 20,
-    elevation: 4,
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 26,
+  modalCard: {
+    backgroundColor: '#d6d1f7',
+    borderRadius: 24,
+    padding: 24,
+    width: 320,
+    alignItems: 'center',
+    alignSelf: 'center',
+    elevation: 8,
+    position: 'relative',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 30,
+    color: '#222',
+    marginBottom: 18,
+    marginTop: 8,
     textAlign: 'center',
   },
-  input: {
-    width: 260,
-    marginBottom: 20,
-    alignSelf: 'center',
-  },
-  button: {
-    borderRadius: 8,
-    marginTop: 20,
-    width: 180,
-    alignSelf: 'center',
-  },
-  buttonText: {
+  label: {
+    color: '#222',
+    fontSize: 16,
     fontWeight: 'bold',
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+    marginTop: 10,
+  },
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ece9fa',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    width: '100%',
+    marginBottom: 8,
+  },
+  dropdownText: {
+    color: '#222',
+    fontSize: 15,
+  },
+  dropdownMenu: {
+    backgroundColor: '#c7c2f3',
+    borderRadius: 16,
+    padding: 16,
+    position: 'absolute',
+    top: 110,
+    left: 0,
+    right: 0,
+    zIndex: 30,
+    width: 320,
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  dropdownMenuTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#222',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  dropdownMenuItem: {
+    paddingVertical: 6,
+  },
+  dropdownMenuItemText: {
+    color: '#222',
+    fontSize: 16,
+  },
+  input: {
+    width: '100%',
+    minHeight: 40,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    marginBottom: 8,
+    color: '#222',
+  },
+  saveBtn: {
+    backgroundColor: '#7b6eea',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+    width: '100%',
+  },
+  saveBtnText: {
+    color: '#fff',
     fontSize: 18,
+    fontWeight: 'bold',
   },
 });

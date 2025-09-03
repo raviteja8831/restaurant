@@ -9,6 +9,16 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false,
     },
+    status: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    icon: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      defaultValue: "",
+    },
     restaurantId: {
       type: Sequelize.INTEGER,
       allowNull: false,
