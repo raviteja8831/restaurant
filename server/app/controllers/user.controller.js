@@ -89,7 +89,7 @@ exports.register = async (req, res) => {
       phone,
       firstname,
       lastname,
-      restaurantId: restaurant.id,
+      restaurant: restaurant.id,
       role_id: 1, // 1 = manager
     });
 
@@ -106,11 +106,18 @@ exports.login = async (req, res) => {
     // Find user by phone
     const user = await db.restaurantUser.findOne({
       where: { phone },
-      include: {
-        model: Role,
-        as: "role",
-        attributes: ["name"],
-      },
+      include: [
+        {
+          model: Role,
+          as: "role",
+          attributes: ["id", "name"],
+        },
+        {
+          model: db.restaurant,
+          as: "restaurant",
+          attributes: ["id", "name", "address", "restaurantType", "foodType", "enableBuffet", "ambianceImage", "logoImage"],
+        }
+      ],
     });
     if (!user) {
       return res.status(404).send({ message: "User not found!" });
@@ -124,7 +131,19 @@ exports.login = async (req, res) => {
     res.status(200).send({
       id: user.id,
       phone: user.phone,
-      role: user.role ? user.role.name : null,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      role: user.role ? { id: user.role.id, name: user.role.name } : null,
+      restaurant: user.restaurant ? {
+        id: user.restaurant.id,
+        name: user.restaurant.name,
+        address: user.restaurant.address,
+        restaurantType: user.restaurant.restaurantType,
+        foodType: user.restaurant.foodType,
+        enableBuffet: user.restaurant.enableBuffet,
+        ambianceImage: user.restaurant.ambianceImage,
+        logoImage: user.restaurant.logoImage
+      } : null,
       accessToken: token
     });
   } catch (error) {
