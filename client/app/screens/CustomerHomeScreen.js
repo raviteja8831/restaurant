@@ -8,6 +8,7 @@ import {
   
 } from "react-native";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import FilterModal from "../Modals/FilterModal";
 import SearchModal from "../Modals/SearchModal";
 
@@ -16,6 +17,7 @@ const { width, height } = Dimensions.get("window");
 export default function CustomerHomeScreen() {
   const [showFilter, setShowFilter] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const router = useRouter();
 
   const handleFilterPress = () => {
     setShowFilter(!showFilter);
@@ -33,6 +35,14 @@ export default function CustomerHomeScreen() {
   const handleSearch = (searchTerm) => {
     console.log("Search term:", searchTerm);
     // You can add your search logic here
+  };
+
+  const handlePersonTabPress = () => {
+    router.push('/user-profile');
+  };
+
+  const handleScanPress = () => {
+    router.push('/qr-scanner');
   };
 
   return (
@@ -71,11 +81,11 @@ export default function CustomerHomeScreen() {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNavigation}>
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={handlePersonTabPress}>
           <MaterialIcons name="person" size={24} color="white" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.navButton, styles.scanButton]}>
+        <TouchableOpacity style={[styles.navButton, styles.scanButton]} onPress={handleScanPress}>
           <MaterialCommunityIcons name="qrcode-scan" size={28} color="white" />
         </TouchableOpacity>
 
