@@ -21,44 +21,41 @@ export default function OrderSummaryScreen() {
 
   // Load order data from parameters if available
   useEffect(() => {
-    console.log('Params received:', params);
-    console.log('Has order data flag:', params.hasOrderData);
-    
+    console.log("Params received:", params);
+    console.log("Has order data flag:", params.hasOrderData);
+
     if (params.orderData && params.hasOrderData === "true") {
       try {
         const parsedOrderData = JSON.parse(params.orderData);
-        console.log('Parsed order data:', parsedOrderData);
-        
+        console.log("Parsed order data:", parsedOrderData);
+
         // Validate and ensure proper data structure
         if (Array.isArray(parsedOrderData) && parsedOrderData.length > 0) {
           const validatedData = parsedOrderData.map((item, index) => ({
             id: item.id || index + 1,
-            item: item.item || item.name || 'Unknown Item',
+            item: item.item || item.name || "Unknown Item",
             qty: parseInt(item.qty || item.quantity || 1),
             price: parseInt(item.price || 0),
-            status: item.status || 'Waiting',
+            status: item.status || "Waiting",
           }));
           setOrderItems(validatedData);
         } else {
-          console.log('Invalid order data structure, using default');
+          console.log("Invalid order data structure, using default");
         }
       } catch (error) {
-        console.error('Error parsing order data:', error);
-        console.log('Using default order data due to error');
+        console.error("Error parsing order data:", error);
+        console.log("Using default order data due to error");
       }
     } else {
-      console.log('No order data found, using default data');
+      console.log("No order data found, using default data");
     }
   }, [params.orderData, params.hasOrderData]);
 
-  const totalAmount = orderItems.reduce(
-    (sum, item) => {
-      const qty = parseInt(item.qty) || 0;
-      const price = parseInt(item.price) || 0;
-      return sum + (qty * price);
-    },
-    0
-  );
+  const totalAmount = orderItems.reduce((sum, item) => {
+    const qty = parseInt(item.qty) || 0;
+    const price = parseInt(item.price) || 0;
+    return sum + qty * price;
+  }, 0);
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
@@ -78,14 +75,14 @@ export default function OrderSummaryScreen() {
   };
 
   const handleQuantityChange = (itemId, change) => {
-    setOrderItems(prevItems => {
-      const updatedItems = prevItems.map(item =>
+    setOrderItems((prevItems) => {
+      const updatedItems = prevItems.map((item) =>
         item.id === itemId
           ? { ...item, qty: Math.max(0, item.qty + change) }
           : item
       );
       // Remove items with quantity 0
-      return updatedItems.filter(item => item.qty > 0);
+      return updatedItems.filter((item) => item.qty > 0);
     });
     // Don't close edit mode when changing quantity - only close on blur
   };
@@ -103,7 +100,7 @@ export default function OrderSummaryScreen() {
       </View>
 
       {/* Table Container */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.tableContainer}
         activeOpacity={1}
         onPress={() => setEditingItem(null)}
@@ -163,7 +160,7 @@ export default function OrderSummaryScreen() {
                   </TouchableOpacity>
                 </View>
               ) : (
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={(e) => {
                     e.stopPropagation();
                     handleEditPress(order.id);
@@ -183,9 +180,7 @@ export default function OrderSummaryScreen() {
         <Text style={[styles.cell, styles.orderColumn]}>Total</Text>
         <Text style={[styles.cell, styles.qtyColumn]} />
         <Text style={[styles.cell, styles.priceColumn]} />
-        <Text style={[styles.cell, styles.totalColumn]}>
-          {totalAmount}
-        </Text>
+        <Text style={[styles.cell, styles.totalColumn]}>{totalAmount}</Text>
         <View style={styles.editColumn} />
       </View>
 
@@ -213,7 +208,7 @@ export default function OrderSummaryScreen() {
 
       {/* PAID Stamp */}
       <View style={styles.stampContainer}>
-        <Text style={styles.paidStamp}>PAID</Text>
+        {/* <Text style={styles.paidStamp}>PAID</Text> */}
         <Text style={styles.thankYouText}>Thank you!</Text>
       </View>
 
@@ -226,10 +221,10 @@ export default function OrderSummaryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#f2f0ff", 
-    padding: 16 
+  container: {
+    flex: 1,
+    backgroundColor: "#f2f0ff",
+    padding: 16,
   },
   header: {
     flexDirection: "row",
@@ -237,7 +232,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingTop: 10,
   },
-  backButton: { 
+  backButton: {
     marginRight: 15,
     padding: 5,
   },
@@ -245,9 +240,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
   },
-  headerTitle: { 
-    fontSize: 22, 
-    fontWeight: "bold", 
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
     textAlign: "center",
     color: "#333",
   },
@@ -263,12 +258,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     minHeight: 35,
   },
-  hcell: { 
-    fontSize: 14, 
+  hcell: {
+    fontSize: 14,
     fontWeight: "bold",
     color: "#333",
   },
-  cell: { 
+  cell: {
     fontSize: 14,
     color: "#333",
   },
@@ -334,16 +329,16 @@ const styles = StyleSheet.create({
     padding: 20,
     marginVertical: 15,
   },
-  feedback: { 
-    textAlign: "center", 
-    marginBottom: 15, 
+  feedback: {
+    textAlign: "center",
+    marginBottom: 15,
     fontSize: 16,
     fontWeight: "500",
     color: "#333",
   },
-  stars: { 
-    flexDirection: "row", 
-    justifyContent: "center", 
+  stars: {
+    flexDirection: "row",
+    justifyContent: "center",
     marginBottom: 10,
   },
   starButton: {
@@ -371,11 +366,11 @@ const styles = StyleSheet.create({
   },
   thankYouText: {
     position: "absolute",
-    fontSize: 24,
+    fontSize: 80,
     fontWeight: "300",
     color: "rgba(0, 0, 0, 0.4)",
     fontStyle: "italic",
-    transform: [{ rotate: "5deg" }],
+    transform: [{ rotate: "-15deg" }],
     marginTop: 20,
     marginLeft: 10,
     zIndex: 1,

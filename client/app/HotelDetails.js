@@ -11,51 +11,34 @@ import {
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-
-// Sample dynamic data
+import { hotelDetailsData } from "./Mock/CustomerHome";
 
 const HotelDetails = () => {
   const router = useRouter();
-  const hotelData = {
-    name: "Hotel Sai",
-    starRating: 3,
-    address:
-      "No 45 Brigade Plaze First floor Near VRL Bus Stand Opp Movieland cinema hall Bangalore 560088",
-    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
-    options: [
-      {
-        icon: "book-outline",
-        label: "Menu",
-        onPress: () => router.push("/menu-list"), // ✅ function that will run on click
-      },
-      {
-        icon: "restaurant-outline",
-        label: "Booking table\n(3 TA)",
-        onPress: Alert.alert("Booking Clicked"),
-      },
-      {
-        icon: "time-outline",
-        label: "Avg Waiting time.\n15Min",
-        onPress: null,
-      },
-    ],
-    reviews: [
-      {
-        reviewer: "Person 1",
-        stars: 5,
-        text: "One of the best Restaurant in Bangalore Highly Recommended",
-      },
-      {
-        reviewer: "Person 2",
-        stars: 5,
-        text: "If you want to try Biriyani this the Best Place in Bangalore",
-      },
-      {
-        reviewer: "Person 3",
-        stars: 5,
-        text: "Best ambiance to chill out with friends and Family. And Food is Great.",
-      },
-    ],
+  const handleBackPress = () => {
+    /*    if (router.canGoBack()) {
+      router.back();
+    } else { */
+    router.push({ pathname: "/customer-home" });
+    //}
+  };
+
+  // Using the first hotel from mock data
+  const hotelData = hotelDetailsData[0];
+
+  const handleOptionPress = (option) => {
+    if (option.route) {
+      router.push({
+        pathname: option.route,
+        params: {
+          hotelName: hotelData.name,
+          hotelId: hotelData.id,
+          ishotel: true,
+        },
+      });
+    } else if (option.label.includes("Booking")) {
+      Alert.alert("Booking", "Table booking feature coming soon!");
+    }
   };
   return (
     <SafeAreaView style={styles.container}>
@@ -65,7 +48,7 @@ const HotelDetails = () => {
 
         {/* Header Top: Back arrow + floating icons */}
         <View style={styles.headerTop}>
-          <TouchableOpacity style={styles.backButton}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
             <Ionicons name="arrow-back" size={24} color="black" />
           </TouchableOpacity>
           <View style={styles.topIcons}>
@@ -86,24 +69,12 @@ const HotelDetails = () => {
           <Text style={styles.address}>{hotelData.address}</Text>
 
           {/* Options */}
-          {/* <View style={styles.optionsRow}>
-            {hotelData.options.map((opt, i) => (
-              <TouchableOpacity
-                key={i}
-                style={styles.option}
-                onPress={opt.onPress}
-              >
-                <Ionicons name={opt.icon} size={28} color="black" />
-                <Text style={styles.optionText}>{opt.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View> */}
           <View style={styles.optionsRow}>
             {hotelData.options.map((opt, i) => (
               <TouchableOpacity
                 key={i}
                 style={styles.option}
-                onPress={opt.onPress}
+                onPress={() => handleOptionPress(opt)}
               >
                 <Ionicons name={opt.icon} size={28} color="black" />
                 <Text style={styles.optionText}>{opt.label}</Text>
