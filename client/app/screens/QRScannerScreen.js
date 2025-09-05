@@ -23,8 +23,8 @@ export default function QRScannerScreen() {
   }, []);
 
   const handleBarCodeScanned = ({ type, data }) => {
-    // Navigate to menu after successful scan
-    router.push('/menu');
+    // Navigate to menu list after successful scan
+    router.push('/menu-list');
   };
 
   const handleBackPress = () => {
