@@ -7,6 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
   TextInput,
+  ImageBackground,
 } from "react-native";
 import {
   MaterialCommunityIcons,
@@ -19,7 +20,8 @@ import CommentModal from "./Modals/menueditModal"; // 👈 new component
 
 export default function ItemsListScreen() {
   const router = useRouter();
-  const { category, categoryName } = useLocalSearchParams();
+  const { category, categoryName, ishotel } = useLocalSearchParams();
+  console.log("ghgsd", useLocalSearchParams());
 
   // ✅ Initialize items state from menuItemsData
   const [items, setItems] = useState(
@@ -157,7 +159,11 @@ export default function ItemsListScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      <ImageBackground
+        source={require("../assets/images/menu-bg.png")}
+        style={styles.backgroundImage}
+        resizeMode="repeat"
+      />
       <View style={styles.header}>
         {/* <TouchableOpacity
           style={styles.backButton}
@@ -186,21 +192,24 @@ export default function ItemsListScreen() {
             {section.items.map((item) => (
               <View key={item.id} style={styles.itemRow}>
                 {/* Checkbox */}
-                <TouchableOpacity
-                  style={styles.checkboxContainer}
-                  onPress={() => handleItemSelect(item.id)}
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      item.selected && styles.checkboxSelected,
-                    ]}
+                {/* {ishotel} */}
+                {ishotel == "false" && (
+                  <TouchableOpacity
+                    style={styles.checkboxContainer}
+                    onPress={() => handleItemSelect(item.id)}
                   >
-                    {item.selected && (
-                      <MaterialIcons name="check" size={16} color="#fff" />
-                    )}
-                  </View>
-                </TouchableOpacity>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        item.selected && styles.checkboxSelected,
+                      ]}
+                    >
+                      {item.selected && (
+                        <MaterialIcons name="check" size={16} color="#fff" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                )}
 
                 {/* Item Info */}
                 <View style={styles.itemInfo}>
@@ -210,7 +219,7 @@ export default function ItemsListScreen() {
                 </View>
 
                 {/* Quantity + Edit */}
-                {item.selected ? (
+                {/*  {item.selected ? (
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <View style={styles.quantityContainer}>
                       <TouchableOpacity
@@ -227,6 +236,7 @@ export default function ItemsListScreen() {
                         <Text style={styles.quantityButtonText}>+</Text>
                       </TouchableOpacity>
                     </View>
+                    
                     <TouchableOpacity
                       onPress={() => handleEdit(item.id)}
                       style={{ marginHorizontal: 6 }}
@@ -241,7 +251,43 @@ export default function ItemsListScreen() {
                   >
                     <Feather name="edit-2" size={18} color="#000" />
                   </TouchableOpacity>
-                )}
+                )} */}
+                {ishotel == "false" &&
+                  (item.selected ? (
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                      <View style={styles.quantityContainer}>
+                        <TouchableOpacity
+                          style={styles.quantityButton}
+                          onPress={() => handleQuantityChange(item.id, -1)}
+                        >
+                          <Text style={styles.quantityButtonText}>-</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.quantityText}>{item.quantity}</Text>
+                        <TouchableOpacity
+                          style={styles.quantityButton}
+                          onPress={() => handleQuantityChange(item.id, 1)}
+                        >
+                          <Text style={styles.quantityButtonText}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => handleEdit(item.id)}
+                        style={{ marginHorizontal: 6 }}
+                      >
+                        <Feather name="edit-2" size={18} color="#000" />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => handleEdit(item.id)}
+                      style={{ marginHorizontal: 6 }}
+                    >
+                      <Feather name="edit-2" size={18} color="#000" />
+                    </TouchableOpacity>
+                  ))}
               </View>
             ))}
           </View>
@@ -249,39 +295,41 @@ export default function ItemsListScreen() {
       </ScrollView>
 
       {/* Order Summary */}
-      <View style={styles.orderSummary}>
-        <Text style={styles.summaryText}>
-          No of item Selected: {selectedItems.length}
-        </Text>
-        <Text style={styles.summaryText}>
-          Total Cost of Selection = ₹{totalCost}
-        </Text>
-        <TouchableOpacity
-          style={[
-            styles.placeOrderButton,
-            selectedItems.length === 0 && styles.placeOrderButtonDisabled,
-          ]}
-          onPress={() => setShowOrderModal(true)}
-          disabled={selectedItems.length === 0}
-        >
-          <Text
-            style={styles.placeOrderButtonText}
-            onPress={() => {
-              // Redirect to menu page with number of orders and amount
-              router.push({
-                pathname: "/menu-list",
-                params: {
-                  totalItems: selectedItems.length,
-                  totalCost: totalCost,
-                  orderDetails: JSON.stringify(selectedItems),
-                },
-              });
-            }}
-          >
-            Place Order
+      {ishotel == "false" && (
+        <View style={styles.orderSummary}>
+          <Text style={styles.summaryText}>
+            No of item Selected: {selectedItems.length}
           </Text>
-        </TouchableOpacity>
-      </View>
+          <Text style={styles.summaryText}>
+            Total Cost of Selection = ₹{totalCost}
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.placeOrderButton,
+              selectedItems.length === 0 && styles.placeOrderButtonDisabled,
+            ]}
+            onPress={() => setShowOrderModal(true)}
+            disabled={selectedItems.length === 0}
+          >
+            <Text
+              style={styles.placeOrderButtonText}
+              onPress={() => {
+                // Redirect to menu page with number of orders and amount
+                router.push({
+                  pathname: "/menu-list",
+                  params: {
+                    totalItems: selectedItems.length,
+                    totalCost: totalCost,
+                    orderDetails: JSON.stringify(selectedItems),
+                  },
+                });
+              }}
+            >
+              Place Order
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Comment Modal */}
       <CommentModal

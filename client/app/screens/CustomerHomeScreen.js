@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   Text,
   Dimensions,
-  
+  Image,
 } from "react-native";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -38,11 +38,11 @@ export default function CustomerHomeScreen() {
   };
 
   const handlePersonTabPress = () => {
-    router.push('/user-profile');
+    router.push("/user-profile");
   };
 
   const handleScanPress = () => {
-    router.push('/qr-scanner');
+    router.push("/qr-scanner");
   };
 
   return (
@@ -53,9 +53,15 @@ export default function CustomerHomeScreen() {
           style={styles.gpsIndicator}
           onPress={handleFilterPress}
         >
-          <MaterialIcons name="filter-list" size={16} color="#2196F3" />
+          <Image
+            source={require("../../assets/images/filter-image.png")}
+            style={styles.filterImage}
+          />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearchPress}>
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={handleSearchPress}
+        >
           <MaterialIcons name="search" size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -81,11 +87,17 @@ export default function CustomerHomeScreen() {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNavigation}>
-        <TouchableOpacity style={styles.navButton} onPress={handlePersonTabPress}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={handlePersonTabPress}
+        >
           <MaterialIcons name="person" size={24} color="white" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.navButton, styles.scanButton]} onPress={handleScanPress}>
+        <TouchableOpacity
+          style={[styles.navButton, styles.scanButton]}
+          onPress={handleScanPress}
+        >
           <MaterialCommunityIcons name="qrcode-scan" size={28} color="white" />
         </TouchableOpacity>
 
@@ -121,6 +133,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  filterImage: {
+    width: 16,
+    height: 16,
+    resizeMode: "contain",
   },
   searchButton: {
     backgroundColor: "white",

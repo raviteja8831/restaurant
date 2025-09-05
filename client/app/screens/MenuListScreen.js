@@ -33,7 +33,7 @@ export default function MenuListScreen() {
   const params = useLocalSearchParams();
   const [totalAmount, setTotalAmount] = useState();
   const [orderSummary, setOrderSummary] = useState({
-   /*  totalItems: 3,
+    /*  totalItems: 3,
     totalCost: 855,
     orderDetails: [
       { name: "Coffee", quantity: 2, price: "₹50", total: "₹100" },
@@ -41,8 +41,9 @@ export default function MenuListScreen() {
       { name: "Veg Biriyani", quantity: 1, price: "₹180", total: "₹180" },
     ], */
   });
+  console.log("MenuListScreen params:", params);
   const [restaurant, setRestaurant] = useState(restaurantData);
-
+  const ishotel = params.ishotel || "false";
   useEffect(() => {
     // Check if we're returning from an order
     if (params.totalItems && params.totalCost) {
@@ -65,12 +66,17 @@ export default function MenuListScreen() {
         categoryName: category.name,
         restaurantId: restaurant.id,
         restaurantName: restaurant.name,
+        ishotel: ishotel,
       },
     });
   };
 
   const handleBackPress = () => {
-    router.back();
+    if (router.canGoBack() && ishotel == "false") {
+      router.back();
+    } else {
+      router.push({ pathname: "/customer-home" }); // 👈 fallback route
+    }
   };
 
   const handleFinalOrder = () => {
@@ -83,8 +89,8 @@ export default function MenuListScreen() {
       status: "Waiting", // Default status for new orders
     }));
 
-    console.log('Order summary:', orderSummary);
-    console.log('Transformed order data:', orderData);
+    console.log("Order summary:", orderSummary);
+    console.log("Transformed order data:", orderData);
 
     // Navigate to payorder screen with order data
     router.push({
@@ -109,13 +115,13 @@ export default function MenuListScreen() {
       style={styles.backgroundImage}
       resizeMode="repeat"
     >
-      <View style={styles.colorOverlay}>
+      <View style={styles.container}>
         <SafeAreaView style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={handleBackPress}
+              onPress={() => handleBackPress(ishotel)}
             >
               <MaterialCommunityIcons
                 name="arrow-left"
@@ -127,6 +133,7 @@ export default function MenuListScreen() {
               <Text style={styles.hotelName}>
                 {restaurant.name} ({restaurant.type})
               </Text>
+
               <Text style={[styles.title, styles.rTopMenu, { top: 87 }]}>
                 {" "}
                 Menu
@@ -152,27 +159,46 @@ export default function MenuListScreen() {
               </TouchableOpacity>
             ))}
           </View>
-
+          {ishotel == "true" && (
+            <TouchableOpacity
+              style={[styles.buffetContainer]}
+              onPress={() => {
+                router.push({
+                  pathname: "/BuffetTimeScreen",
+                  params: {
+                    hotelName: params.hotelName || restaurant.name,
+                    hotelId: params.hotelId || restaurant.id,
+                    ishotel: params.ishotel,
+                  },
+                });
+              }}
+            >
+              <Text style={styles.buffetText}>Buffet Available</Text>
+            </TouchableOpacity>
+          )}
           {/* Total Amount */}
-          <View style={[styles.totalContainer, styles.rTopMenu, { top: 750 }]}>
-          
-            {Object.keys(orderSummary).length > 0 && (
-              <View style={styles.orderSummaryContainer}>
-                <Text style={styles.totalText}>
-                  Total Amount = ₹{totalAmount}/-
-                </Text>
-                {/*     <Text style={styles.orderSummaryText}>
+          {ishotel == "false" && (
+            <View
+              style={[styles.totalContainer, styles.rTopMenu, { top: 750 }]}
+            >
+              {Object.keys(orderSummary).length > 0 && (
+                <View style={styles.orderSummaryContainer}>
+                  <Text style={styles.totalText}>
+                    Total Amount = ₹{totalAmount}/-
+                  </Text>
+                  {/*     <Text style={styles.orderSummaryText}>
                       Total Items: {orderSummary?.totalItems}
                     </Text> */}
-                <TouchableOpacity
-                  style={styles.finalOrderButton}
-                  onPress={handleFinalOrder}
-                >
-                  <Text style={styles.finalOrderButtonText}>Final Order</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
+                  <TouchableOpacity
+                    style={styles.finalOrderButton}
+                    onPress={handleFinalOrder}
+                  >
+                    <Text style={styles.finalOrderButtonText}>Final Order</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
         </SafeAreaView>
       </View>
     </ImageBackground>
@@ -196,15 +222,25 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  container: {
-    flex: 1,
-  },
-  text: {
+  buffetText: {
+    maxWidth: 300,
+    borderRadius: 15,
     fontSize: 24,
-    color: "#000",
+    padding: "5px",
+    marginBlockStart: "auto",
     fontWeight: "bold",
+    color: "#f31414ff",
+    textAlign: "center",
+    alignSelf: "center",
+    backgroundColor: "#8C8AEB",
   },
+  buffetContainer: {
+    marginBlockStart: "auto",
+    bottom: "25px",
+  },
+
   colorOverlay: {
+    display: "flex",
     flex: 1,
     backgroundColor: "BBBAEF", // Very light overlay to show image pattern clearly
   },

@@ -1,6 +1,6 @@
 export interface Filter {
-    name: string;
-    count: number;
+  name: string;
+  count: number;
 }
 
 export interface UserData {
@@ -63,9 +63,41 @@ export interface MenuItem {
   quantity?: number;
   category?: string;
 }
+
+export interface BuffetData {
+  type: string;
+  description: string;
+  price: number;
+  availableTime?: string;
+  items?: string[];
+}
 export interface MenuItemsByCategory {
   category: string;
   items: MenuItem[];
+}
+
+export interface HotelOption {
+  icon: string;
+  label: string;
+  route?: string;
+}
+
+export interface HotelReview {
+  reviewer: string;
+  stars: number;
+  text: string;
+}
+
+export interface HotelDetailData {
+  id: number;
+  name: string;
+  starRating: number;
+  address: string;
+  image: string;
+  options: HotelOption[];
+  reviews: HotelReview[];
+  averageWaitingTime: string;
+  tablesAvailable: number;
 }
 
 export interface RestaurantData {
@@ -80,19 +112,19 @@ export interface RestaurantData {
 }
 
 export const CustomerHome: Filter[] = [
-        { name: "Near Me", count: 15 },
-        { name: "3 Star Hotel", count: 6 },
-        { name: "5 Star Hotel", count: 3 },
-        { name: "Waiting Period Less then 5 Min", count: 6 },
-        { name: "Waiting Period More then 15 Min", count: 7 },
-        { name: "Only Veg Restaurant", count: 1 },
-        { name: "Only Non Veg Restaurant", count: 8 },
-        { name: "Only Bar & Restaurant", count: 6 },
-        { name: "5 Star Rating", count: 2 },
-        { name: "Only Buffet", count: 1 },
-        { name: "Only Self Service", count: 5 },
-        { name: "Only Table Service", count: 9 },
-    ];
+  { name: "Near Me", count: 15 },
+  { name: "3 Star Hotel", count: 6 },
+  { name: "5 Star Hotel", count: 3 },
+  { name: "Waiting Period Less then 5 Min", count: 6 },
+  { name: "Waiting Period More then 15 Min", count: 7 },
+  { name: "Only Veg Restaurant", count: 1 },
+  { name: "Only Non Veg Restaurant", count: 8 },
+  { name: "Only Bar & Restaurant", count: 6 },
+  { name: "5 Star Rating", count: 2 },
+  { name: "Only Buffet", count: 1 },
+  { name: "Only Self Service", count: 5 },
+  { name: "Only Table Service", count: 9 },
+];
 
 export const userData: UserData = {
   firstName: "Praveen",
@@ -194,6 +226,79 @@ export const transactionsData: TransactionItem[] = [
 ];
 
 // Menu Categories
+export const buffetData: BuffetData[] = [
+  {
+    type: "Breakfast Buffet",
+    description: "Poori, All types of Dosa,\nChow Chow Bath, Rice Bath",
+    price: 800,
+    availableTime: "7:00 AM - 11:00 AM",
+    items: [
+      "Poori",
+      "Masala Dosa",
+      "Plain Dosa",
+      "Set Dosa",
+      "Chow Chow Bath",
+      "Rice Bath",
+      "Idli",
+      "Vada",
+      "Coffee/Tea",
+    ],
+  },
+  {
+    type: "Lunch Buffet",
+    description: "North Indian, South Indian, Chinese Cuisine",
+    price: 999,
+    availableTime: "12:00 PM - 3:30 PM",
+    items: ["Variety of Starters", "Main Course", "Desserts", "Beverages"],
+  },
+];
+
+export const hotelDetailsData: HotelDetailData[] = [
+  {
+    id: 1,
+    name: "Hotel Sai",
+    starRating: 3,
+    address:
+      "No 45 Brigade Plaze First floor Near VRL Bus Stand Opp Movieland cinema hall Bangalore 560088",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
+    averageWaitingTime: "15 Min",
+    tablesAvailable: 3,
+    options: [
+      {
+        icon: "book-outline",
+        label: "Menu",
+        route: "/menu-list",
+      },
+      {
+        icon: "restaurant-outline",
+        label: "Booking table\n(3 TA)",
+        route: "/TableDiningScreen",
+      },
+      {
+        icon: "time-outline",
+        label: "Avg Waiting time.\n15Min",
+      },
+    ],
+    reviews: [
+      {
+        reviewer: "Person 1",
+        stars: 5,
+        text: "One of the best Restaurant in Bangalore Highly Recommended",
+      },
+      {
+        reviewer: "Person 2",
+        stars: 5,
+        text: "If you want to try Biriyani this the Best Place in Bangalore",
+      },
+      {
+        reviewer: "Person 3",
+        stars: 5,
+        text: "Best ambiance to chill out with friends and Family. And Food is Great.",
+      },
+    ],
+  },
+];
+
 export const menuCategories: MenuCategory[] = [
   {
     id: 1,
