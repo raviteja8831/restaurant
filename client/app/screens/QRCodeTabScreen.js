@@ -1,79 +1,99 @@
-// This is the new Manager Dashboard Screen using modular components
-import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import DashboardScreen from './screens/DashboardScreen';
-import QRCodeTabScreen from './screens/QRCodeTabScreen';
-import NotificationsTabScreen from './screens/NotificationsTabScreen';
-import UserListScreen from './screens/userListScreen';
-export default function ManagerDashboardScreenNew() {
-    const router = useRouter();
-    const [activeTab, setActiveTab] = useState('Dashboard');
+import React, { useState } from "react";
+import { router } from "expo-router";
+import { Alert } from "react-native";
+import { addUserByManager } from "../api/managerApi";
+import FormService from "../components/formService";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+  Dimensions,
+  TextInput,
+} from "react-native";
+import { LineChart } from "react-native-chart-kit";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Appbar, Surface } from "react-native-paper";
 
-    let content;
-    if (activeTab === 'Dashboard') {
-        content = <DashboardScreen onProfilePress={() => {}} />;
-    } else if (activeTab === 'QRCode') {
-        content = <QRCodeTabScreen />;
-    } else if (activeTab === 'Notifications') {
-        content = <NotificationsTabScreen />;
-    } else if (activeTab === 'Users') {
-        content = <UserListScreen />;
-    }
+export default function QRCodeTabScreen() {
+    const [showNewQRModal, setShowNewQRModal] = useState(false);
+    const [showTableDetail, setShowTableDetail] = useState(false);
+    const [selectedTable, setSelectedTable] = useState(null);
+    const [qrFormData, setQrFormData] = useState({
+      name: "",
+    });
+    const handleTableClick = (tableNum) => {
+    setSelectedTable(tableNum);
+    setShowTableDetail(true);
+  };
+  // Placeholder for QR code tab UI
+  return (
+    <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.qrContainer}>
+          <Text style={styles.qrTitle}>QR Code Generator / Statistics</Text>
 
-    return (
-        <View style={styles.container}>
-            {/* AppBar/Header */}
-            <View style={styles.appbar}>
-                <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => router.replace('/menu')}>
-                    <MaterialCommunityIcons name="food" size={28} color="#6c63b5" />
-                </TouchableOpacity>
-                <Text style={styles.appbarTitle}>Hotel Sai (3 Star)</Text>
-                <TouchableOpacity style={{ marginRight: 16 }}>
-                    <Text style={styles.payBtnText}>Pay</Text>
-                </TouchableOpacity>
+          {/* Large QR Code */}
+          <View style={styles.qrCodeBox}>
+            <MaterialCommunityIcons name="qrcode" size={120} color="#000" />
+          </View>
+
+          {/* New QR Code Button */}
+          <TouchableOpacity
+            style={styles.newQRButton}
+            onPress={() => setShowNewQRModal(true)}
+          >
+            <MaterialCommunityIcons
+              name="plus"
+              size={20}
+              color="#000"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.newQRButtonText}>New QR Code</Text>
+          </TouchableOpacity>
+
+          {/* Customer Statistics Section */}
+          <View style={styles.qrStatsContainer}>
+            <View style={styles.qrStatsRow}>
+              <TouchableOpacity style={styles.qrPeriodButton}>
+                <Text style={styles.qrPeriodButtonText}>Today</Text>
+                <MaterialCommunityIcons
+                  name="chevron-down"
+                  size={16}
+                  color="#000"
+                />
+              </TouchableOpacity>
+              <View style={styles.qrCustomerCountContainer}>
+                <Text style={styles.qrCustomerCountText}>
+                  No of Customers today : 50
+                </Text>
+              </View>
             </View>
-            {/* Tab content */}
-            <View style={{ flex: 1 }}>{content}</View>
-            {/* Bottom navigation bar */}
-            <View style={styles.bottomNav}>
-                <TouchableOpacity style={activeTab === 'Dashboard' ? styles.navBtnActive : styles.navBtn} onPress={() => setActiveTab('Dashboard')}>
-                    <MaterialCommunityIcons name="home" size={32} color={activeTab === 'Dashboard' ? '#6c63b5' : '#222'} />
+
+            {/* Table Buttons */}
+            <View style={styles.qrTableButtons}>
+              {[1, 2, 3, 4, 5, 6].map((num) => (
+                <TouchableOpacity
+                  key={num}
+                  style={styles.qrTableButton}
+                  onPress={() => handleTableClick(num)}
+                >
+                  <Text style={styles.qrTableButtonText}>Table {num}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={activeTab === 'Users' ? styles.navBtnActive : styles.navBtn} onPress={() => setActiveTab('Users')}>
-                    <MaterialCommunityIcons name="account" size={32} color={activeTab === 'Users' ? '#6c63b5' : '#222'} />
-                </TouchableOpacity>
-                <TouchableOpacity style={activeTab === 'QRCode' ? styles.navBtnActive : styles.navBtn} onPress={() => setActiveTab('QRCode')}>
-                    <MaterialCommunityIcons name="qrcode" size={32} color={activeTab === 'QRCode' ? '#6c63b5' : '#222'} />
-                </TouchableOpacity>
-                <TouchableOpacity style={activeTab === 'Notifications' ? styles.navBtnActive : styles.navBtn} onPress={() => setActiveTab('Notifications')}>
-                    <View style={styles.notificationContainer}>
-                        <MaterialCommunityIcons name="bell" size={32} color={activeTab === 'Notifications' ? '#6c63b5' : '#222'} />
-                        <View style={styles.notificationBadge}>
-                            <Text style={styles.notificationText}>1</Text>
-                        </View>
-                    </View>
-                </TouchableOpacity>
+              ))}
             </View>
+          </View>
         </View>
-    );
+      </ScrollView>
+  );
 }
-
-
 
 const styles = StyleSheet.create({
   // QR Code Tab Styles
-   container: { flex: 1, backgroundColor: '#9d95e3', borderRadius: 40 },
-    appbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'transparent' },
-    appbarTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff', flex: 1, textAlign: 'center' },
-    payBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16, backgroundColor: '#7b6eea', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 4, overflow: 'hidden' },
-    bottomNav: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', backgroundColor: 'transparent', paddingVertical: 12, borderTopLeftRadius: 32, borderTopRightRadius: 32, marginTop: 8 },
-    navBtn: { flex: 1, alignItems: 'center', padding: 8 },
-    navBtnActive: { flex: 1, alignItems: 'center', padding: 8, borderRadius: 24, backgroundColor: 'rgba(123,110,234,0.15)' },
-    notificationContainer: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
-    notificationBadge: { position: 'absolute', top: -4, right: -8, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 4, paddingVertical: 1 },
-    notificationText: { color: '#6c63b5', fontWeight: 'bold', fontSize: 12 },
   qrContainer: {
     flex: 1,
     padding: 20,
@@ -347,7 +367,29 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
   },
-  
+  container: {
+    flex: 1,
+    backgroundColor: "#a6a6e7",
+    paddingTop: 0,
+  },
+  appbar: {
+    backgroundColor: "#a6a6e7",
+    elevation: 0,
+  },
+  appbarTitle: {
+    fontWeight: "bold",
+    fontSize: 24,
+    textAlign: "center",
+  },
+  payBtnText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    backgroundColor: "#7b6eea",
+    borderRadius: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+  },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -861,8 +903,57 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: "bold",
   },
-
- 
+  bottomNav: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    elevation: 8,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+  },
+  navBtn: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+    paddingVertical: 4,
+  },
+  navBtnActive: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#6c63b5",
+    backgroundColor: "rgba(108,99,181,0.08)",
+  },
+  notificationContainer: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#ff0000",
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
   // Reviews Tab Styles
   reviewsContainer: {
     flex: 1,

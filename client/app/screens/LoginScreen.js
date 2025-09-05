@@ -42,7 +42,7 @@ export default function LoginScreen() {
         otp: otpValue.join(''),
       });
       const user = response.data;
-      const role = user?.role?.toLowerCase();
+      const role = user?.role?.name.toLowerCase();
       Alert.alert('API user', JSON.stringify(user));
       if (role === 'manager') {
         router.push('/manager-dashboard');
