@@ -166,34 +166,44 @@ export default function UserProfileScreen() {
       {/* Tab Navigation */}
       <View style={styles.tabNavigation}>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'history' && styles.activeTab]}
+          style={styles.tabButton}
           onPress={() => setActiveTab('history')}
         >
           <MaterialIcons 
             name="history" 
-            size={24} 
-            color={activeTab === 'history' ? '#6854ff' : '#666'} 
+            size={32} 
+            color="#000" 
           />
+          {activeTab === 'history' && <View style={styles.tabArrow} />}
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'favorites' && styles.activeTab]}
+          style={styles.tabButton}
           onPress={() => setActiveTab('favorites')}
         >
           <MaterialIcons 
             name="favorite" 
-            size={24} 
-            color={activeTab === 'favorites' ? '#6854ff' : '#666'} 
+            size={32} 
+            color="#000" 
           />
+          {activeTab === 'favorites' && <View style={styles.tabArrow} />}
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'transactions' && styles.activeTab]}
+          style={styles.tabButton}
           onPress={() => setActiveTab('transactions')}
         >
-          <Text style={[styles.currencyIcon, { color: activeTab === 'transactions' ? '#6854ff' : '#666' }]}>₹</Text>
+          <Text style={[styles.currencyIcon, { 
+            color: '#000',
+            fontSize: 32,
+            fontWeight: '900'
+          }]}>₹</Text>
+          {activeTab === 'transactions' && <View style={styles.tabArrow} />}
         </TouchableOpacity>
       </View>
+
+      {/* Border Separator */}
+      <View style={styles.tabBorder} />
 
       {/* Tab Content */}
       {renderTabContent()}
@@ -211,14 +221,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 20,
+    paddingTop: 20,
   },
   profileSection: {
-    alignItems: 'center',
-    paddingVertical: 20,
+    alignItems: 'flex-start',
+    paddingVertical: 30,
+    paddingHorizontal: 20,
   },
   profileImageContainer: {
-    marginBottom: 20,
+    marginBottom: 60,
+    alignSelf: 'center',
   },
   profileImage: {
     width: 80,
@@ -226,44 +239,63 @@ const styles = StyleSheet.create({
     borderRadius: 40,
   },
   profileImagePlaceholder: {
-    width: 80,
-    height: 80,
+    width: 100,
+    height: 100,
     borderRadius: 40,
     backgroundColor: '#D0D0D0',
     justifyContent: 'center',
     alignItems: 'center',
   },
   userInfo: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    width: '100%',
   },
   userInfoText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#333',
-    marginBottom: 5,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   tabNavigation: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingHorizontal: 40,
-    paddingVertical: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   tabButton: {
     padding: 15,
     borderRadius: 10,
     backgroundColor: '#bbbaef',
+    alignItems: 'center',
+    position: 'relative',
   },
-  activeTab: {
-    backgroundColor: 'rgba(104, 84, 255, 0.1)',
+  tabArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderBottomWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#000',
+    marginTop: 5,
+  },
+
+  tabBorder: {
+    height: 1,
+    backgroundColor: '#000',
+    marginHorizontal: 10,
   },
   tabContent: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
+    paddingTop: 7.5,
   },
   historyItem: {
     backgroundColor: '#bbbaef',
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
+    padding: 20,
+    marginBottom: 15,
   },
   hotelHeader: {
     flexDirection: 'row',
@@ -274,24 +306,26 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   hotelName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 5,
+    marginBottom: 8,
   },
   hotelAddress: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
-    marginBottom: 5,
+    marginBottom: 6,
+    lineHeight: 18,
   },
   hotelDate: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   hotelTime: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
+    fontWeight: '500',
   },
   orderDetails: {
     marginTop: 10,
@@ -329,10 +363,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   separator: {
-    height: 2,
+    height: 1,
     backgroundColor: '#000000',
-    marginTop: 15,
-    marginHorizontal: -15,
+    marginTop: 20,
+    marginHorizontal: -20,
   },
   favoriteItem: {
     backgroundColor: '#bbbaef',
@@ -379,7 +413,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   currencyIcon: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
   },
 });
