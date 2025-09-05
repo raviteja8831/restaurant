@@ -8,5 +8,8 @@ module.exports = app => {
   router.put('/:id', menuitem.update);
   router.delete('/:id', menuitem.delete);
 
+  // Bulk status update route
+  router.put('/updateStatus', menuitem.updateStatusBulk);
+
   app.use('/api/menuitems', router);
 };
