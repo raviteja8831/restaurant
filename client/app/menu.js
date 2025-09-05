@@ -4,6 +4,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Switch, Dimensions } from "re
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import AddMenuItemScreen from "./screens/AddMenuItemScreen";
+import { addMenuItem, updateMenuItemsStatus } from "./api/menuApi";
+import { useAlert } from "./services/alertService";
 
 const menuCategories = [
   { label: "Hot & Cold beverages", icon: "cup" },
@@ -18,11 +20,32 @@ const menuCategories = [
 
 export default function MenuScreen() {
   const [enableAll, setEnableAll] = useState(false);
+  // Placeholder: Replace with real menu item IDs from state/store
+  const [menuItemIds, setMenuItemIds] = useState([1, 2, 3]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const alert = useAlert();
+  // TODO: Replace with real menuId from context/store/props
+  const menuId = 1;
 
-  const handleAddSave = (item) => {
-    // You can handle the new item here (e.g., add to state or send to API)
-    // console.log('Saved item:', item);
+  const handleAddSave = async (item) => {
+    try {
+      await addMenuItem({ ...item, menuId });
+      alert.success('Menu item added successfully!');
+      setShowAddModal(false);
+    } catch (error) {
+      alert.error(error?.response?.data?.message || error?.message || 'Failed to add menu item');
+    }
+  };
+
+  // Handler for Enable All switch
+  const handleEnableAll = async (value) => {
+    setEnableAll(value);
+    try {
+      await updateMenuItemsStatus(menuItemIds, value);
+      alert.success(`All menu items ${value ? 'enabled' : 'disabled'}!`);
+    } catch (error) {
+      alert.error(error?.response?.data?.message || error?.message || 'Failed to update status');
+    }
   };
 
   return (
@@ -46,7 +69,7 @@ export default function MenuScreen() {
         </View>
         {/* Enable All */}
         <View style={styles.enableAllRow}>
-          <Switch value={enableAll} onValueChange={setEnableAll} />
+          <Switch value={enableAll} onValueChange={handleEnableAll} />
           <Text style={styles.enableAllText}>Enable All</Text>
         </View>
         {/* Add Button */}
@@ -58,6 +81,7 @@ export default function MenuScreen() {
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSave={handleAddSave}
+        menuId={menuId}
       />
     </>
   );

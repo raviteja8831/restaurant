@@ -3,6 +3,8 @@ module.exports = (sequelize, Sequelize) => {
     name: { type: Sequelize.STRING, allowNull: false },
     price: { type: Sequelize.FLOAT, allowNull: false },
     type: { type: Sequelize.STRING }, // veg/non-veg
+    status: { type: Sequelize.BOOLEAN }, // veg/non-veg
+
     menuId: {
       type: Sequelize.INTEGER,
       references: {

@@ -13,8 +13,8 @@ const categories = [
   'Ice Cream & Desert',
 ];
 
-export default function AddMenuItemScreen({ visible, onClose, onSave }) {
-  const [category, setCategory] = useState('');
+export default function AddMenuItemScreen({ visible, onClose, onSave, menuId }) {
+  const [menu, setMenu] = useState('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [type, setType] = useState('');
   const [name, setName] = useState('');
@@ -29,16 +29,16 @@ export default function AddMenuItemScreen({ visible, onClose, onSave }) {
           </TouchableOpacity>
           <Text style={styles.modalTitle}>Add Menu Item</Text>
           {/* Category Dropdown */}
-          <Text style={styles.label}>category</Text>
+          <Text style={styles.label}>Menu</Text>
           <TouchableOpacity style={styles.dropdown} onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}>
-            <Text style={styles.dropdownText}>{category || 'Select category'}</Text>
+            <Text style={styles.dropdownText}>{menu || 'Select menu'}</Text>
             <MaterialCommunityIcons name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={24} color="#222" />
           </TouchableOpacity>
           {showCategoryDropdown && (
             <View style={styles.dropdownMenu}>
-              <Text style={styles.dropdownMenuTitle}>category</Text>
+              <Text style={styles.dropdownMenuTitle}>Menu</Text>
               {categories.map((cat) => (
-                <TouchableOpacity key={cat} style={styles.dropdownMenuItem} onPress={() => { setCategory(cat); setShowCategoryDropdown(false); }}>
+                <TouchableOpacity key={cat} style={styles.dropdownMenuItem} onPress={() => { setMenu(cat); setShowCategoryDropdown(false); }}>
                   <Text style={styles.dropdownMenuItemText}>• {cat}</Text>
                 </TouchableOpacity>
               ))}
@@ -72,7 +72,7 @@ export default function AddMenuItemScreen({ visible, onClose, onSave }) {
             keyboardType="numeric"
             placeholderTextColor="#888"
           />
-          <TouchableOpacity style={styles.saveBtn} onPress={() => { onSave && onSave({ category, type, name, price }); onClose && onClose(); }}>
+          <TouchableOpacity style={styles.saveBtn} onPress={() => { onSave && onSave({ menu, type, name, price, menuId }); onClose && onClose(); }}>
             <Text style={styles.saveBtnText}>Save</Text>
           </TouchableOpacity>
         </View>
