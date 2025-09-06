@@ -1,14 +1,32 @@
 export interface User {
-  name: string;
-  role: string;
+  id: number;
+  firstname: string;
+  lastname: string;
+  phone: string;
+  allottedMenuItems: MenuItem[];
 }
 
-export interface OrderHistory {
-  msg: string;
-  time: string;
+export interface MenuItem {
+  id: number;
+  name: string;
 }
 
 export interface TopOrder {
   name: string;
   count: number;
+}
+
+export interface TodaysOrder {
+  id: number;
+  time: string;
+  items: { name: string; qty: number }[];
+}
+
+export interface UserDashboard {
+  user: User;
+  todayLoginTime: string;
+  totalOrders: number;
+  totalOrdersAll: number;
+  topOrders: TopOrder[];
+  todaysOrders: TodaysOrder[];
 }

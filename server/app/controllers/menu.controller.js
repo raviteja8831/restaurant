@@ -1,3 +1,15 @@
+// Get all menus with their items
+exports.getMenuWithItems = async (req, res) => {
+  try {
+    const db = require('../models');
+    const menus = await db.menu.findAll({
+      include: [{ model: db.menuItem, as: 'menuItems' }]
+    });
+    res.json(menus);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 const db = require('../models');
 const Menu = db.menu;
 
