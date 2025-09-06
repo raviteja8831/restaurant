@@ -34,7 +34,7 @@ db.restaurantTable = require("./restauranttable.model.js")(sequelize, Sequelize)
 db.qrCode = require("./qrcode.model.js")(sequelize, Sequelize);
 db.announcement = require("./announcement.model.js")(sequelize, Sequelize);
 db.orderProducts = require("./orderproducts.model.js")(sequelize, Sequelize);
-
+db.userMenuItem = require("./user_menuitem.model.js")(sequelize, Sequelize);
 
 db.restaurantReview.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
 db.restaurantReview.belongsTo(db.users, { foreignKey: 'userId', as: 'user' });
@@ -44,11 +44,30 @@ db.restaurant.hasMany(db.menu, { foreignKey: 'restaurantId', as: 'menus' });
 
 // Removed duplicate associations for orderProducts and orders
 
+
 // Orders, OrderProducts, Menu, MenuItem associations
 db.orders.hasMany(db.orderProducts, { foreignKey: 'orderId', as: 'orderProducts' });
 db.orderProducts.belongsTo(db.orders, { foreignKey: 'orderId', as: 'order' });
 db.menu.hasMany(db.menuItem, { foreignKey: 'menuId', as: 'menuItems' });
 db.menuItem.belongsTo(db.menu, { foreignKey: 'menuId', as: 'menu' });
+// Associate orderProducts (orderproduct) with menuItem (menuitem)
+db.orderProducts.belongsTo(db.menuItem, { foreignKey: 'productId', as: 'menuitem' });
+db.menuItem.hasMany(db.orderProducts, { foreignKey: 'productId', as: 'orderProducts' });
+
+
+// Many-to-many: restaurantUser <-> menuItem through userMenuItem
+db.restaurantUser.belongsToMany(db.menuItem, {
+  through: db.userMenuItem,
+  foreignKey: 'userId',
+  otherKey: 'menuitemId',
+  as: 'allottedMenuItems'
+});
+db.menuItem.belongsToMany(db.restaurantUser, {
+  through: db.userMenuItem,
+  foreignKey: 'menuitemId',
+  otherKey: 'userId',
+  as: 'allottedUsers'
+});
 
 module.exports = db;
 
@@ -74,6 +93,15 @@ db.restaurantRating.belongsTo(db.users, { foreignKey: 'userId', as: 'user' });
 db.users.belongsTo(db.roles, {
   foreignKey: "role_id",
   as: "role",
+});
+
+db.users.hasMany(db.orders, {
+  foreignKey: "userId",
+  as: "orders",
+});
+db.orders.belongsTo(db.users, {
+  foreignKey: "userId",
+  as: "users",
 });
 
 db.roles.hasMany(db.users, {

@@ -3,6 +3,7 @@ import { ScrollView, View, Text, TouchableOpacity, Dimensions } from 'react-nati
 import { Appbar, Surface } from 'react-native-paper';
 import { LineChart } from 'react-native-chart-kit';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import TabBar from './TabBarScreen';
 
 export default function DashboardScreen({ onProfilePress }) {
   // Static data for demonstration
@@ -18,8 +19,8 @@ export default function DashboardScreen({ onProfilePress }) {
   const nonReservedTables = 4;
 
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-      
+    <><ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+
 
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 0, marginBottom: 8 }}>
         <View>
@@ -129,8 +130,7 @@ export default function DashboardScreen({ onProfilePress }) {
             },
           }}
           bezier
-          style={{ borderRadius: 16, marginVertical: 8 }}
-        />
+          style={{ borderRadius: 16, marginVertical: 8 }} />
       </Surface>
 
       {/* Income Graph */}
@@ -179,9 +179,10 @@ export default function DashboardScreen({ onProfilePress }) {
             },
           }}
           bezier
-          style={{ borderRadius: 16, marginVertical: 8 }}
-        />
+          style={{ borderRadius: 16, marginVertical: 8 }} />
       </Surface>
     </ScrollView>
+    <TabBar></TabBar >
+    </>
   );
 }

@@ -5,6 +5,8 @@ export const USER_API = {
   PROFILE: '/users',
   REGISTER_RESTAURANT_USER: '/users/registerRestaurantUser',
   LOGIN_RESTAURANT_USER: '/users/login',
+  DASHBOARD: '/users/dashboard',
+  ADD_MENU_ITEM: '/users/:userId/menu-items',
 };
 export interface UserUpdateRequest {
   name?: string;

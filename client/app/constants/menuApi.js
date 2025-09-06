@@ -2,5 +2,6 @@
 export const MENU_API = {
   ADDITEM: '/api/menuitems', // POST
   UPDATE_STATUS_BULK: '/api/menuitems/updateStatus', // PUT
-  // Add more endpoints as needed
+  GET_MENUS_WITH_ITEMS: '/api/menus/with-items',
+  SAVE_USER_MENUITEMS: '/api/users/:userId/allotted-menuitems',
 };

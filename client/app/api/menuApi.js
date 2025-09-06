@@ -1,6 +1,30 @@
+
 import api from '../api/api';
 import { MENU_API } from '../constants/menuApi';
 import { showApiError } from '../services/alertService';
+
+// Get all menus with their items
+export const getMenusWithItems = async () => {
+  try {
+    const res = await api.get('/api/menus/with-items');
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+};
+
+// Save user allotted menu items (bulk)
+export const saveUserMenuItems = async (userId, menuitemIds) => {
+  try {
+    // Send selectedUserId in the payload as well
+    const res = await api.post(`/api/users/${userId}/allotted-menuitems`, { menuitemIds, userId });
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+};
 
 export const addMenuItem = async (data) => {
   try {

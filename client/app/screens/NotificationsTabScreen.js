@@ -1,21 +1,14 @@
-import React, { useState } from "react";
-import { router } from "expo-router";
-import { Alert } from "react-native";
-import { addUserByManager } from "../api/managerApi";
-import FormService from "../components/formService";
+import React from "react";
+
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
-  Modal,
   ScrollView,
-  Dimensions,
-  TextInput,
 } from "react-native";
-import { LineChart } from "react-native-chart-kit";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Appbar, Surface } from "react-native-paper";
+import TabBar from "./TabBarScreen";
 
 export default function NotificationsTabScreen() {
     // Reviews and Ratings mock data
@@ -101,6 +94,7 @@ export default function NotificationsTabScreen() {
           </View>
         </View>
       </ScrollView>
+      <TabBar></TabBar>
       </View>
   );
 }

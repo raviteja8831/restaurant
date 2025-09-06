@@ -20,9 +20,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     password: {
       type: Sequelize.STRING,
-      unique: true,
-      allowNull: false,
-      defaultValue: "123456",
+      allowNull: true,
     },
     restaurantId: {
       type: Sequelize.INTEGER,
