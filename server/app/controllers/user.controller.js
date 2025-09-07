@@ -1,6 +1,24 @@
+  const db = require("../models");
+
+// Get users by restaurantId and roleId
+exports.getRestaurantUsers = async (req, res) => {
+  
+  const { restaurantId, roleId } = req.query;
+  if (!restaurantId || !roleId) {
+    return res.status(400).json({ error: 'restaurantId and roleId are required' });
+  }
+  try {
+    const users = await db.restaurantUser.findAll({
+      where: { restaurantId: restaurantId, role_id: roleId },
+      attributes: ['id', 'phone', 'firstname', 'lastname', 'email', 'role_id', 'restaurantId', 'createdAt', 'updatedAt'],
+    });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 // Get allotted menu items for a user
 exports.getUserMenuItems = async (req, res) => {
-  const db = require("../models");
   const { userId } = req.params;
   try {
     const user = await db.restaurantUser.findByPk(userId, {
@@ -14,9 +32,7 @@ exports.getUserMenuItems = async (req, res) => {
   }
 };
 // Save user allotted menu items (bulk)
-exports.saveUserMenuItems = async (req, res) => {
-  const db = require("../models");
-  // Accept userId from body if present, else from params
+exports.saveUserMenuItems = async (req, res) => {  // Accept userId from body if present, else from params
   const userId = req.body.userId || req.params.userId;
   const { menuitemIds } = req.body;
   if (!Array.isArray(menuitemIds)) return res.status(400).json({ error: 'menuitemIds must be array' });
@@ -99,11 +115,11 @@ exports.getDashboardData = async (req, res) => {
           [db.Sequelize.fn('COUNT', db.Sequelize.col('menuitemId')), 'count']
         ],
         include: [
-          { model: db.menuItem, as: 'menuitem', attributes: ['id', 'name'] },
+          { model: db.menuItem, as: 'menuitem', attributes: ['id', 'name', 'createdAt'] },
           {
             model: db.orders,
             as: 'order',
-            attributes: [], // Remove non-grouped attributes to fix ONLY_FULL_GROUP_BY error
+            attributes: [],
             where: { restaurantId, createdAt: { [db.Sequelize.Op.gte]: startOfDay } }
           }
         ],
@@ -123,7 +139,7 @@ exports.getDashboardData = async (req, res) => {
           {
             model: db.orderProducts,
             as: 'orderProducts',
-            where: { menuitemId: allottedMenuItemIds },
+            where: { menuitemId:allottedMenuItemIds },
             required: true,
             include: [{ model: db.menuItem, as: 'menuitem', attributes: ['id', 'name'] }]
           }
@@ -145,11 +161,26 @@ exports.getDashboardData = async (req, res) => {
       todayLoginTime,
       totalOrders,
       totalOrdersAll,
-      topOrders: topOrders.map(o => ({ name: o.menuitem?.name, count: o.dataValues.count })),
+      topOrders: topOrders.map(o => ({
+        id: o.menuitem?.id,
+        name: o.menuitem?.name,
+        count: o.dataValues.count
+      })),
       todaysOrders: todaysOrders.map(order => ({
         id: order.id,
         time: order.createdAt,
-        items: order.orderProducts.map(op => ({ name: op.menuitem?.name, qty: op.qty }))
+        items: (order.orderProducts || []).map(op => {
+          console.log('Order Product:', op);
+          const opPlain = typeof op.get === 'function' ? op.get({ plain: true }) : op;
+          console.log('Order Product Plain:', opPlain);
+          // Ensure op and op.menuitem are plain objects
+          const menuitem = op.menuitem || {};
+          return {
+            id: menuitem.id,
+            name: menuitem.name,
+            qty: opPlain.quantity || 1
+          };
+        })
       }))
     });
   } catch (err) {
@@ -159,7 +190,6 @@ exports.getDashboardData = async (req, res) => {
 
 // Add a menu item to a user
 exports.addMenuItemToUser = async (req, res) => {
-  const db = require("../models");
   const { userId } = req.params;
   const { menuitemId } = req.body;
   try {
@@ -187,7 +217,6 @@ exports.uploadImage = async (req, res) => {
 };
 // Add Restaurant User (Chef or other role)
 
-const db = require("../models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const path = require('path');

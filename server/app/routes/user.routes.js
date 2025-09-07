@@ -1,4 +1,4 @@
-  // Save user allotted menu items (bulk)
+// Save user allotted menu items (bulk)
  
 const multer = require('multer');
 const path = require('path');
@@ -50,6 +50,7 @@ module.exports = app => {
   router.post('/:userId/message', users.sendMessageToUser);
   router.get('/:userId/messages', users.getMessagesForUser);
     router.post('/:userId/allotted-menuitems', users.saveUserMenuItems);
+  router.get('/restaurant-users', users.getRestaurantUsers);
 
   app.use("/api/users", router);
 };

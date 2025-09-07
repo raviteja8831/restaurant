@@ -1,7 +1,18 @@
-
 import api from '../api';
 import { USER_API } from '../constants/userApi';
 import { showApiError } from '../services/messagingService';// Get allotted menu items for a user
+// Get users by restaurantId and roleId
+export const getRestaurantUsers = async (restaurantId, roleId) => {
+  try {
+    const res = await api.get(`/users/restaurant-users?restaurantId=${restaurantId}&roleId=${roleId}`);
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+};
+
+
 export const getUserAllottedMenuItems = async (userId) => {
   try {
     const res = await api.get(`/users/${userId}/allotted-menuitems`);
