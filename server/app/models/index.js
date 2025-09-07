@@ -51,8 +51,8 @@ db.orderProducts.belongsTo(db.orders, { foreignKey: 'orderId', as: 'order' });
 db.menu.hasMany(db.menuItem, { foreignKey: 'menuId', as: 'menuItems' });
 db.menuItem.belongsTo(db.menu, { foreignKey: 'menuId', as: 'menu' });
 // Associate orderProducts (orderproduct) with menuItem (menuitem)
-db.orderProducts.belongsTo(db.menuItem, { foreignKey: 'productId', as: 'menuitem' });
-db.menuItem.hasMany(db.orderProducts, { foreignKey: 'productId', as: 'orderProducts' });
+db.orderProducts.belongsTo(db.menuItem, { foreignKey: 'menuitemId', as: 'menuitem' });
+db.menuItem.hasMany(db.orderProducts, { foreignKey: 'menuitemId', as: 'orderProducts' });
 
 
 // Many-to-many: restaurantUser <-> menuItem through userMenuItem

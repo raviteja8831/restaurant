@@ -10,7 +10,7 @@ module.exports = (sequelize, Sequelize) => {
         key: "id",
       },
     },
-    productId: {
+    menuItemId: {
       type: Sequelize.INTEGER,
       references: {
         model: "menuitem",

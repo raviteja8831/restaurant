@@ -3,17 +3,10 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, ActivityIn
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TabBar from "./TabBarScreen";
 import AddMenuItemModal from "../Modals/AddMenuItemModal";
-import { getUserDashboard, sendMessageToUser, getMessagesForUser, getUserAllottedMenuItems } from "../api/userApi";
+import { getUserDashboard, sendMessageToUser, getMessagesForUser, getUserAllottedMenuItems, getRestaurantUsers } from "../api/userApi";
 import { getMenusWithItems, saveUserMenuItems } from "../api/menuApi";
 
-const userList = [
-  { id: 2, name: "Kiran", role: "Chef" },
-  { id: 3, name: "Anil", role: "Chef" },
-  { id: 4, name: "Anoop", role: "Chef" },
-  { id: 5, name: "Vishal", role: "Chef" },
-  { id: 6, name: "Anthony", role: "Chef" },
-  { id: 1, name: "Mohan", role: "Manager" },
-];
+export default function UsersTabScreen() {
 
 const periodOptions = [
   { label: "Week", value: "week" },
@@ -21,8 +14,7 @@ const periodOptions = [
   { label: "Year", value: "year" },
 ];
 
-export default function UsersTabScreen() {
-  const [selectedUser, setSelectedUser] = useState(userList[0]);
+  
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState("week");
@@ -32,12 +24,40 @@ export default function UsersTabScreen() {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState([]);
+const [userList, setUserList] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  // Replace with actual restaurantId from context/auth if available
+  const restaurantId = 1; // TODO: get from context or props
+  const chefRoleId = 2;
 
   useEffect(() => {
-    fetchDashboard(selectedUser.id, period);
-    fetchMessages(selectedUser.id);
-    fetchMenus();
-    fetchAllottedMenuItems(selectedUser.id);
+    fetchUserList();
+  }, [restaurantId]);
+
+  const fetchUserList = async () => {
+    try {
+      const users = await getRestaurantUsers(restaurantId, chefRoleId);
+      // Map to match expected fields for UI
+      const mapped = users.map(u => ({
+        id: u.id,
+        name: u.firstname + (u.lastname ? ' ' + u.lastname : ''),
+        role: 'Chef', // or u.role if available
+      }));
+      setUserList(mapped);
+      if (mapped.length > 0) setSelectedUser(mapped[0]);
+    } catch (err) {
+      setUserList([]);
+      setSelectedUser(null);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedUser) {
+      fetchDashboard(selectedUser.id, period);
+      fetchMessages(selectedUser.id);
+      fetchMenus();
+      fetchAllottedMenuItems(selectedUser.id);
+    }
   }, [selectedUser, period]);
 
   const fetchAllottedMenuItems = async (userId) => {
@@ -108,14 +128,14 @@ export default function UsersTabScreen() {
             {userList.map((user, idx) => (
               <TouchableOpacity
                 key={user.id}
-                style={[styles.userAvatarCol, selectedUser.id === user.id && { borderColor: '#6c63b5', borderWidth: 2 }]}
+                style={[styles.userAvatarCol, selectedUser && selectedUser.id === user.id && { borderColor: '#6c63b5', borderWidth: 2 }]}
                 onPress={() => setSelectedUser(user)}
               >
                 <View style={styles.userAvatarCircle}>
                   <MaterialCommunityIcons name="account" size={32} color="#6c63b5" />
                 </View>
-                <Text style={styles.userAvatarName}>{user.name}</Text>
-                <Text style={styles.userAvatarRole}>{user.role}</Text>
+                <Text style={styles.userAvatarName}>{user?.name}</Text>
+                <Text style={styles.userAvatarRole}>{user?.role}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -135,8 +155,8 @@ export default function UsersTabScreen() {
               <MaterialCommunityIcons name="account" size={48} color="#6c63b5" />
             </View>
             <View>
-              <Text style={styles.usersProfileName}>{selectedUser.name}</Text>
-              <Text style={styles.usersProfileRole}>{selectedUser.role}</Text>
+              <Text style={styles.usersProfileName}>{selectedUser ? selectedUser.name : ''}</Text>
+              <Text style={styles.usersProfileRole}>{selectedUser ? selectedUser.role : ''}</Text>
               <Text style={styles.usersLoginTime}>Login: {dashboard?.todayLoginTime || '--'}</Text>
             </View>
           </View>
