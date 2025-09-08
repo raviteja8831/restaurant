@@ -2,15 +2,17 @@
 
 // Get users by restaurantId and roleId
 exports.getRestaurantUsers = async (req, res) => {
-  
+
   const { restaurantId, roleId } = req.query;
+      console.log(restaurantId, roleId);
+
   if (!restaurantId || !roleId) {
     return res.status(400).json({ error: 'restaurantId and roleId are required' });
   }
   try {
     const users = await db.restaurantUser.findAll({
       where: { restaurantId: restaurantId, role_id: roleId },
-      attributes: ['id', 'phone', 'firstname', 'lastname', 'email', 'role_id', 'restaurantId', 'createdAt', 'updatedAt'],
+      attributes: ['id', 'phone', 'firstname', 'lastname',  'role_id', 'restaurantId', 'createdAt', 'updatedAt'],
     });
     res.json(users);
   } catch (err) {
@@ -385,10 +387,17 @@ exports.findOne = async (req, res) => {
   }
 };
 
-// Update user
+// Update user (for restaurantUser, including password and role)
 exports.update = async (req, res) => {
   try {
-    const [updated] = await User.update(req.body, { where: { id: req.params.id } });
+    const { firstname, lastname, phone, password, role_id } = req.body;
+    const updateFields = { firstname, lastname, phone };
+    if (role_id !== undefined) updateFields.role_id = role_id;
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      updateFields.password = await bcrypt.hash(password, 10);
+    }
+    const [updated] = await db.restaurantUser.update(updateFields, { where: { id: req.params.id } });
     if (!updated) return res.status(404).json({ error: 'User not found' });
     res.json({ message: 'User updated' });
   } catch (err) {
@@ -432,13 +441,12 @@ exports.addRestaurantUser = async (req, res) => {
       lastname = "",
       password,
       phone,
-      restaurant_id,
       restaurantId,
       role_id
     } = req.body;
 
     // Use restaurant_id or restaurantId (prefer restaurant_id if both)
-    const restId = restaurant_id || restaurantId;
+    const restId =  restaurantId;
 
     if (!firstname || !password || !role_id || !phone || !restId) {
       return res.status(400).send({ message: 'Missing required fields' });

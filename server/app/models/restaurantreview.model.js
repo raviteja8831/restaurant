@@ -5,6 +5,9 @@ module.exports = (sequelize, Sequelize) => {
       autoIncrement: true,
       primaryKey: true,
     },
+        rating: {
+      type: Sequelize.INTEGER,
+      allowNull: true,},
     restaurantId: {
       type: Sequelize.INTEGER,
       allowNull: false,

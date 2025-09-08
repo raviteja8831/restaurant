@@ -25,6 +25,14 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.FLOAT,
       allowNull: false,
     },
+    tableId: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'Restauranttable',
+        key: 'id',
+      },
+    },
     status: {
       type: Sequelize.STRING,
       allowNull: false,

@@ -17,8 +17,9 @@ export const getMenusWithItems = async () => {
 // Save user allotted menu items (bulk)
 export const saveUserMenuItems = async (userId, menuitemIds) => {
   try {
-    // Send selectedUserId in the payload as well
-    const res = await api.post(`/api/users/${userId}/allotted-menuitems`, { menuitemIds, userId });
+    // Ensure menuitemIds is a flat array
+    const flatMenuitemIds = Array.isArray(menuitemIds) ? menuitemIds.flat() : [];
+    const res = await api.post(`/api/users/${userId}/allotted-menuitems`, { menuitemIds: flatMenuitemIds, userId });
     return res.data;
   } catch (error) {
     showApiError(error);
