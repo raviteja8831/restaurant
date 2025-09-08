@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   StyleSheet,
@@ -10,29 +10,21 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TabBar from "./TabBarScreen";
 
+import { fetchReviews } from '../services/reviewService';
+
 export default function NotificationsTabScreen() {
-    // Reviews and Ratings mock data
-  const reviews = [
-    {
-      hotelName: "Sai Hotel (3 Star Hotel)",
-      description: "ssssssegegegwegg",
-      rating: 5,
-      status: "Excellent",
-    },
-    {
-      hotelName: "Kamat Hotel",
-      description: "asdafewqfewqc",
-      rating: 5,
-      status: "Excellent",
-    },
-    {
-      hotelName: "Udupi Kitchen Hotel",
-      description: "gafsvgregerqverqgrqegqergewg",
-      rating: 5,
-      status: "Excellent",
-    },
-  ];
-  // Placeholder for Notifications tab UI
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  // TODO: Replace with actual restaurantId from context or props
+  const restaurantId = 1;
+
+  useEffect(() => {
+    fetchReviews(restaurantId)
+      .then(data => setReviews(data))
+      .catch(() => setReviews([]))
+      .finally(() => setLoading(false));
+  }, [restaurantId]);
+
   return (
     <View style={styles.container}>
   <ScrollView
@@ -63,34 +55,45 @@ export default function NotificationsTabScreen() {
 
           {/* Reviews List */}
           <View style={styles.reviewsList}>
-            {reviews.map((review, index) => (
-              <View key={index} style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <MaterialCommunityIcons
-                    name="star"
-                    size={16}
-                    color="#FFD700"
-                  />
-                  <Text style={styles.reviewHotelName}>{review.hotelName}</Text>
-                </View>
-                <Text style={styles.reviewDescription}>
-                  {review.description}
-                </Text>
-                <View style={styles.reviewFooter}>
-                  <View style={styles.reviewStars}>
-                    {[...Array(review.rating)].map((_, i) => (
-                      <MaterialCommunityIcons
-                        key={i}
-                        name="star"
-                        size={16}
-                        color="#FFD700"
-                      />
-                    ))}
+            {loading ? (
+              <Text style={{ color: '#222', textAlign: 'center', marginTop: 16 }}>Loading...</Text>
+            ) : reviews.length === 0 ? (
+              <Text style={{ color: '#222', textAlign: 'center', marginTop: 16 }}>No reviews found.</Text>
+            ) : (
+              reviews.map((review, index) => (
+                <View key={index} style={styles.reviewCard}>
+                  {/* Left: Large Star */}
+                  <View style={styles.reviewLeft}>
+                    <MaterialCommunityIcons
+                      name="star"
+                      size={36}
+                      color="#FFD700"
+                      style={styles.cardStar}
+                    />
                   </View>
-                  <Text style={styles.reviewStatus}>{review.status}</Text>
+                  {/* Center: Hotel Name & Description */}
+                  <View style={styles.reviewContent}>
+                    <Text style={styles.reviewHotelName}>{review.restaurant || review.hotelName}</Text>
+                    <Text style={styles.reviewDescription} numberOfLines={1} ellipsizeMode="tail">
+                      {review.review || review.description}
+                    </Text>
+                    <View style={styles.reviewFooter}>
+                      <View style={styles.reviewStars}>
+                        {[...Array(review.rating)].map((_, i) => (
+                          <MaterialCommunityIcons
+                            key={i}
+                            name="star"
+                            size={16}
+                            color="#FFD700"
+                          />
+                        ))}
+                      </View>
+                      <Text style={styles.reviewStatus}>{review.status || (review.rating >= 4 ? 'Excellent' : review.rating === 3 ? 'Good' : 'Average')}</Text>
+                    </View>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))
+            )}
           </View>
         </View>
       </ScrollView>
@@ -151,16 +154,15 @@ export default function NotificationsTabScreen() {
           flex: 1,
         },
         reviewCard: {
-          backgroundColor: 'rgba(255,255,255,0.18)',
-          borderRadius: 0,
-          borderBottomWidth: 2,
-          borderColor: '#8883d8',
           flexDirection: 'row',
           alignItems: 'center',
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          marginBottom: 0,
-          minHeight: 80,
+          backgroundColor: 'rgba(255,255,255,0.18)',
+          borderRadius: 12,
+          marginBottom: 16,
+          marginHorizontal: 8,
+          paddingVertical: 16,
+          paddingHorizontal: 12,
+          minHeight: 90,
           shadowColor: '#888',
           shadowOffset: { width: 2, height: 2 },
           shadowOpacity: 0.15,
@@ -169,24 +171,30 @@ export default function NotificationsTabScreen() {
         },
         reviewLeft: {
           alignItems: 'center',
-          marginRight: 12,
+          justifyContent: 'center',
+          marginRight: 16,
           width: 48,
         },
+        cardStar: {
+          textShadowColor: '#888',
+          textShadowOffset: { width: 2, height: 2 },
+          textShadowRadius: 4,
+        },
+        reviewContent: {
+          flex: 1,
+          justifyContent: 'center',
+        },
         reviewHotelName: {
-          fontSize: 18,
+          fontSize: 17,
           fontWeight: 'bold',
           color: '#222',
           marginBottom: 2,
         },
         reviewDescription: {
-          fontSize: 14,
+          fontSize: 13,
           color: '#222',
-          marginBottom: 6,
-          lineHeight: 18,
-        },
-        reviewContent: {
-          flex: 1,
-          justifyContent: 'center',
+          marginBottom: 4,
+          lineHeight: 17,
         },
         reviewFooter: {
           flexDirection: 'row',
@@ -198,15 +206,11 @@ export default function NotificationsTabScreen() {
           alignItems: 'center',
           marginRight: 8,
           marginTop: 2,
-          textShadowColor: '#888',
-          textShadowOffset: { width: 1, height: 1 },
-          textShadowRadius: 2,
         },
         reviewStatus: {
-          fontSize: 15,
+          fontSize: 14,
           color: '#222',
           fontWeight: 'bold',
-          alignSelf: 'flex-end',
           marginLeft: 'auto',
         },
       });

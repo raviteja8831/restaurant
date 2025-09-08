@@ -1,18 +1,35 @@
-import React from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
 import { router } from 'expo-router';
+import { fetchChefStats, fetchChefOrders, fetchChefMessages } from '../api/chefApi';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setApiAuthToken } from '../api/api';
 
 export default function ChefProfileScreen() {
+  const [profile, setProfile] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Test data as per screenshot
-  const items = [
-    'Masala Dosa', 'Plain Dosa', 'Rava Dosa', 'Paper Dosa', 'Masala Paper Dosa', 'Pesarattu',
-    'Cheese Dosa', 'Nair Dosa', 'Aloo Dosa', 'Moong Dal Dosa', 'Onion Dosa', 'Butter Dosa',
-    'Masala Butter Dosa', 'Paneer Dosa', 'Masala Paneer Dosa', 'Podi'
-  ];
-  const mostOrdered = ['Masala Butter Dosa', 'Paneer Dosa', 'Masala Paneer Dosa'];
+  useEffect(() => {
+    const loadProfile = async () => {
+      setLoading(true);
+      try {
+        const token = await AsyncStorage.getItem('chef_token');
+                const user = await AsyncStorage.getItem('chef_profile');
+        
+        if (token) {
+          setApiAuthToken(token);
+        }
+        const statsRes = await fetchChefStats(user ? JSON.parse(user).id : null);
+        setStats(statsRes);
+        const chefProfile = await AsyncStorage.getItem('chef_profile');
+        setProfile(chefProfile ? JSON.parse(chefProfile) : null);
+      } catch (e) {}
+      setLoading(false);
+    };
+    loadProfile();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -21,38 +38,40 @@ export default function ChefProfileScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <MaterialCommunityIcons name="arrow-left" size={28} color="#222" />
         </TouchableOpacity>
-        <Image source={{ uri: 'https://randomuser.me/api/portraits/men/32.jpg' }} style={styles.profileImg} />
+        <Image source={{ uri: profile?.photoUrl || 'https://randomuser.me/api/portraits/men/32.jpg' }} style={styles.profileImg} />
         <MaterialCommunityIcons name="send-outline" size={28} color="#222" />
       </View>
       {/* Main Content */}
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.row}>
-          {/* Number of Items */}
-          <View style={styles.itemsBox}>
-            <Text style={styles.itemsTitle}>Number of Items</Text>
-            {items.map((item, i) => (
-              <Text key={i} style={styles.itemText}>• {item}</Text>
-            ))}
-          </View>
-          {/* Stats */}
-          <View style={styles.statsCol}>
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Total Order Completed</Text>
-              <Text style={styles.statValue}>45</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>No of Working Days</Text>
-              <Text style={styles.statValue}>215</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>Most Ordered Dish</Text>
-              {mostOrdered.map((dish, i) => (
-                <Text key={i} style={styles.mostOrderedText}>{dish}</Text>
+        {loading ? <ActivityIndicator color="#7b6eea" size="large" /> : (
+          <View style={styles.row}>
+            {/* Number of Items */}
+            <View style={styles.itemsBox}>
+              <Text style={styles.itemsTitle}>Number of Items</Text>
+              {stats?.menuItems?.map((item, i) => (
+                <Text key={i} style={styles.itemText}> {item.name}</Text>
               ))}
             </View>
+            {/* Stats */}
+            <View style={styles.statsCol}>
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Total Order Completed</Text>
+                <Text style={styles.statValue}>{stats?.totalOrders ?? '-'}</Text>
+              </View>
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>No of Working Days</Text>
+                <Text style={styles.statValue}>{stats?.workingDays ?? '-'}</Text>
+              </View>
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Most Ordered Dish</Text>
+                {stats?.mostOrdered?.map?.((dish, i) => (
+                  <Text key={i} style={styles.mostOrderedText}>{dish.menuitemId}</Text>
+                ))}
+              </View>
+            </View>
           </View>
-        </View>
-        {/* Login Hours */}
+        )}
+        {/* Login Hours (placeholder) */}
         <Text style={styles.loginHours}>Login Hours : 4 Hrs</Text>
       </ScrollView>
     </View>

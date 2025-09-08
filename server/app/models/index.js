@@ -19,6 +19,7 @@ const db = {};
 
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
+db.message = require("./message.model.js")(sequelize, Sequelize);
 
 db.restaurantType = require("./restauranttype.model.js")(sequelize, Sequelize); 
 db.users = require("./user.model.js")(sequelize, Sequelize);
@@ -26,18 +27,16 @@ db.roles = require("./role.model.js")(sequelize, Sequelize);
 db.restaurant = require("./restaurant.model.js")(sequelize, Sequelize);
 db.restaurantUser = require("./restaurantuser.model.js")(sequelize, Sequelize);
 db.restaurantReview = require("./restaurantreview.model.js")(sequelize, Sequelize);
-db.restaurantRating = require("./restaurantrating.model.js")(sequelize, Sequelize);
 db.orders = require("./order.model.js")(sequelize, Sequelize);
 db.menu = require("./menu.model.js")(sequelize, Sequelize);
 db.menuItem = require("./menuitem.model.js")(sequelize, Sequelize);
 db.restaurantTable = require("./restauranttable.model.js")(sequelize, Sequelize);
-db.qrCode = require("./qrcode.model.js")(sequelize, Sequelize);
 db.announcement = require("./announcement.model.js")(sequelize, Sequelize);
 db.orderProducts = require("./orderproducts.model.js")(sequelize, Sequelize);
 db.userMenuItem = require("./user_menuitem.model.js")(sequelize, Sequelize);
 
 db.restaurantReview.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
-db.restaurantReview.belongsTo(db.users, { foreignKey: 'userId', as: 'user' });
+// db.restaurantReview.belongsTo(db.users, { foreignKey: 'userId', as: 'user' });
 
 db.menu.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
 db.restaurant.hasMany(db.menu, { foreignKey: 'restaurantId', as: 'menus' });
@@ -53,6 +52,9 @@ db.menuItem.belongsTo(db.menu, { foreignKey: 'menuId', as: 'menu' });
 // Associate orderProducts (orderproduct) with menuItem (menuitem)
 db.orderProducts.belongsTo(db.menuItem, { foreignKey: 'menuitemId', as: 'menuitem' });
 db.menuItem.hasMany(db.orderProducts, { foreignKey: 'menuitemId', as: 'orderProducts' });
+// Order <-> Restauranttable association
+db.orders.belongsTo(db.restaurantTable, { foreignKey: 'tableId', as: 'table' });
+db.restaurantTable.hasMany(db.orders, { foreignKey: 'tableId', as: 'orders' });
 
 
 // Many-to-many: restaurantUser <-> menuItem through userMenuItem
@@ -78,17 +80,16 @@ db.restaurantType.hasMany(db.restaurant, { foreignKey: 'typeId', as: 'restaurant
 // Removed duplicate association for restaurantReview and restaurant with alias 'restaurant'
 db.restaurantTable.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
 db.restaurant.hasMany(db.restaurantTable, { foreignKey: 'restaurantId', as: 'tables' });
-db.qrCode.belongsTo(db.restaurantTable, { foreignKey: 'restTableId', as: 'restaurantTable' });
-db.restaurantTable.hasMany(db.qrCode, { foreignKey: 'restTableId', as: 'qrcodes' });
 db.restaurantUser.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
 db.restaurant.hasMany(db.restaurantUser, { foreignKey: 'restaurantId', as: 'restaurantUsers' });
 db.restaurantUser.belongsTo(db.roles, { foreignKey: 'role_id', as: 'role' });
 db.roles.hasMany(db.restaurantUser, { foreignKey: 'role_id', as: 'restaurantUsers' });
 
 // RestaurantRating associations
-db.restaurantRating.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
-db.restaurant.hasMany(db.restaurantRating, { foreignKey: 'restaurantId', as: 'restaurantRatings' });
-db.restaurantRating.belongsTo(db.users, { foreignKey: 'userId', as: 'user' });
+// db.restaurantReview.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
+db.restaurant.hasMany(db.restaurantReview, { foreignKey: 'restaurantId', as: 'restaurantReviews' });
+db.restaurantReview.belongsTo(db.users, { foreignKey: 'userId', as: 'user' });
+db.users.hasMany(db.restaurantReview, { foreignKey: 'userId', as: 'userReviews' });
 
 db.users.belongsTo(db.roles, {
   foreignKey: "role_id",

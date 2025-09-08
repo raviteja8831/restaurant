@@ -1,21 +1,40 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, Image, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { fetchChefMessages, fetchChefOrders } from '../api/chefApi';
+import { setApiAuthToken } from '../api/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ChefHomeScreen() {
   const [showMsgModal, setShowMsgModal] = useState(false);
-  // Test data as per screenshot
-  const orders = [
-    { name: 'Masala Dosa 03', table: 'Table No 02' },
-    { name: 'Rava Dosa 05', table: 'Parcel Table' },
-    { name: 'Butter Dosa 02', table: 'Table No 06' },
-  ];
+  const [orders, setOrders] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const token = await AsyncStorage.getItem('chef_token');
+        const user = await AsyncStorage.getItem('chef_profile');
+        if (token) {
+          setApiAuthToken(token);
+        }
+        const ordersRes = await fetchChefOrders(user ? JSON.parse(user).id : null);
+        setOrders(ordersRes.orders || []);
+        const msgRes = await fetchChefMessages();
+        setMessages(msgRes.messages || []);
+      } catch (e) {}
+      setLoading(false);
+    };
+    loadData();
+  }, []);
 
   return (
     <View style={styles.container}>
       {/* Absolute icons at corners */}
-      <TouchableOpacity style={styles.powerIcon} onPress={() => router.replace('/login')}>
+      <TouchableOpacity style={styles.powerIcon} onPress={() => { AsyncStorage.removeItem('chef_token'); router.replace('/chef-login'); }}>
         <MaterialCommunityIcons name="power" size={28} color="#222" />
       </TouchableOpacity>
       <TouchableOpacity style={styles.bellIcon} onPress={() => setShowMsgModal(true)}>
@@ -25,16 +44,17 @@ export default function ChefHomeScreen() {
       <Modal visible={showMsgModal} transparent animationType="fade" onRequestClose={() => setShowMsgModal(false)}>
         <View style={styles.msgModalOverlay}>
           <View style={styles.msgModalCard}>
-            <Text style={styles.msgModalTitle}>Message</Text>
-            <View style={styles.msgBox}>
-              <Text style={styles.msgText}>Today Meet me at 4:00 PM in Cabin</Text>
-              <View style={{ marginTop: 8 }}>
-                <Text style={styles.msgMeta}>Sent by: Mohan (Manager)</Text>
-                <Text style={styles.msgMeta}>Time: 12:00 AM Wednesday</Text>
-                <Text style={styles.msgMeta}>Date: 28.08.2025</Text>
+            <Text style={styles.msgModalTitle}>Messages</Text>
+            {messages.length === 0 && <Text style={styles.msgText}>No messages</Text>}
+            {messages.map((msg, i) => (
+              <View key={i} style={styles.msgBox}>
+                <Text style={styles.msgText}>{msg.message}</Text>
+                <View style={{ marginTop: 8 }}>
+                  <Text style={styles.msgMeta}>From: {msg.fromUserId}</Text>
+                  <Text style={styles.msgMeta}>Time: {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ''}</Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.msgBox} />
+            ))}
             <TouchableOpacity style={styles.msgCloseBtn} onPress={() => setShowMsgModal(false)}>
               <MaterialCommunityIcons name="close" size={28} color="#222" />
             </TouchableOpacity>
@@ -63,15 +83,16 @@ export default function ChefHomeScreen() {
       <Text style={styles.ordersTitle}>Your Orders</Text>
       {/* Orders List */}
       <View style={{ marginHorizontal: 16, marginTop: 8 }}>
-        {orders.map((order, i) => (
-          <View key={i} style={styles.orderCard}>
-            <View>
-              <Text style={styles.orderName}>{order.name}</Text>
-              <Text style={styles.orderTable}>{order.table}</Text>
+        {loading ? <ActivityIndicator color="#7b6eea" size="large" /> :
+          orders.map((order, i) => (
+            <View key={i} style={styles.orderCard}>
+              <View>
+                <Text style={styles.orderName}>{order.name || order.menuItemName || 'Order'}</Text>
+                <Text style={styles.orderTable}>{order.table || order.tableName || ''}</Text>
+              </View>
+              <MaterialCommunityIcons name="cog-outline" size={28} color="#222" style={styles.orderIcon} />
             </View>
-            <MaterialCommunityIcons name="cog-outline" size={28} color="#222" style={styles.orderIcon} />
-          </View>
-        ))}
+          ))}
       </View>
     </View>
   );

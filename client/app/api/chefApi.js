@@ -1,10 +1,20 @@
+
 import api from '../api';
 import { CHEF_API } from '../constants/chefApi';
 import { showApiError } from '../services/messagingService';
 
-export const fetchChefOrders = async () => {
+export const fetchChefOrders = async (user) => {
   try {
-    const res = await api.get(CHEF_API.ORDERS);
+    const res = await api.get(`${CHEF_API.ORDERS}/${user}`);
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+};
+export const chefLogin = async ({ phone, password }) => {
+  try {
+    const res = await api.post(CHEF_API.LOGIN, { phone, password });
     return res.data;
   } catch (error) {
     showApiError(error);
@@ -12,9 +22,9 @@ export const fetchChefOrders = async () => {
   }
 };
 
-export const fetchChefStats = async () => {
+export const fetchChefStats = async (chefId) => {
   try {
-    const res = await api.get(CHEF_API.STATS);
+    const res =  await api.get(`${CHEF_API.ORDERS}/${chefId}`);
     return res.data;
   } catch (error) {
     showApiError(error);
