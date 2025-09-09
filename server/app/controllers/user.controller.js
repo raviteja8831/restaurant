@@ -1,16 +1,172 @@
-  const db = require("../models");
+const db = require("../models");
+const { Op } = require("sequelize");
+
+// Get user profile with orders, favorites and transactions
+exports.getUserProfile = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    // Get user details
+    const user = await db.users.findOne({
+      where: { id: userId },
+      attributes: ["id", "firstname", "lastname", "phone", "email"],
+    });
+
+    if (!user) {
+      return res.status(404).send({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    // Get recent orders with details
+    const orders = await db.orders.findAll({
+      where: {
+        userId,
+        status: "COMPLETED",
+      },
+      include: [
+        {
+          model: db.restaurant,
+          as: "orderRestaurant",
+          attributes: ["name", "address"], //, "image"
+        },
+        {
+          model: db.orderProducts,
+          as: "orderProducts",
+          include: [
+            {
+              model: db.menuItem,
+              as: "menuitem",
+              attributes: ["name", "price"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit: 5,
+    });
+
+    // Format orders for response
+    const formattedOrders = orders.map((order) => ({
+      id: order.id,
+      restaurantName: order.orderRestaurant.name,
+      restaurantAddress: order.orderRestaurant.address,
+      restaurantImage: order.orderRestaurant.image,
+      date: new Date(order.createdAt).toLocaleDateString(),
+      time: new Date(order.createdAt).toLocaleTimeString(),
+      totalAmount: order?.total,
+      items: order.orderProducts.map((product) => ({
+        name: product.menuitem.name,
+        quantity: product.quantity,
+        price: product.price,
+        total: product.quantity * product.price,
+      })),
+    }));
+
+    // Get user favorites
+    const favorites = await db.userFavorite.findAll({
+      where: {
+        userId,
+      },
+      include: [
+        {
+          model: db.restaurant,
+          as: "ratedRestaurant",
+          attributes: ["id", "name", "address"], //, "image"
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    // Format favorites for response
+    const formattedFavorites = favorites.map((favorite) => ({
+      id: favorite.id,
+      restaurantId: favorite.ratedRestaurant.id,
+      restaurantName: favorite.ratedRestaurant.name,
+      restaurantAddress: favorite.ratedRestaurant.address,
+      restaurantImage: favorite.ratedRestaurant.image,
+      comment: favorite.comment,
+      addedAt: new Date(favorite.createdAt).toLocaleDateString(),
+    }));
+
+    // Get recent payments/transactions
+    const payments = await db.orders.findAll({
+      where: {
+        userId,
+        status: "COMPLETED",
+      },
+      include: [
+        {
+          model: db.restaurant,
+          as: "orderRestaurant",
+          attributes: ["name", "address"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      // limit: 5,
+      attributes: ["id", "total", "createdAt", "membercount"], //"paymentMethod"
+    });
+
+    // Format payments for response
+    const formattedPayments = payments.map((payment) => ({
+      id: payment.id,
+      amount: payment.total,
+      restaurantName: payment.orderRestaurant.name,
+      restaurantAddress: payment.orderRestaurant.address,
+      date: new Date(payment.createdAt).toLocaleDateString(),
+      time: new Date(payment.createdAt).toLocaleTimeString(),
+      method: payment?.paymentMethod || "ONLINE",
+    }));
+
+    // Return formatted response
+    return res.status(200).send({
+      status: "success",
+      data: {
+        user: {
+          id: user.id,
+          firstName: user.firstname,
+          lastName: user.lastname,
+          phoneNumber: user.phone,
+          email: user.email,
+        },
+        orders: formattedOrders,
+        favorites: formattedFavorites,
+        payments: formattedPayments,
+      },
+    });
+  } catch (error) {
+    console.error("Error in getUserProfile:", error);
+    return res.status(500).send({
+      status: "error",
+      message: "Error fetching user profile",
+      error: error.message,
+    });
+  }
+};
 
 // Get users by restaurantId and roleId
 exports.getRestaurantUsers = async (req, res) => {
-  
   const { restaurantId, roleId } = req.query;
   if (!restaurantId || !roleId) {
-    return res.status(400).json({ error: 'restaurantId and roleId are required' });
+    return res
+      .status(400)
+      .json({ error: "restaurantId and roleId are required" });
   }
   try {
     const users = await db.restaurantUser.findAll({
       where: { restaurantId: restaurantId, role_id: roleId },
-      attributes: ['id', 'phone', 'firstname', 'lastname', 'email', 'role_id', 'restaurantId', 'createdAt', 'updatedAt'],
+      attributes: [
+        "id",
+        "phone",
+        "firstname",
+        "lastname",
+        "email",
+        "role_id",
+        "restaurantId",
+        "createdAt",
+        "updatedAt",
+      ],
     });
     res.json(users);
   } catch (err) {
@@ -22,23 +178,31 @@ exports.getUserMenuItems = async (req, res) => {
   const { userId } = req.params;
   try {
     const user = await db.restaurantUser.findByPk(userId, {
-      attributes: ['id', 'firstname', 'lastname', 'phone'],
-      include: [{ model: db.menuItem, as: 'allottedMenuItems', attributes: ['id', 'name'] }]
+      attributes: ["id", "firstname", "lastname", "phone"],
+      include: [
+        {
+          model: db.menuItem,
+          as: "allottedMenuItems",
+          attributes: ["id", "name"],
+        },
+      ],
     });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ error: "User not found" });
     res.json({ menuItems: user.allottedMenuItems });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 // Save user allotted menu items (bulk)
-exports.saveUserMenuItems = async (req, res) => {  // Accept userId from body if present, else from params
+exports.saveUserMenuItems = async (req, res) => {
+  // Accept userId from body if present, else from params
   const userId = req.body.userId || req.params.userId;
   const { menuitemIds } = req.body;
-  if (!Array.isArray(menuitemIds)) return res.status(400).json({ error: 'menuitemIds must be array' });
+  if (!Array.isArray(menuitemIds))
+    return res.status(400).json({ error: "menuitemIds must be array" });
   try {
     const user = await db.restaurantUser.findByPk(userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ error: "User not found" });
     await user.setAllottedMenuItems(menuitemIds);
     res.json({ success: true });
   } catch (err) {
@@ -51,7 +215,7 @@ let userMessages = {};
 exports.sendMessageToUser = async (req, res) => {
   const { userId } = req.params;
   const { message, from } = req.body;
-  if (!message) return res.status(400).json({ error: 'Message required' });
+  if (!message) return res.status(400).json({ error: "Message required" });
   if (!userMessages[userId]) userMessages[userId] = [];
   userMessages[userId].push({ message, from, time: new Date() });
   res.json({ success: true });
@@ -65,31 +229,40 @@ exports.getMessagesForUser = async (req, res) => {
 // Get dashboard data for a user (profile, allotted menu, stats, top orders, today's orders)
 exports.getDashboardData = async (req, res) => {
   const { userId } = req.params;
-  const { period = 'week' } = req.query;
+  const { period = "week" } = req.query;
   try {
     // Get user profile and restaurantId
     const user = await db.restaurantUser.findByPk(userId, {
-      attributes: ['id', 'firstname', 'lastname', 'phone', 'restaurantId'],
+      attributes: ["id", "firstname", "lastname", "phone", "restaurantId"],
     });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     const restaurantId = user.restaurantId;
     // Get allotted menu items for this user (actual menu items, not join table)
     const userWithMenu = await db.restaurantUser.findByPk(userId, {
-      include: [{ model: db.menuItem, as: 'allottedMenuItems', attributes: ['id', 'name'] }]
+      include: [
+        {
+          model: db.menuItem,
+          as: "allottedMenuItems",
+          attributes: ["id", "name"],
+        },
+      ],
     });
-    const allottedMenuItems = userWithMenu && userWithMenu.allottedMenuItems ? userWithMenu.allottedMenuItems : [];
-    const allottedMenuItemIds = allottedMenuItems.map(mi => mi.id);
+    const allottedMenuItems =
+      userWithMenu && userWithMenu.allottedMenuItems
+        ? userWithMenu.allottedMenuItems
+        : [];
+    const allottedMenuItemIds = allottedMenuItems.map((mi) => mi.id);
 
     // Get login time (mocked for now)
-    const todayLoginTime = '8:00 AM';
+    const todayLoginTime = "8:00 AM";
 
     // Get order stats (total, week/month/year) for this restaurant
     const now = new Date();
     let startDate;
-    if (period === 'year') {
+    if (period === "year") {
       startDate = new Date(now.getFullYear(), 0, 1);
-    } else if (period === 'month') {
+    } else if (period === "month") {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     } else {
       // week
@@ -99,34 +272,47 @@ exports.getDashboardData = async (req, res) => {
     }
 
     // Total orders for period (for this restaurant)
-    const totalOrders = await db.orders.count({ where: { restaurantId, createdAt: { [db.Sequelize.Op.gte]: startDate } } });
+    const totalOrders = await db.orders.count({
+      where: { restaurantId, createdAt: { [db.Sequelize.Op.gte]: startDate } },
+    });
     // Total orders all time (for this restaurant)
     const totalOrdersAll = await db.orders.count({ where: { restaurantId } });
 
     // Today's date
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
 
     // Top 3 orders for today (by menu items allotted to this user)
     let topOrders = [];
     if (allottedMenuItemIds.length > 0) {
       topOrders = await db.orderProducts.findAll({
         attributes: [
-          'menuitemId',
-          [db.Sequelize.fn('COUNT', db.Sequelize.col('menuitemId')), 'count']
+          "menuitemId",
+          [db.Sequelize.fn("COUNT", db.Sequelize.col("menuitemId")), "count"],
         ],
         include: [
-          { model: db.menuItem, as: 'menuitem', attributes: ['id', 'name', 'createdAt'] },
+          {
+            model: db.menuItem,
+            as: "menuitem",
+            attributes: ["id", "name", "createdAt"],
+          },
           {
             model: db.orders,
-            as: 'order',
+            as: "order",
             attributes: [],
-            where: { restaurantId, createdAt: { [db.Sequelize.Op.gte]: startOfDay } }
-          }
+            where: {
+              restaurantId,
+              createdAt: { [db.Sequelize.Op.gte]: startOfDay },
+            },
+          },
         ],
         where: { menuitemId: allottedMenuItemIds },
-        group: ['menuitemId', 'menuitem.id', 'menuitem.name'],
-        order: [[db.Sequelize.literal('count'), 'DESC']],
-        limit: 3
+        group: ["menuitemId", "menuitem.id", "menuitem.name"],
+        order: [[db.Sequelize.literal("count"), "DESC"]],
+        limit: 3,
       });
     }
 
@@ -134,17 +320,26 @@ exports.getDashboardData = async (req, res) => {
     let todaysOrders = [];
     if (allottedMenuItemIds.length > 0) {
       const orders = await db.orders.findAll({
-        where: { restaurantId, createdAt: { [db.Sequelize.Op.gte]: startOfDay } },
+        where: {
+          restaurantId,
+          createdAt: { [db.Sequelize.Op.gte]: startOfDay },
+        },
         include: [
           {
             model: db.orderProducts,
-            as: 'orderProducts',
-            where: { menuitemId:allottedMenuItemIds },
+            as: "orderProducts",
+            where: { menuitemId: allottedMenuItemIds },
             required: true,
-            include: [{ model: db.menuItem, as: 'menuitem', attributes: ['id', 'name'] }]
-          }
+            include: [
+              {
+                model: db.menuItem,
+                as: "menuitem",
+                attributes: ["id", "name"],
+              },
+            ],
+          },
         ],
-        order: [['createdAt', 'DESC']]
+        order: [["createdAt", "DESC"]],
       });
       todaysOrders = orders;
     }
@@ -156,32 +351,33 @@ exports.getDashboardData = async (req, res) => {
         lastname: user.lastname,
         phone: user.phone,
         restaurantId: user.restaurantId,
-        allottedMenuItems
+        allottedMenuItems,
       },
       todayLoginTime,
       totalOrders,
       totalOrdersAll,
-      topOrders: topOrders.map(o => ({
+      topOrders: topOrders.map((o) => ({
         id: o.menuitem?.id,
         name: o.menuitem?.name,
-        count: o.dataValues.count
+        count: o.dataValues.count,
       })),
-      todaysOrders: todaysOrders.map(order => ({
+      todaysOrders: todaysOrders.map((order) => ({
         id: order.id,
         time: order.createdAt,
-        items: (order.orderProducts || []).map(op => {
-          console.log('Order Product:', op);
-          const opPlain = typeof op.get === 'function' ? op.get({ plain: true }) : op;
-          console.log('Order Product Plain:', opPlain);
+        items: (order.orderProducts || []).map((op) => {
+          console.log("Order Product:", op);
+          const opPlain =
+            typeof op.get === "function" ? op.get({ plain: true }) : op;
+          console.log("Order Product Plain:", opPlain);
           // Ensure op and op.menuitem are plain objects
           const menuitem = op.menuitem || {};
           return {
             id: menuitem.id,
             name: menuitem.name,
-            qty: opPlain.quantity || 1
+            qty: opPlain.quantity || 1,
           };
-        })
-      }))
+        }),
+      })),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -195,9 +391,10 @@ exports.addMenuItemToUser = async (req, res) => {
   try {
     const user = await db.users.findByPk(userId);
     const menuitem = await db.menuItem.findByPk(menuitemId);
-    if (!user || !menuitem) return res.status(404).json({ error: 'User or Menu Item not found' });
+    if (!user || !menuitem)
+      return res.status(404).json({ error: "User or Menu Item not found" });
     await user.addAllottedMenuItem(menuitem);
-    res.json({ message: 'Menu item added to user' });
+    res.json({ message: "Menu item added to user" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -206,7 +403,7 @@ exports.addMenuItemToUser = async (req, res) => {
 exports.uploadImage = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).send({ message: 'No file uploaded' });
+      return res.status(400).send({ message: "No file uploaded" });
     }
     // Save file URL (relative to server)
     const fileUrl = `/assets/images/${req.file.filename}`;
@@ -219,10 +416,13 @@ exports.uploadImage = async (req, res) => {
 
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const path = require('path');
-const fs = require('fs');
-const multer = require('multer');
-const { ensureUploadDir, getUploadFilename } = require('../utils/imageUploadHelper');
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
+const {
+  ensureUploadDir,
+  getUploadFilename,
+} = require("../utils/imageUploadHelper");
 
 const User = db.users;
 const Role = db.roles;
@@ -231,7 +431,7 @@ const Role = db.roles;
 const SECRET_KEY = "your_secret_key";
 
 // Ensure the upload directory exists
-const uploadDir = path.join(__dirname, '../../assets/images');
+const uploadDir = path.join(__dirname, "../../assets/images");
 ensureUploadDir(uploadDir);
 
 const storage = multer.diskStorage({
@@ -240,41 +440,53 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     cb(null, getUploadFilename(file));
-  }
+  },
 });
 const upload = multer({ storage });
 
 // User registration (manager)
 exports.register = async (req, res) => {
-  console.log('--- Register endpoint hit ---');
-  console.log('Request object:', req);
-  console.log('Request headers:', req.headers);
-  console.log('Request body:', req.body);
+  console.log("--- Register endpoint hit ---");
+  console.log("Request object:", req);
+  console.log("Request headers:", req.headers);
+  console.log("Request body:", req.body);
   try {
-  const { phone, firstname, lastname, email, name, restaurantAddress, restaurantType, ambiancePhoto, logo, foodType, enableBuffet } = req.body;
+    const {
+      phone,
+      firstname,
+      lastname,
+      email,
+      name,
+      restaurantAddress,
+      restaurantType,
+      ambiancePhoto,
+      logo,
+      foodType,
+      enableBuffet,
+    } = req.body;
 
     // Convert restaurantType and foodType to comma-separated values if array
-    let restaurantTypeStr = '';
+    let restaurantTypeStr = "";
     if (Array.isArray(restaurantType)) {
-      restaurantTypeStr = restaurantType.join(',');
+      restaurantTypeStr = restaurantType.join(",");
     } else {
       restaurantTypeStr = restaurantType;
     }
-    let foodTypeStr = '';
+    let foodTypeStr = "";
     if (Array.isArray(foodType)) {
-      foodTypeStr = foodType.join(',');
+      foodTypeStr = foodType.join(",");
     } else {
       foodTypeStr = foodType;
     }
 
     // Upload ambiancePhoto if it's a file (base64 or file path)
-    let ambianceImageUrl = '';
-      ambianceImageUrl = ambiancePhoto;
+    let ambianceImageUrl = "";
+    ambianceImageUrl = ambiancePhoto;
 
     // Upload logo if needed (similar logic)
-    let logoImageUrl = '';
-   
-      logoImageUrl = logo;
+    let logoImageUrl = "";
+
+    logoImageUrl = logo;
 
     // Create restaurant first
     const restaurant = await db.restaurant.create({
@@ -282,9 +494,9 @@ exports.register = async (req, res) => {
       address: restaurantAddress,
       restaurantType: restaurantTypeStr,
       foodType: foodTypeStr,
-      enableBuffet: enableBuffet === true || enableBuffet === 'true',
+      enableBuffet: enableBuffet === true || enableBuffet === "true",
       ambianceImage: ambianceImageUrl,
-      logoImage: logoImageUrl
+      logoImage: logoImageUrl,
     });
 
     // Create manager user for the restaurant
@@ -296,7 +508,11 @@ exports.register = async (req, res) => {
       role_id: 1, // 1 = manager
     });
 
-    res.status(201).send({ message: "Manager and restaurant registered successfully!", managerUser, restaurant });
+    res.status(201).send({
+      message: "Manager and restaurant registered successfully!",
+      managerUser,
+      restaurant,
+    });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
@@ -318,8 +534,17 @@ exports.login = async (req, res) => {
         {
           model: db.restaurant,
           as: "restaurant",
-          attributes: ["id", "name", "address", "restaurantType", "foodType", "enableBuffet", "ambianceImage", "logoImage"],
-        }
+          attributes: [
+            "id",
+            "name",
+            "address",
+            "restaurantType",
+            "foodType",
+            "enableBuffet",
+            "ambianceImage",
+            "logoImage",
+          ],
+        },
       ],
     });
     if (!user) {
@@ -337,17 +562,19 @@ exports.login = async (req, res) => {
       firstname: user.firstname,
       lastname: user.lastname,
       role: user.role ? { id: user.role.id, name: user.role.name } : null,
-      restaurant: user.restaurant ? {
-        id: user.restaurant.id,
-        name: user.restaurant.name,
-        address: user.restaurant.address,
-        restaurantType: user.restaurant.restaurantType,
-        foodType: user.restaurant.foodType,
-        enableBuffet: user.restaurant.enableBuffet,
-        ambianceImage: user.restaurant.ambianceImage,
-        logoImage: user.restaurant.logoImage
-      } : null,
-      accessToken: token
+      restaurant: user.restaurant
+        ? {
+            id: user.restaurant.id,
+            name: user.restaurant.name,
+            address: user.restaurant.address,
+            restaurantType: user.restaurant.restaurantType,
+            foodType: user.restaurant.foodType,
+            enableBuffet: user.restaurant.enableBuffet,
+            ambianceImage: user.restaurant.ambianceImage,
+            logoImage: user.restaurant.logoImage,
+          }
+        : null,
+      accessToken: token,
     });
   } catch (error) {
     res.status(500).send({ message: error.message });
@@ -378,7 +605,7 @@ exports.findAll = async (req, res) => {
 exports.findOne = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ error: "User not found" });
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -388,9 +615,11 @@ exports.findOne = async (req, res) => {
 // Update user
 exports.update = async (req, res) => {
   try {
-    const [updated] = await User.update(req.body, { where: { id: req.params.id } });
-    if (!updated) return res.status(404).json({ error: 'User not found' });
-    res.json({ message: 'User updated' });
+    const [updated] = await User.update(req.body, {
+      where: { id: req.params.id },
+    });
+    if (!updated) return res.status(404).json({ error: "User not found" });
+    res.json({ message: "User updated" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -400,8 +629,8 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const deleted = await User.destroy({ where: { id: req.params.id } });
-    if (!deleted) return res.status(404).json({ error: 'User not found' });
-    res.json({ message: 'User deleted' });
+    if (!deleted) return res.status(404).json({ error: "User not found" });
+    res.json({ message: "User deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -410,7 +639,7 @@ exports.delete = async (req, res) => {
 // Middleware to verify token
 exports.verifyToken = (req, res, next) => {
   let token = req.headers["authorization"];
-  if (token && token.startsWith('Bearer ')) {
+  if (token && token.startsWith("Bearer ")) {
     token = token.slice(7);
   }
   if (!token) {
@@ -434,14 +663,14 @@ exports.addRestaurantUser = async (req, res) => {
       phone,
       restaurant_id,
       restaurantId,
-      role_id
+      role_id,
     } = req.body;
 
     // Use restaurant_id or restaurantId (prefer restaurant_id if both)
     const restId = restaurant_id || restaurantId;
 
     if (!firstname || !password || !role_id || !phone || !restId) {
-      return res.status(400).send({ message: 'Missing required fields' });
+      return res.status(400).send({ message: "Missing required fields" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -451,9 +680,12 @@ exports.addRestaurantUser = async (req, res) => {
       password: hashedPassword,
       role_id: role_id,
       phone,
-      restaurantId: restId
+      restaurantId: restId,
     });
-    return res.status(201).send({ message: 'User added to existing restaurant successfully', user });
+    return res.status(201).send({
+      message: "User added to existing restaurant successfully",
+      user,
+    });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }

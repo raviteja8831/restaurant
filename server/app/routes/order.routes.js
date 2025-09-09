@@ -5,7 +5,12 @@ module.exports = (app) => {
 
   const router = require("express").Router();
 
+  // Create a new order
+  router.post("/create", orders.createOrder);
 
-    app.use('/api/orders', router);
+  // Get pending orders for a restaurant selected
+  router.get("/pending/:restaurantId/:userId", orders.getPendingOrders);
+  router.get("/selected/items/:orderId", orders.getSelectedOrderItems);
 
+  app.use("/api/orders", router);
 };

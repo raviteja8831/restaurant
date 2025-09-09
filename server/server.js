@@ -1,4 +1,3 @@
-
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -7,8 +6,11 @@ const app = express();
 const allowAllCORS = (req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  if (req.method === 'OPTIONS') {
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
   next();
@@ -26,8 +28,9 @@ require("./app/routes/user.routes.js")(app);
 require("./app/routes/menu.routes.js")(app);
 require("./app/routes/menuitem.routes.js")(app);
 require("./app/routes/table.routes.js")(app);
+require("./app/routes/review.routes.js")(app);
 var corsOptions = {
-  origin: "*"
+  origin: "*",
 };
 
 app.use(cors(corsOptions));
@@ -40,7 +43,8 @@ app.use(express.urlencoded({ extended: true }));
 
 const db = require("./app/models");
 
-db.sequelize.sync()
+db.sequelize
+  .sync()
   .then(() => {
     console.log("Synced db.");
   })
@@ -53,19 +57,20 @@ db.sequelize.sync()
 //   console.log("Drop and re-sync db.");
 // });
 
-
 // Serve images with CORS headers
-app.use('/assets/images', express.static(__dirname + '/app/assets/images', {
-  setHeaders: function (res, path, stat) {
-    res.set('Access-Control-Allow-Origin', '*');
-  }
-}));
+app.use(
+  "/assets/images",
+  express.static(__dirname + "/app/assets/images", {
+    setHeaders: function (res, path, stat) {
+      res.set("Access-Control-Allow-Origin", "*");
+    },
+  })
+);
 
 // simple route
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to  application." });
 });
-
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;

@@ -11,6 +11,7 @@ import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import FilterModal from "../Modals/FilterModal";
 import SearchModal from "../Modals/SearchModal";
+// import MapView, { Marker } from "react-native-maps";
 
 const { width, height } = Dimensions.get("window");
 
@@ -70,6 +71,23 @@ export default function CustomerHomeScreen() {
       <View style={styles.mapArea}>
         <Text style={styles.mapText}>Map will go here</Text>
       </View>
+      {/* <View style={styles.mapArea}>
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: 37.78825, // your default lat
+            longitude: -122.4324, // your default lng
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        >
+          <Marker
+            coordinate={{ latitude: 37.78825, longitude: -122.4324 }}
+            title="My Location"
+            description="Here’s a marker!"
+          />
+        </MapView>
+      </View> */}
 
       {/* Filter Component */}
       <FilterModal
@@ -114,6 +132,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  mapArea: {
+    flex: 1,
+    height: 300, // or whatever height you want
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
   topControls: {
     position: "absolute",
     top: 20,
