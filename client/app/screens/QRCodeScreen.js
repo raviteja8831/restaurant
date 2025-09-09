@@ -1,14 +1,57 @@
 
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native';
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import TabBar from '../screens/TabBarScreen';
-
-const TABLES = [1, 2, 3, 4, 5, 6];
+import QRCodeModal from '../components/QRCodeModal';
+import { fetchQRCodes, createQRCode } from '../services/qrcodeService';
+import { useRouter } from 'expo-router';
 
 export default function QRCodeScreen() {
-  const [selectedDate, setSelectedDate] = useState('Today');
-  // Placeholder for dropdown, not functional
+  const router = useRouter();
+  const [selectedDate, setSelectedDate] = useState('Week');
+  const [qrcodes, setQRCodes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const restaurantId = 1; // TODO: get from context or props
+
+  useEffect(() => {
+    loadQRCodes();
+  }, []);
+
+  const loadQRCodes = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchQRCodes(restaurantId);
+      setQRCodes(data);
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to load QR codes');
+    }
+    setLoading(false);
+  };
+
+  const handleAddQRCode = async ({ name }) => {
+    setSaving(true);
+    try {
+      await createQRCode({ name, restaurantId });
+      setShowModal(false);
+      loadQRCodes();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to add QR code');
+    }
+    setSaving(false);
+  };
+
+  const handleQRCodePress = (qrcode) => {
+    // Use router.push with params (id, name)
+    router.push({
+      pathname: '/QRCodeOrdersScreen',
+      params: { id: qrcode.id, name: qrcode.name },
+    });
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
@@ -16,7 +59,7 @@ export default function QRCodeScreen() {
         <View style={styles.qrWrapper}>
           <MaterialCommunityIcons name="qrcode" size={180} color="#19171d" style={styles.qrIcon} />
         </View>
-        <TouchableOpacity style={styles.addBtn} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.addBtn} activeOpacity={0.8} onPress={() => setShowModal(true)}>
           <Text style={styles.addBtnText}>+</Text>
           <Text style={styles.addBtnLabel}>New QR Code</Text>
         </TouchableOpacity>
@@ -27,14 +70,24 @@ export default function QRCodeScreen() {
           </View>
           <Text style={styles.statsText}>No of Customers today : <Text style={styles.statsNum}>50</Text></Text>
         </View>
-        <View style={styles.tablesRow}>
-          {TABLES.map((n) => (
-            <View key={n} style={styles.tableBtn}>
-              <Text style={styles.tableBtnText}>{`Table ${n}`}</Text>
-            </View>
-          ))}
-        </View>
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, marginLeft: 18, marginBottom: 8 }}>QR Code List</Text>
+        {loading ? <ActivityIndicator color="#6c63b5" /> : (
+          <FlatList
+            data={qrcodes}
+            keyExtractor={item => item.id?.toString() || item.name}
+            contentContainerStyle={styles.tablesRow}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.tableBtn} onPress={() => handleQRCodePress(item)}>
+                <Text style={styles.tableBtnText}>{item.name}</Text>
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={<Text style={{ color: '#fff', textAlign: 'center', marginTop: 16 }}>No QR codes found.</Text>}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          />
+        )}
       </ScrollView>
+      <QRCodeModal visible={showModal} onClose={() => setShowModal(false)} onSave={handleAddQRCode} loading={saving} />
       <TabBar activeTab="qrcodes" />
     </View>
   );
@@ -135,8 +188,8 @@ const styles = StyleSheet.create({
   },
   tablesRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
     marginTop: 8,
     marginBottom: 24,
     gap: 10,

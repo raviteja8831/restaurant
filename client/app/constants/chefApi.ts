@@ -5,7 +5,7 @@ export const CHEF_API = {
   MENU: '/chef/menu',
   TRANSACTIONS: '/chef/transactions',
   QRCODES: '/chef/qrcodes',
-  ORDERS: '/chef/orders',
+  ORDERS: '/chef/dashboard',
   STATS: '/chef/stats',
   MESSAGES: '/chef/messages',
 };

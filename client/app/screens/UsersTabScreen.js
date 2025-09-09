@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, ActivityIn
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TabBar from "./TabBarScreen";
 import AddMenuItemModal from "../Modals/AddMenuItemModal";
-import { getUserDashboard, sendMessageToUser, getMessagesForUser, getUserAllottedMenuItems, getRestaurantUsers } from "../api/userApi";
+import { getUserDashboard, sendMessageToUser, getMessagesForUser, getUserAllottedMenuItems, getRestaurantUsers, registerRestaurantUser } from "../api/userApi";
 import { getMenusWithItems, saveUserMenuItems } from "../api/menuApi";
+import AddUserScreen from './AddUserScreen';
+import EditUserScreen from './EditUserScreen';
 
 export default function UsersTabScreen() {
 
@@ -14,7 +16,7 @@ const periodOptions = [
   { label: "Year", value: "year" },
 ];
 
-  
+  const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState("week");
@@ -37,14 +39,9 @@ const [userList, setUserList] = useState([]);
   const fetchUserList = async () => {
     try {
       const users = await getRestaurantUsers(restaurantId, chefRoleId);
-      // Map to match expected fields for UI
-      const mapped = users.map(u => ({
-        id: u.id,
-        name: u.firstname + (u.lastname ? ' ' + u.lastname : ''),
-        role: 'Chef', // or u.role if available
-      }));
-      setUserList(mapped);
-      if (mapped.length > 0) setSelectedUser(mapped[0]);
+      // Do not map to name/role only, keep all fields for edit modal
+      setUserList(users);
+      if (users.length > 0) setSelectedUser(users[0]);
     } catch (err) {
       setUserList([]);
       setSelectedUser(null);
@@ -118,6 +115,32 @@ const [userList, setUserList] = useState([]);
     }
   };
 
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const handleUpdateUser = async (userData) => {
+    try {
+      // Call backend update API (assume updateUser is available in userApi)
+      await require('../api/userApi').updateUser(userData.id, userData);
+      setShowEditUserModal(false);
+      fetchUserList();
+      if (selectedUser && selectedUser.id === userData.id) {
+        setSelectedUser({ ...selectedUser, ...userData });
+      }
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to update user');
+    }
+  };
+
+  const handleSaveUser = async (userData) => {
+    try {
+      await registerRestaurantUser({ ...userData, restaurantId, role_id: chefRoleId });
+      setShowAddUserModal(false);
+      fetchUserList();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to add user');
+    }
+  };
+
   return (
     <>
       <ScrollView style={styles.container}>
@@ -131,45 +154,69 @@ const [userList, setUserList] = useState([]);
                 style={[styles.userAvatarCol, selectedUser && selectedUser.id === user.id && { borderColor: '#6c63b5', borderWidth: 2 }]}
                 onPress={() => setSelectedUser(user)}
               >
+                <Text style={styles.userAvatarName}>{user?.name}</Text>
                 <View style={styles.userAvatarCircle}>
                   <MaterialCommunityIcons name="account" size={32} color="#6c63b5" />
                 </View>
-                <Text style={styles.userAvatarName}>{user?.name}</Text>
                 <Text style={styles.userAvatarRole}>{user?.role}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
-          {/* + Button below avatars */}
-          <View style={{ alignItems: 'center', marginTop: 4 }}>
-            <TouchableOpacity style={styles.userAddBtn} onPress={() => Alert.alert('Add user pressed')}>
-              <MaterialCommunityIcons name="plus" size={32} color="#6c63b5" />
-            </TouchableOpacity>
-            <Text style={styles.userAddText}>Add</Text>
-          </View>
+            {/* Add User Plus Icon */}
+            <View style={{ alignItems: 'center', marginTop: 8 }}>
+              <TouchableOpacity
+                style={{ backgroundColor: '#ece9fa', borderRadius: 28, width: 56, height: 56, alignItems: 'center', justifyContent: 'center', elevation: 2 }}
+                onPress={() => setShowAddUserModal(true)}
+              >
+                <MaterialCommunityIcons name="plus" size={32} color="#6c63b5" />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 13, color: '#222', fontWeight: 'bold', marginTop: 4 }}>Add</Text>
+            </View>
+            {/* Add User Modal */}
+            <Modal visible={showAddUserModal} animationType="slide" transparent={true} onRequestClose={() => setShowAddUserModal(false)}>
+              <AddUserScreen
+                visible={showAddUserModal}
+                onClose={() => setShowAddUserModal(false)}
+                onSave={handleSaveUser}
+              />
+            </Modal>
         </View>
 
-        {/* Selected User Profile Row */}
+
+
+
+
+        {/* Profile Row (with settings icon) */}
         <View style={styles.usersProfileRow}>
           <View style={styles.usersProfileColLeft}>
             <View style={styles.usersProfileAvatarCircle}>
               <MaterialCommunityIcons name="account" size={48} color="#6c63b5" />
             </View>
             <View>
-              <Text style={styles.usersProfileName}>{selectedUser ? selectedUser.name : ''}</Text>
-              <Text style={styles.usersProfileRole}>{selectedUser ? selectedUser.role : ''}</Text>
-              <Text style={styles.usersLoginTime}>Login: {dashboard?.todayLoginTime || '--'}</Text>
+              <Text style={styles.usersProfileName}>{selectedUser?.name}</Text>
+              <Text style={styles.usersProfileRole}>{selectedUser?.role}</Text>
+              <Text style={styles.usersLoginTime}>Today Login Time : 8:00 AM</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.usersProfileSettingsBtn}>
+          <TouchableOpacity style={styles.usersProfileSettingsBtn} onPress={() => setShowEditUserModal(true)}>
             <MaterialCommunityIcons name="cog" size={28} color="#6c63b5" />
           </TouchableOpacity>
         </View>
 
+        {/* Edit User Modal */}
+        <Modal visible={showEditUserModal} animationType="slide" transparent={true} onRequestClose={() => setShowEditUserModal(false)}>
+          <EditUserScreen
+            visible={showEditUserModal}
+            onClose={() => setShowEditUserModal(false)}
+            user={selectedUser}
+            onSave={handleUpdateUser}
+          />
+        </Modal>
 
-        {/* Allotted Dishes & Orders Count Row */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginHorizontal: 18, marginBottom: 8, marginTop: 8 }}>
-          {/* Allotted Dishes Card */}
-          <View style={[styles.usersAllottedCard, { flex: 1.2, marginRight: 8, minHeight: 220 }]}> 
+        {/* Dashboard Layout: Menu List in one column, other three sections in one column (2 rows) */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginHorizontal: 12, marginTop: 8, marginBottom: 8 }}>
+          {/* Allotted Dishes Column */}
+          <View style={[styles.usersAllottedCard, { flex: 1.2, marginRight: 12, minHeight: 220 }]}> 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={styles.usersAllottedTitle}>Allotted Dishes</Text>
               <TouchableOpacity onPress={() => setShowAddMenuModal(true)}>
@@ -182,63 +229,85 @@ const [userList, setUserList] = useState([]);
               ))}
             </ScrollView>
           </View>
-          {/* Orders Count Card with Period Dropdown */}
-          <View style={{ flex: 1.1, minWidth: 180, backgroundColor: '#ece9fa', borderRadius: 16, padding: 18, alignItems: 'center', position: 'relative' }}>
-            <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 13, marginBottom: 2 }}>Total Orders Completed</Text>
-            <Text style={{ fontSize: 48, fontWeight: 'bold', color: '#222' }}>{dashboard?.totalOrders ?? '--'}</Text>
-            <Text style={{ color: '#888', fontWeight: 'bold', fontSize: 16, marginTop: 2 }}>{dashboard?.totalOrders}/{dashboard?.totalOrdersAll}</Text>
-            {/* Floating Period Dropdown */}
-            <View style={{ position: 'absolute', top: 12, right: 12 }}>
-              <TouchableOpacity style={{ backgroundColor: '#d1c4e9', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 4 }}>
-                <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 15 }}>{periodOptions.find(p => p.value === period)?.label}</Text>
-              </TouchableOpacity>
-              <View style={{ position: 'absolute', top: 36, right: 0, backgroundColor: '#ece9fa', borderRadius: 8, zIndex: 10, minWidth: 80 }}>
-                {periodOptions.map(opt => (
-                  <TouchableOpacity
-                    key={opt.value}
-                    style={{ padding: 10, backgroundColor: period === opt.value ? '#d1c4e9' : 'transparent' }}
-                    onPress={() => setPeriod(opt.value)}
-                  >
-                    <Text style={{ color: '#6c63b5', fontWeight: 'bold' }}>{opt.label}</Text>
-                  </TouchableOpacity>
-                ))}
+
+          {/* Right Column: Orders stacked vertically, then Top 3 Orders */}
+          <View style={{ flex: 2, flexDirection: 'column', justifyContent: 'flex-start' }}>
+            {/* Total Orders Completed (All Time) */}
+            <View style={{ backgroundColor: '#ece9fa', borderRadius: 16, padding: 18, alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 13, marginBottom: 2 }}>Total Orders Completed</Text>
+              <Text style={{ fontSize: 48, fontWeight: 'bold', color: '#222' }}>{dashboard?.totalOrdersAll ?? '--'}</Text>
+            </View>
+            {/* Period Wise Orders */}
+            <View style={{ backgroundColor: '#ece9fa', borderRadius: 16, padding: 18, alignItems: 'center', marginBottom: 12, position: 'relative' }}>
+              <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 13, marginBottom: 2 }}>Total Orders Completed</Text>
+              <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#222' }}>{dashboard?.totalOrders ?? '--'}</Text>
+              <Text style={{ color: '#888', fontWeight: 'bold', fontSize: 16, marginTop: 2 }}>{dashboard?.totalOrders}/{dashboard?.totalOrdersAll}</Text>
+              {/* Floating Period Dropdown */}
+              <View style={{ position: 'absolute', top: 12, right: 12 }}>
+                <TouchableOpacity
+                  style={{ backgroundColor: '#d1c4e9', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 4 }}
+                  onPress={() => setShowPeriodDropdown(v => !v)}
+                >
+                  <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 15 }}>
+                    {periodOptions.find(p => p.value === period)?.label}
+                  </Text>
+                </TouchableOpacity>
+                {showPeriodDropdown && (
+                  <View style={{ position: 'absolute', top: 36, right: 0, backgroundColor: '#ece9fa', borderRadius: 8, zIndex: 10, minWidth: 80 }}>
+                    {periodOptions.map(opt => (
+                      <TouchableOpacity
+                        key={opt.value}
+                        style={{ padding: 10, backgroundColor: period === opt.value ? '#d1c4e9' : 'transparent' }}
+                        onPress={() => {
+                          setPeriod(opt.value);
+                          setShowPeriodDropdown(false);
+                        }}
+                      >
+                        <Text style={{ color: '#6c63b5', fontWeight: 'bold' }}>{opt.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
               </View>
+            </View>
+            {/* Top Three Orders */}
+            <View style={{ backgroundColor: '#ece9fa', borderRadius: 16, padding: 18, alignItems: 'center' }}>
+              <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 13, marginBottom: 2 }}>Top three Orders of the Day</Text>
+              {dashboard?.topOrders && dashboard.topOrders.length > 0 ? (
+                dashboard.topOrders.map((order, idx) => (
+                  <Text key={idx} style={{ color: '#222', fontWeight: 'bold', fontSize: 15, marginTop: 2 }}>{order.name}: {order.count}</Text>
+                ))
+              ) : (
+                <Text style={{ color: '#888', fontSize: 14, marginTop: 4 }}>No data</Text>
+              )}
             </View>
           </View>
         </View>
-        {/* Message Section */}
-        <View style={{ marginHorizontal: 18, marginBottom: 12 }}>
-          <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 16, marginBottom: 4 }}>Message</Text>
-          <View style={{ backgroundColor: '#ece9fa', borderRadius: 12, padding: 10, marginBottom: 6 }}>
-            {messages.length ? (
-              <Text style={{ color: '#333', fontSize: 14 }}>{messages[messages.length - 1].message}</Text>
-            ) : (
-              <Text style={{ color: '#888', fontSize: 14 }}>No messages yet</Text>
-            )}
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
-            <TextInput
-              style={{ flex: 1, fontSize: 15, color: '#222', padding: 6 }}
-              placeholder="Message..."
-              value={message}
-              onChangeText={setMessage}
-              editable={!sending}
-            />
-            <TouchableOpacity onPress={handleSendMessage} disabled={sending || !message.trim()} style={{ marginLeft: 8 }}>
-              <MaterialCommunityIcons name="send" size={24} color={sending || !message.trim() ? '#ccc' : '#6c63b5'} />
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        {/* Top Orders Card (below Allotted/Orders row) */}
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginHorizontal: 18, marginBottom: 8 }}>
-          <View style={{ backgroundColor: '#d1c4e9', borderRadius: 16, padding: 14, minWidth: 180, alignItems: 'center' }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 13, color: '#222', marginBottom: 2 }}>Top three Orders of the Day</Text>
-            {dashboard?.topOrders?.map((order, idx) => (
-              <Text key={idx} style={{ color: '#333', fontSize: 14 }}>{order.name}: <Text style={{ fontWeight: 'bold' }}>{order.count}</Text></Text>
-            ))}
-          </View>
+
+      {/* Message Section */}
+      <View style={{ marginHorizontal: 18, marginBottom: 12 }}>
+        <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 16, marginBottom: 4 }}>Message</Text>
+        <View style={{ backgroundColor: '#ece9fa', borderRadius: 12, padding: 10, marginBottom: 6 }}>
+          {messages.length ? (
+            <Text style={{ color: '#333', fontSize: 14 }}>{messages[messages.length - 1].message}</Text>
+          ) : (
+            <Text style={{ color: '#888', fontSize: 14 }}>No messages yet</Text>
+          )}
         </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+          <TextInput
+            style={{ flex: 1, fontSize: 15, color: '#222', padding: 6 }}
+            placeholder="Message..."
+            value={message}
+            onChangeText={setMessage}
+            editable={!sending}
+          />
+          <TouchableOpacity onPress={handleSendMessage} disabled={sending || !message.trim()} style={{ marginLeft: 8 }}>
+            <MaterialCommunityIcons name="send" size={24} color={sending || !message.trim() ? '#ccc' : '#6c63b5'} />
+          </TouchableOpacity>
+        </View>
+  </View>
 
         {/* Today's Orders List */}
         <View style={{ marginHorizontal: 18, marginTop: 12 }}>
@@ -256,19 +325,19 @@ const [userList, setUserList] = useState([]);
             );
           }) : <Text style={{ color: '#fff' }}>No orders today</Text>}
         </View>
-
         {loading && <ActivityIndicator size="large" color="#6c63b5" style={{ marginTop: 24 }} />}
+        <AddMenuItemModal
+          visible={showAddMenuModal}
+          onClose={() => setShowAddMenuModal(false)}
+          menus={menusWithItems}
+          allottedMenuItemIds={allottedMenuItemIds}
+          onAdd={handleAddMenuItem}
+        />
+        <TabBar />
       </ScrollView>
-      <AddMenuItemModal
-        visible={showAddMenuModal}
-        onClose={() => setShowAddMenuModal(false)}
-        menus={menusWithItems}
-        allottedMenuItemIds={allottedMenuItemIds}
-        onAdd={handleAddMenuItem}
-      />
-      <TabBar />
     </>
   );
+// ...existing code...
 }
 
 const styles = StyleSheet.create({
