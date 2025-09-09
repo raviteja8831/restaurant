@@ -1,15 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
+  ScrollView,
   Image,
+  Dimensions,
+  ScrollViewBase,
 } from "react-native";
 import { orderData } from "../app/Mock/CustomerHome";
 import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { wp, hp, responsiveStyles } from "./styles/responsive";
+const { width, height } = Dimensions.get("window");
 
 export default function OrderSummaryScreen() {
   const router = useRouter();
@@ -61,9 +66,22 @@ export default function OrderSummaryScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.push({ pathname: "/orderitems" }); // 👈 fallback route
+      router.push({
+        pathname: "/menu-list",
+        params: {
+          orderData: params.orderData,
+          totalAmount: totalAmount.toString(),
+        },
+      }); // 👈 fallback route
     }
   };
+  useEffect(() => {
+    if (totalAmount == 0) {
+      router.push({
+        pathname: "/menu-list",
+      }); //
+    }
+  }, [totalAmount]);
 
   const handleStarPress = (rating) => {
     setUserRating(rating);
@@ -87,163 +105,185 @@ export default function OrderSummaryScreen() {
     // Don't close edit mode when changing quantity - only close on blur
   };
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.mainScrollViewContent}
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Your Order</Text>
+          </View>
+        </View>
+
+        {/* Table Container */}
+        <TouchableOpacity
+          style={styles.tableContainer}
+          activeOpacity={1}
+          onPress={() => setEditingItem(null)}
+        >
+          {/* Table Header */}
+          <View style={styles.tableHeader}>
+            <Text style={[styles.hcell, styles.statusColumn]}>Status</Text>
+            <Text style={[styles.hcell, styles.orderColumn]}>Order</Text>
+            <Text style={[styles.hcell, styles.qtyColumn]}>Qty</Text>
+            <Text style={[styles.hcell, styles.priceColumn]}>Price</Text>
+            <Text style={[styles.hcell, styles.totalColumn]}>Total</Text>
+            <Text style={[styles.hcell, styles.editColumn]}></Text>
+          </View>
+
+          {/* Order Rows */}
+          {orderItems.map((order) => (
+            <View key={order.id} style={styles.tableRow}>
+              <Text
+                style={[
+                  styles.cell,
+                  styles.statusColumn,
+                  order.status === "Served" && { color: "green" },
+                  order.status === "Ready" && { color: "limegreen" },
+                  order.status === "Preparing" && { color: "orange" },
+                  order.status === "Waiting" && { color: "red" },
+                ]}
+              >
+                {order.status}
+              </Text>
+              <Text style={[styles.cell, styles.orderColumn]}>
+                {order.item}
+              </Text>
+              <Text style={[styles.cell, styles.qtyColumn]}>{order.qty}</Text>
+              <Text style={[styles.cell, styles.priceColumn]}>
+                {order.price}
+              </Text>
+              <Text style={[styles.cell, styles.totalColumn]}>
+                {order.qty * order.price}
+              </Text>
+              {/* Edit icon or quantity controls */}
+              <View style={styles.editColumn}>
+                {editingItem === order.id ? (
+                  <View style={styles.quantityControls}>
+                    <TouchableOpacity
+                      style={[styles.quantityButton, responsiveStyles.bg1]}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleQuantityChange(order.id, -1);
+                      }}
+                    >
+                      <Text style={styles.quantityButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleQuantityChange(order.id, 1);
+                      }}
+                    >
+                      <Text style={styles.quantityButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleEditPress(order.id);
+                    }}
+                  >
+                    <Feather name="edit-2" size={14} color="#000" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          ))}
         </TouchableOpacity>
 
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Your Order</Text>
-        </View>
-      </View>
-
-      {/* Table Container */}
-      <TouchableOpacity
-        style={styles.tableContainer}
-        activeOpacity={1}
-        onPress={() => setEditingItem(null)}
-      >
-        {/* Table Header */}
-        <View style={styles.tableHeader}>
-          <Text style={[styles.hcell, styles.statusColumn]}>Status</Text>
-          <Text style={[styles.hcell, styles.orderColumn]}>Order</Text>
-          <Text style={[styles.hcell, styles.qtyColumn]}>Qty</Text>
-          <Text style={[styles.hcell, styles.priceColumn]}>Price</Text>
-          <Text style={[styles.hcell, styles.totalColumn]}>Total</Text>
-          <Text style={[styles.hcell, styles.editColumn]}></Text>
+        {/* Total Row */}
+        <View style={styles.totalRow}>
+          <Text style={[styles.cell, styles.statusColumn]} />
+          <Text style={[styles.cell, styles.orderColumn]}>Total</Text>
+          <Text style={[styles.cell, styles.qtyColumn]} />
+          <Text style={[styles.cell, styles.priceColumn]} />
+          <Text style={[styles.cell, styles.totalColumn]}>{totalAmount}</Text>
+          <View style={styles.editColumn} />
         </View>
 
-        {/* Order Rows */}
-        {orderItems.map((order) => (
-          <View key={order.id} style={styles.tableRow}>
-            <Text
-              style={[
-                styles.cell,
-                styles.statusColumn,
-                order.status === "Served" && { color: "green" },
-                order.status === "Ready" && { color: "limegreen" },
-                order.status === "Preparing" && { color: "orange" },
-                order.status === "Waiting" && { color: "red" },
-              ]}
-            >
-              {order.status}
-            </Text>
-            <Text style={[styles.cell, styles.orderColumn]}>{order.item}</Text>
-            <Text style={[styles.cell, styles.qtyColumn]}>{order.qty}</Text>
-            <Text style={[styles.cell, styles.priceColumn]}>{order.price}</Text>
-            <Text style={[styles.cell, styles.totalColumn]}>
-              {order.qty * order.price}
-            </Text>
-            {/* Edit icon or quantity controls */}
-            <View style={styles.editColumn}>
-              {editingItem === order.id ? (
-                <View style={styles.quantityControls}>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleQuantityChange(order.id, -1);
-                    }}
-                  >
-                    <Text style={styles.quantityButtonText}>-</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleQuantityChange(order.id, 1);
-                    }}
-                  >
-                    <Text style={styles.quantityButtonText}>+</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleEditPress(order.id);
-                  }}
-                >
-                  <Feather name="edit-2" size={14} color="#000" />
-                </TouchableOpacity>
-              )}
-            </View>
+        {/* Rating Section */}
+        <View style={styles.ratingSection}>
+          <Text style={styles.feedback}>
+            Please Rate this Restaurant as a Feedback
+          </Text>
+          <View style={styles.stars}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity
+                key={star}
+                onPress={() => handleStarPress(star)}
+                style={styles.starButton}
+              >
+                <MaterialCommunityIcons
+                  name={star <= userRating ? "star" : "star-outline"}
+                  size={28}
+                  color={star <= userRating ? "#FFD700" : "#DDD"}
+                />
+              </TouchableOpacity>
+            ))}
           </View>
-        ))}
-      </TouchableOpacity>
-
-      {/* Total Row */}
-      <View style={styles.totalRow}>
-        <Text style={[styles.cell, styles.statusColumn]} />
-        <Text style={[styles.cell, styles.orderColumn]}>Total</Text>
-        <Text style={[styles.cell, styles.qtyColumn]} />
-        <Text style={[styles.cell, styles.priceColumn]} />
-        <Text style={[styles.cell, styles.totalColumn]}>{totalAmount}</Text>
-        <View style={styles.editColumn} />
-      </View>
-
-      {/* Rating Section */}
-      <View style={styles.ratingSection}>
-        <Text style={styles.feedback}>
-          Please Rate this Restaurant as a Feedback
-        </Text>
-        <View style={styles.stars}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <TouchableOpacity
-              key={star}
-              onPress={() => handleStarPress(star)}
-              style={styles.starButton}
-            >
-              <MaterialCommunityIcons
-                name={star <= userRating ? "star" : "star-outline"}
-                size={28}
-                color={star <= userRating ? "#FFD700" : "#DDD"}
-              />
-            </TouchableOpacity>
-          ))}
         </View>
-      </View>
 
-      {/* PAID Stamp */}
-      <View style={styles.stampContainer}>
-        {/* <Text style={styles.paidStamp}>PAID</Text> */}
-        <Text style={styles.thankYouText}>Thank you!</Text>
-      </View>
+        {/* PAID Stamp */}
+        <View style={styles.stampContainer}>
+          {/* <Text style={styles.paidStamp}>PAID</Text> */}
+          <Text style={styles.thankYouText}>Thank you!</Text>
+        </View>
 
-      {/* Pay Button */}
-      <TouchableOpacity style={styles.payButton}>
-        <Text style={styles.payText}>Pay</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+        {/* Pay Button */}
+        <TouchableOpacity style={[styles.payButton, responsiveStyles.bg1]}>
+          <Text style={styles.payText}>Pay</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  // container: {
+  //   flex: 1,
+  //   backgroundColor: "#f2f0ff",
+  //   padding: 16,
+  // },
+  contentWrapper: {
     flex: 1,
-    backgroundColor: "#f2f0ff",
-    padding: 16,
+    marginTop: 30,
+  },
+  mainScrollView: {
+    flex: 1,
+  },
+  mainScrollViewContent: {
+    flexGrow: 1,
+    // paddingBottom: Math.min(height * 0.02, 16), // Reduced bottom padding
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
     paddingTop: 10,
+    // position: "relative",
   },
   backButton: {
-    marginRight: 15,
+    zIndex: 1,
     padding: 5,
   },
   headerContent: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",
+    // alignItems: "center",
+
     color: "#333",
   },
   tableHeader: {
@@ -376,7 +416,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   payButton: {
-    backgroundColor: "#8C8AEB",
+    // backgroundColor: "#8C8AEB",
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 12,
@@ -397,3 +437,174 @@ const styles = StyleSheet.create({
 
   payText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: "#f2f0ff",
+//     padding: wp(20),
+//   },
+//   header: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     marginBottom: hp(16),
+//     paddingTop: hp(8),
+//   },
+//   backButton: {
+//     marginRight: wp(20),
+//     padding: wp(8),
+//   },
+//   headerContent: {
+//     flex: 1,
+//     alignItems: "center",
+//   },
+//   headerTitle: {
+//     ...responsiveStyles.headerText,
+//     fontWeight: "bold",
+//     textAlign: "center",
+//     color: "#333",
+//   },
+//   tableHeader: {
+//     flexDirection: "row",
+//     paddingVertical: hp(8),
+//     marginBottom: hp(4),
+//     backgroundColor: "transparent",
+//   },
+//   tableRow: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     paddingVertical: hp(8),
+//     minHeight: hp(40),
+//   },
+//   hcell: {
+//     ...responsiveStyles.bodyText,
+//     fontWeight: "bold",
+//     color: "#333",
+//   },
+//   cell: {
+//     ...responsiveStyles.bodyText,
+//     color: "#333",
+//   },
+//   // Column styles for proper alignment
+//   statusColumn: {
+//     width: wp(60),
+//     textAlign: "left",
+//     paddingLeft: wp(4),
+//   },
+//   orderColumn: {
+//     flex: 1,
+//     paddingLeft: wp(8),
+//     textAlign: "left",
+//   },
+//   qtyColumn: {
+//     width: wp(40),
+//     textAlign: "right",
+//     paddingRight: wp(8),
+//   },
+//   priceColumn: {
+//     width: wp(48),
+//     textAlign: "right",
+//     paddingRight: wp(8),
+//   },
+//   totalColumn: {
+//     width: wp(60),
+//     textAlign: "right",
+//     paddingRight: wp(8),
+//   },
+//   editColumn: {
+//     width: wp(48),
+//     alignItems: "center",
+//     justifyContent: "center",
+//   },
+//   quantityControls: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     gap: wp(4),
+//   },
+//   quantityButton: {
+//     width: wp(16),
+//     height: wp(16),
+//     borderRadius: wp(4),
+//     alignItems: "center",
+//     justifyContent: "center",
+//   },
+//   quantityButtonText: {
+//     color: "#fff",
+//     fontSize: wp(12),
+//     fontWeight: "bold",
+//   },
+//   // Total row styles - matching image
+//   totalRow: {
+//     flexDirection: "row",
+//     alignItems: "center",
+//     paddingVertical: hp(8),
+//     backgroundColor: "transparent",
+//     marginTop: hp(4),
+//   },
+//   ratingSection: {
+//     backgroundColor: "transparent",
+//     padding: wp(20),
+//     marginVertical: hp(24),
+//   },
+//   feedback: {
+//     textAlign: "center",
+//     marginBottom: hp(16),
+//     fontSize: wp(20),
+//     fontWeight: "500",
+//     color: "#333",
+//   },
+//   stars: {
+//     flexDirection: "row",
+//     justifyContent: "center",
+//     marginBottom: hp(8),
+//   },
+//   starButton: {
+//     padding: wp(4),
+//     marginHorizontal: wp(2),
+//   },
+//   stampContainer: {
+//     position: "relative",
+//     alignItems: "center",
+//     justifyContent: "center",
+//     marginVertical: hp(40),
+//     height: hp(160),
+//   },
+//   paidStamp: {
+//     position: "absolute",
+//     fontSize: wp(32),
+//     fontWeight: "bold",
+//     color: "#DC143C",
+//     transform: [{ rotate: "-15deg" }],
+//     textShadowColor: "rgba(0, 0, 0, 0.3)",
+//     textShadowOffset: { width: 2, height: 2 },
+//     textShadowRadius: 4,
+//     letterSpacing: wp(2),
+//     zIndex: 2,
+//   },
+//   thankYouText: {
+//     position: "absolute",
+//     fontSize: wp(48),
+//     fontWeight: "300",
+//     color: "rgba(0, 0, 0, 0.4)",
+//     fontStyle: "italic",
+//     transform: [{ rotate: "-15deg" }],
+//     marginTop: hp(24),
+//     marginLeft: wp(8),
+//     zIndex: 1,
+//   },
+//   payButton: {
+//     backgroundColor: "#6A5ACD",
+//     paddingVertical: 12,
+//     paddingHorizontal: 40,
+//     borderRadius: 25,
+//     marginBottom: 20,
+//   },
+//   tableContainer: {
+//     marginTop: hp(16),
+//     backgroundColor: "transparent",
+//   },
+//   payText: {
+//     color: "#fff",
+//     fontSize: wp(16),
+//     fontWeight: "bold",
+//   },
+// });

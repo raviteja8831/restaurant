@@ -15,61 +15,127 @@ import {
   Feather,
 } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { menuItemsData } from "./Mock/CustomerHome";
 import CommentModal from "./Modals/menueditModal"; // 👈 new component
+import { orderitemsstyle, responsiveStyles } from "./styles/responsive";
+import { AlertService } from "./services/alert.service";
+import { getitemsbasedonmenu } from "./api/menuApi";
+import { createOrder, getOrderItemList } from "./api/orderApi";
 
 export default function ItemsListScreen() {
   const router = useRouter();
-  const { category, categoryName, ishotel } = useLocalSearchParams();
-  console.log("ghgsd", useLocalSearchParams());
+  const { category, categoryName, restaurantId, userId, orderID, ishotel } =
+    useLocalSearchParams();
+  // console.log("ghgsd", useLocalSearchParams());
 
   // ✅ Initialize items state from menuItemsData
-  const [items, setItems] = useState(
-    menuItemsData.map((section) => ({
-      ...section,
-      items: section.items.map((item) => ({
-        ...item,
-        selected: false,
-        quantity: 0,
-        comment: "", // 👈 added comment field
-      })),
-    }))
-  );
 
   const [selectedItems, setSelectedItems] = useState([]);
+  const [remove_list, setRemoveList] = useState([]);
   const [totalCost, setTotalCost] = useState(0);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [comment, setComment] = useState("");
+  const [items, setItems] = useState([]);
+  var itemfirstcalling = false;
 
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        setLoading(true);
+        // First fetch the menu items
+        const menuItems = await getitemsbasedonmenu(category);
+
+        // Then fetch the order items
+        const orderResponse = await getOrderItemList(orderID || 1, userId || 1);
+
+        // Create a map of order items
+        const orderItems = orderResponse.reduce((acc, orderItem) => {
+          acc[orderItem.menuItemId] = orderItem;
+          return acc;
+        }, {});
+
+        // Combine menu items with order data
+        const combinedItems = menuItems.map((item) => ({
+          ...item,
+          selected: !!orderItems[item.id],
+          quantity: orderItems[item.id]?.quantity || 0,
+          comment: orderItems[item.id]?.comment || "",
+          orderItemId: orderItems[item.id]?.id || null,
+        }));
+
+        setItems(combinedItems);
+      } catch (error) {
+        AlertService.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeData();
+  }, [category, orderID, userId]);
+
+  const createOrder_data = async (path_re) => {
+    const order = {
+      userId: userId || 1,
+      restaurantId: restaurantId,
+      total: 0,
+      status: "PENDING",
+      orderItems: selectedItems || [],
+      orderID: orderID || null,
+      removedItems: remove_list,
+    };
+    // console.log("items", order);
+    try {
+      const response = await createOrder(order);
+      console.log("Order created successfully:", response);
+    } catch (error) {
+      // console.error("Error creating order:", error);
+    }
+    setShowOrderModal(true);
+    if (path_re) {
+      router.push({
+        pathname: "/menu-list",
+      });
+    }
+  };
   // ✅ Handle checkbox toggle
   const handleItemSelect = (itemId) => {
     setItems((prevData) =>
-      prevData.map((section) => ({
-        ...section,
-        items: section.items.map((item) =>
-          item.id === itemId
-            ? {
-                ...item,
-                selected: !item.selected,
-                quantity: item.selected ? 0 : 1,
-              }
-            : item
-        ),
-      }))
+      prevData.map((item) => {
+        if (item.id === itemId) {
+          // If item is being unselected, add it to remove_list
+          if (item.selected) {
+            setRemoveList((prev) => [...prev, item]);
+          } else {
+            // If item is being selected, remove it from remove_list if it exists
+            setRemoveList((prev) =>
+              prev.filter((removedItem) => removedItem.id !== item.id)
+            );
+          }
+          return {
+            ...item,
+            selected: !item.selected,
+            quantity: item.selected ? 0 : 1,
+          };
+        }
+        return item;
+      })
     );
   };
+  useEffect(() => {
+    console.log("remove_list:", remove_list);
+  }, [remove_list]);
 
   // ✅ Handle edit
   const handleEdit = (itemId) => {
     let foundItem = null;
-    setItems((prevSections) =>
-      prevSections.map((section) => ({
-        ...section,
-        items: section.items.map((item) => {
+    setItems(
+      (prevSections) =>
+        prevSections.map((item) => {
           if (item.id === itemId) {
             foundItem = {
               ...item,
@@ -79,8 +145,8 @@ export default function ItemsListScreen() {
             return foundItem;
           }
           return item;
-        }),
-      }))
+        })
+      // }))
     );
     if (foundItem) {
       setSelectedItem(foundItem);
@@ -107,36 +173,43 @@ export default function ItemsListScreen() {
   // ✅ Handle quantity increment/decrement
   const handleQuantityChange = (itemId, increment) => {
     setItems((prevData) =>
-      prevData.map((section) => ({
-        ...section,
-        items: section.items.map((item) => {
-          if (item.id === itemId) {
-            const newQuantity = Math.max(0, item.quantity + increment);
-            return {
-              ...item,
-              quantity: newQuantity,
-              selected: newQuantity > 0,
-            };
+      prevData.map((item) => {
+        if (item.id === itemId) {
+          const newQuantity = Math.max(0, item.quantity + increment);
+          // Add to remove_list if quantity becomes 0
+          if (newQuantity === 0 && item.orderItemId) {
+            setRemoveList((prev) => [...prev, item]);
+          } else if (newQuantity > 0) {
+            // Remove from remove_list if quantity becomes > 0
+            setRemoveList((prev) =>
+              prev.filter((removedItem) => removedItem.id !== item.id)
+            );
           }
-          return item;
-        }),
-      }))
+          return {
+            ...item,
+            quantity: newQuantity,
+            selected: newQuantity > 0,
+          };
+        }
+        return item;
+      })
     );
   };
 
   // ✅ Recalculate selected items + total cost
   useEffect(() => {
-    const selected = items.flatMap((section) =>
-      section.items.filter((item) => item.selected)
-    );
+    const selected = items.filter((item) => item.selected);
     setSelectedItems(selected);
-
+    itemfirstcalling = true;
     const total = selected.reduce((sum, item) => {
-      const price = parseInt(item.price.replace("₹", ""));
+      const price = parseInt(item.price);
       return sum + price * item.quantity;
     }, 0);
     setTotalCost(total);
-  }, [items]);
+    if (selected == 0) {
+      createOrder_data(false);
+    }
+  }, [items, itemfirstcalling]);
 
   const handleConfirmOrder = () => {
     router.push({
@@ -158,173 +231,131 @@ export default function ItemsListScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={orderitemsstyle.container}>
       <ImageBackground
         source={require("../assets/images/menu-bg.png")}
-        style={styles.backgroundImage}
+        style={orderitemsstyle.backgroundImage}
         resizeMode="repeat"
       />
-      <View style={styles.header}>
+      <View style={orderitemsstyle.header}>
         {/* <TouchableOpacity
-          style={styles.backButton}
+          style={orderitemsstyle.backButton}
           onPress={() => router.back()}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
         </TouchableOpacity> */}
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+        <TouchableOpacity
+          style={orderitemsstyle.backButton}
+          onPress={handleBackPress}
+        >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
+        <View style={orderitemsstyle.headerContent}>
           <MaterialCommunityIcons name="food-variant" size={24} color="#000" />
-          <Text style={styles.title}>{categoryName}</Text>
+          <Text style={orderitemsstyle.title}>{categoryName}</Text>
         </View>
       </View>
 
       {/* Menu Items */}
       <ScrollView
-        style={styles.scrollView}
+        style={orderitemsstyle.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {items.map((section) => (
-          <View key={section.category}>
-            <Text style={styles.category}>{section.category}</Text>
+        {/*         {items.map((section) => (
+          <View key={section.name}>
+            <Text style={orderitemsstyle.category}>{section.name}</Text> */}
 
-            {section.items.map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                {/* Checkbox */}
-                {/* {ishotel} */}
-                {ishotel == "false" && (
-                  <TouchableOpacity
-                    style={styles.checkboxContainer}
-                    onPress={() => handleItemSelect(item.id)}
-                  >
-                    <View
-                      style={[
-                        styles.checkbox,
-                        item.selected && styles.checkboxSelected,
-                      ]}
-                    >
-                      {item.selected && (
-                        <MaterialIcons name="check" size={16} color="#fff" />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                )}
-
-                {/* Item Info */}
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <View style={styles.dottedLine} />
-                  <Text style={styles.itemPrice}>{item.price}</Text>
+        {items.map((item) => (
+          <View key={item.id} style={orderitemsstyle.itemRow}>
+            {/* Checkbox */}
+            {/* {ishotel} */}
+            {ishotel == "false" && (
+              <TouchableOpacity
+                style={orderitemsstyle.checkboxContainer}
+                onPress={() => handleItemSelect(item.id)}
+              >
+                <View
+                  style={[
+                    orderitemsstyle.checkbox,
+                    item.selected && orderitemsstyle.checkboxSelected,
+                  ]}
+                >
+                  {item.selected && (
+                    <MaterialIcons name="check" size={16} color="#fff" />
+                  )}
                 </View>
+              </TouchableOpacity>
+            )}
 
-                {/* Quantity + Edit */}
-                {/*  {item.selected ? (
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <View style={styles.quantityContainer}>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() => handleQuantityChange(item.id, -1)}
-                      >
-                        <Text style={styles.quantityButtonText}>-</Text>
-                      </TouchableOpacity>
-                      <Text style={styles.quantityText}>{item.quantity}</Text>
-                      <TouchableOpacity
-                        style={styles.quantityButton}
-                        onPress={() => handleQuantityChange(item.id, 1)}
-                      >
-                        <Text style={styles.quantityButtonText}>+</Text>
-                      </TouchableOpacity>
-                    </View>
-                    
+            {/* Item Info */}
+            <View style={orderitemsstyle.itemInfo}>
+              <Text style={orderitemsstyle.itemName}>{item.name}</Text>
+              <View style={orderitemsstyle.dottedLine} />
+              <Text style={orderitemsstyle.itemPrice}>{item.price}</Text>
+            </View>
+
+            {ishotel == "false" &&
+              (item.selected ? (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <View style={orderitemsstyle.quantityContainer}>
                     <TouchableOpacity
-                      onPress={() => handleEdit(item.id)}
-                      style={{ marginHorizontal: 6 }}
+                      style={orderitemsstyle.quantityButton}
+                      onPress={() => handleQuantityChange(item.id, -1)}
                     >
-                      <Feather name="edit-2" size={18} color="#000" />
+                      <Text style={orderitemsstyle.quantityButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={orderitemsstyle.quantityText}>
+                      {item.quantity}
+                    </Text>
+                    <TouchableOpacity
+                      style={orderitemsstyle.quantityButton}
+                      onPress={() => handleQuantityChange(item.id, 1)}
+                    >
+                      <Text style={orderitemsstyle.quantityButtonText}>+</Text>
                     </TouchableOpacity>
                   </View>
-                ) : (
+
                   <TouchableOpacity
                     onPress={() => handleEdit(item.id)}
                     style={{ marginHorizontal: 6 }}
                   >
                     <Feather name="edit-2" size={18} color="#000" />
                   </TouchableOpacity>
-                )} */}
-                {ishotel == "false" &&
-                  (item.selected ? (
-                    <View
-                      style={{ flexDirection: "row", alignItems: "center" }}
-                    >
-                      <View style={styles.quantityContainer}>
-                        <TouchableOpacity
-                          style={styles.quantityButton}
-                          onPress={() => handleQuantityChange(item.id, -1)}
-                        >
-                          <Text style={styles.quantityButtonText}>-</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.quantityText}>{item.quantity}</Text>
-                        <TouchableOpacity
-                          style={styles.quantityButton}
-                          onPress={() => handleQuantityChange(item.id, 1)}
-                        >
-                          <Text style={styles.quantityButtonText}>+</Text>
-                        </TouchableOpacity>
-                      </View>
-
-                      <TouchableOpacity
-                        onPress={() => handleEdit(item.id)}
-                        style={{ marginHorizontal: 6 }}
-                      >
-                        <Feather name="edit-2" size={18} color="#000" />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <TouchableOpacity
-                      onPress={() => handleEdit(item.id)}
-                      style={{ marginHorizontal: 6 }}
-                    >
-                      <Feather name="edit-2" size={18} color="#000" />
-                    </TouchableOpacity>
-                  ))}
-              </View>
-            ))}
+                </View>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => handleEdit(item.id)}
+                  style={{ marginHorizontal: 6 }}
+                >
+                  <Feather name="edit-2" size={18} color="#000" />
+                </TouchableOpacity>
+              ))}
           </View>
         ))}
+        {/*  </View>
+        ))} */}
       </ScrollView>
 
       {/* Order Summary */}
       {ishotel == "false" && (
-        <View style={styles.orderSummary}>
-          <Text style={styles.summaryText}>
+        <View style={orderitemsstyle.orderSummary}>
+          <Text style={orderitemsstyle.summaryText}>
             No of item Selected: {selectedItems.length}
           </Text>
-          <Text style={styles.summaryText}>
+          <Text style={orderitemsstyle.summaryText}>
             Total Cost of Selection = ₹{totalCost}
           </Text>
           <TouchableOpacity
             style={[
-              styles.placeOrderButton,
-              selectedItems.length === 0 && styles.placeOrderButtonDisabled,
+              orderitemsstyle.placeOrderButton,
+              responsiveStyles.bg1,
+              selectedItems.length === 0 &&
+                orderitemsstyle.placeOrderButtonDisabled,
             ]}
-            onPress={() => setShowOrderModal(true)}
+            onPress={() => createOrder_data(true)}
             disabled={selectedItems.length === 0}
           >
-            <Text
-              style={styles.placeOrderButtonText}
-              onPress={() => {
-                // Redirect to menu page with number of orders and amount
-                router.push({
-                  pathname: "/menu-list",
-                  params: {
-                    totalItems: selectedItems.length,
-                    totalCost: totalCost,
-                    orderDetails: JSON.stringify(selectedItems),
-                  },
-                });
-              }}
-            >
+            <Text style={orderitemsstyle.placeOrderButtonText}>
               Place Order
             </Text>
           </TouchableOpacity>
@@ -343,263 +374,3 @@ export default function ItemsListScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#E8E0FF",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerContent: {
-    flex: 1,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 20,
-    color: "#000",
-    fontWeight: "bold",
-    marginLeft: 8,
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  categorySection: {
-    marginBottom: 20,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    color: "#000",
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 15,
-    marginTop: 10,
-  },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  checkboxContainer: {
-    marginRight: 12,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 2,
-    borderColor: "#ddd",
-    borderRadius: 4,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#f8f8f8",
-  },
-  checkboxSelected: {
-    backgroundColor: "#6B46C1",
-    borderColor: "#6B46C1",
-  },
-  itemInfo: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  itemName: {
-    fontSize: 14,
-    color: "#000",
-    fontWeight: "500",
-    flex: 1,
-  },
-  dottedLine: {
-    flex: 1,
-    height: 1,
-    borderStyle: "dashed",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginHorizontal: 8,
-  },
-  itemPrice: {
-    fontSize: 14,
-    color: "#000",
-    fontWeight: "bold",
-    minWidth: 50,
-    textAlign: "right",
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 10,
-  },
-  quantityButton: {
-    width: 24,
-    height: 24,
-    backgroundColor: "#6B46C1",
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quantityButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  quantityText: {
-    fontSize: 16,
-    color: "#000",
-    fontWeight: "bold",
-    marginHorizontal: 12,
-    minWidth: 20,
-    textAlign: "center",
-  },
-  orderSummary: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  summaryText: {
-    fontSize: 16,
-    color: "#000",
-    fontWeight: "500",
-    marginBottom: 5,
-  },
-  placeOrderButton: {
-    backgroundColor: "#6B46C1",
-    borderRadius: 12,
-    paddingVertical: 15,
-    alignItems: "center",
-    marginTop: 15,
-  },
-  placeOrderButtonDisabled: {
-    backgroundColor: "#ccc",
-  },
-  placeOrderButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#E8E0FF",
-    borderRadius: 16,
-    padding: 20,
-    width: "80%",
-    maxHeight: "60%",
-  },
-  modalTitle: {
-    fontSize: 18,
-    color: "#000",
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 15,
-  },
-  specialInstructionsInput: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 15,
-    minHeight: 100,
-    textAlignVertical: "top",
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  infoButton: {
-    backgroundColor: "#6B46C1",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  infoButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  confirmButton: {
-    backgroundColor: "#4CAF50",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  confirmButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  scrollView: { padding: 16 },
-  category: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginVertical: 10,
-    color: "#333",
-    textAlign: "center",
-  },
-  itemRow: { flexDirection: "row", alignItems: "center", marginVertical: 8 },
-  checkboxContainer: { marginRight: 10 },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#999",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxSelected: { backgroundColor: "#333" },
-  itemInfo: { flex: 1, flexDirection: "row", alignItems: "center" },
-  itemName: { fontSize: 15, color: "#333" },
-  dottedLine: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderStyle: "dotted",
-    borderColor: "#aaa",
-    marginHorizontal: 4,
-  },
-  itemPrice: { fontSize: 15, fontWeight: "500" },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 8,
-  },
-  quantityButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#333",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quantityButtonText: { fontSize: 16, fontWeight: "bold" },
-  quantityText: { marginHorizontal: 6, fontSize: 14 },
-});
