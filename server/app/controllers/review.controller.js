@@ -1,58 +1,38 @@
 const db = require("../models");
-const RestaurantReview = db.restaurantReview;
-const User = db.user;
-const Restaurant = db.restaurant;
 
-// Get user's recent reviews
-exports.getUserReviews = async (req, res) => {
-  console.log("Fetching reviews for user:", req.params.userId);
+// List all reviews for a restaurant
+exports.listReviews = async (req, res) => {
   try {
-    const userId = req.params.userId;
-
-    const reviews = await RestaurantReview.findAll({
-      where: { userId: userId },
+    const { restaurantId } = req.query;
+    if (!restaurantId)
+      return res.status(400).json({ message: "restaurantId required" });
+    const reviews = await db.restaurantReview.findAll({
+      where: { restaurantId },
+      attributes: [
+        "id",
+        "userId",
+        "restaurantId",
+        "rating",
+        "review",
+        "createdAt",
+      ],
       include: [
-        {
-          model: Restaurant,
-          as: "reviewedRestaurant", // Updated to match the model association
-          attributes: ["name", "address"],
-        },
+        { model: db.users, as: "user", attributes: ["firstname", "lastname"] },
+        { model: db.restaurant, as: "restaurant", attributes: ["name"] },
       ],
       order: [["createdAt", "DESC"]],
-      limit: 10,
     });
-
-    res.status(200).send({
-      status: "success",
-      data: reviews,
-    });
+    res.json(
+      reviews.map((r) => ({
+        id: r.id,
+        user: r.user ? `${r.user.firstname} ${r.user.lastname}` : "",
+        restaurant: r.restaurant ? r.restaurant.name : "",
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt,
+      }))
+    );
   } catch (err) {
-    res.status(500).send({
-      status: "error",
-      message: err.message || "Some error occurred while retrieving reviews.",
-    });
-  }
-};
-
-// Add a new review
-exports.addReview = async (req, res) => {
-  try {
-    const { userId, restaurantId, review } = req.body;
-
-    const newReview = await RestaurantReview.create({
-      userId,
-      restaurantId,
-      review,
-    });
-
-    res.status(201).send({
-      status: "success",
-      data: newReview,
-    });
-  } catch (err) {
-    res.status(500).send({
-      status: "error",
-      message: err.message || "Some error occurred while creating the review.",
-    });
+    res.status(500).json({ message: err.message });
   }
 };

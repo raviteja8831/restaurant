@@ -27,7 +27,7 @@ module.exports = (app) => {
   router.post("/login", users.login);
   // Restaurant manager login
   // router.post("/loginRestaurantUser", users.loginRestaurantUser);
-  router.post("/addRestaurantUser", users.addRestaurantUser);
+  router.post("/registerRestaurantUser", users.addRestaurantUser);
 
   // Get user profile with reviews and transactions
   router.get("/profile/:userId", users.getUserProfile);
@@ -38,6 +38,7 @@ module.exports = (app) => {
   });
 
   // Dashboard and menu item endpoints
+  router.get("/restaurant-users", users.getRestaurantUsers);
   router.get("/dashboard/:userId", users.getDashboardData); // period query param: week|month|year
   router.get("/:userId/allotted-menuitems", users.getUserMenuItems); // NEW: get user's allotted menu items
   router.post("/:userId/menu-items", users.addMenuItemToUser);

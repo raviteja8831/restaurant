@@ -1,12 +1,10 @@
 module.exports = (app) => {
-  const reviews = require("../controllers/review.controller.js");
-  const router = require("express").Router();
+  const express = require("express");
+  const router = express.Router();
+  const reviewController = require("../controllers/review.controller");
 
-  // Get user's recent reviews
-  router.get("/user/:userId", reviews.getUserReviews);
+  router.get("/", reviewController.listReviews);
 
-  // Add new review
-  router.post("/", reviews.addReview);
-
+  module.exports = router;
   app.use("/api/reviews", router);
 };

@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -23,15 +24,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(allowAllCORS);
 
 // Register routes after middleware
+
 require("./app/routes/order.routes.js")(app);
 require("./app/routes/user.routes.js")(app);
 require("./app/routes/menu.routes.js")(app);
 require("./app/routes/menuitem.routes.js")(app);
 require("./app/routes/table.routes.js")(app);
+require("./app/routes/restaurant.routes.js")(app);
+require("./app/routes/qrcode.routes.js")(app);
 require("./app/routes/review.routes.js")(app);
+require("./app/routes/manager.routes.js")(app);
+require("./app/routes/chef.routes.js")(app);
+require("dotenv").config();
 var corsOptions = {
   origin: "*",
 };
+require("./app/routes/qrcode.routes.js")(app);
 
 app.use(cors(corsOptions));
 

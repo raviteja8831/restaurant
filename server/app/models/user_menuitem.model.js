@@ -4,7 +4,7 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
-        model: "restaurantusers", // Ensure this matches your actual table name
+        model: "restaurantUser", // Correct table name for association
         key: "id",
       },
     },
