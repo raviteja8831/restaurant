@@ -171,10 +171,10 @@ db.orders.belongsTo(db.users, {
 });
 
 // Add orders-restaurant association
-/* db.orders.belongsTo(db.restaurant, {
+db.orders.belongsTo(db.restaurant, {
   foreignKey: "restaurantId",
   as: "orderRestaurant",
-}); */
+});
 db.restaurant.hasMany(db.orders, {
   foreignKey: "restaurantId",
   as: "orders",
