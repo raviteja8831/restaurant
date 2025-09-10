@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from 'expo-router';
 import {
   StyleSheet,
@@ -13,6 +13,7 @@ import {
 import { Button, Text, Surface } from "react-native-paper";
 import { useAlert } from "../services/alertService";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from 'expo-location';
 import { registerManager } from "../api/managerApi";
 import { showApiError } from "../services/messagingService";
 import FormService from "../components/formService";
@@ -25,7 +26,37 @@ const DEFAULT_ADDRESS = "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA
 
 
 export default function ManagerRegisterScreen() {
-  const [address] = React.useState(DEFAULT_ADDRESS);
+  const [address, setAddress] = React.useState(DEFAULT_ADDRESS);
+  // Location logic
+  const GOOGLE_API_KEY = "AIzaSyCJT87ZYDqm6bVLxRsg4Zde87HyefUfASQ";
+  const handleUseCurrentLocation = async () => {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission to access location was denied');
+        setAddress('Location permission denied');
+        setFormState((prev) => ({ ...prev, restaurantAddress: 'Location permission denied' }));
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const { latitude, longitude } = location.coords;
+      // Use Google Maps Geocoding API
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const addr = data.results[0].formatted_address;
+        setAddress(addr);
+        setFormState((prev) => ({ ...prev, restaurantAddress: addr }));
+      } else {
+        setAddress('Address not found');
+        setFormState((prev) => ({ ...prev, restaurantAddress: 'Address not found' }));
+      }
+    } catch (error) {
+      setAddress('Error fetching location or address');
+      setFormState((prev) => ({ ...prev, restaurantAddress: 'Error fetching location or address' }));
+    }
+  };
   const router = useRouter();
   const alert = useAlert();
   const [step, setStep] = React.useState(1);
@@ -40,36 +71,37 @@ export default function ManagerRegisterScreen() {
   // Remove parent error state for form steps
   const [loading, setLoading] = React.useState(false);
   // const [error, setError] = React.useState(""); // Removed unused variable
-const formConfig = [
-  {
-    label: "First Name",
-    name: "firstname",
-    type: "text",
-  },
-  {
-    label: "Last Name",
-    name: "lastname",
-    type: "text",
-  },
-  {
-    label: "Phone",
-    name: "phone",
-    type: "text",
-    keyboardType: "phone-pad",
-  },
-  {
-    label: "Restaurant Name",
-    name: "name",
-    type: "text",
-  },
-  {
-    label: "Restaurant Address",
-    name: "restaurantAddress",
-    type: "textarea",
-    value: address,
-    multiline: true,
-  },
-];
+  const formConfig = [
+    {
+      label: "First Name",
+      name: "firstname",
+      type: "text",
+    },
+    {
+      label: "Last Name",
+      name: "lastname",
+      type: "text",
+    },
+    {
+      label: "Phone",
+      name: "phone",
+      type: "text",
+      keyboardType: "phone-pad",
+    },
+    {
+      label: "Restaurant Name",
+      name: "name",
+      type: "text",
+    },
+    {
+      label: "Restaurant Address",
+      name: "restaurantAddress",
+      type: "textarea",
+      value: address,
+      multiline: true,
+      editable: true,
+    },
+  ];
 
   // Single form state for all fields
   const [form, setFormState] = React.useState({
@@ -131,7 +163,8 @@ const formConfig = [
 //     })();
 //   }, []);
 
-  const pickImage = async (type = "ambiance") => {
+  // Only pick and preview image, upload on register
+  const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       aspect: [4, 3],
@@ -140,40 +173,12 @@ const formConfig = [
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const asset = result.assets[0];
-      const localUri = asset.uri;
-      const filename = localUri.split("/").pop();
-      const match = /\.(\w+)$/.exec(filename ?? "");
-      const typeMime = match ? `image/${match[1]}` : `image`;
-      const file = {
-        uri: localUri,
-        name: filename,
-        type: typeMime,
-      };
-      try {
-        const data = await uploadImage(file);
-        // Always use absolute URL for image preview
-        const SERVER_URL = "http://localhost:8080"; // Change if needed
-        let imageUrl = data.url;
-        if (imageUrl && !imageUrl.startsWith("http")) {
-          if (imageUrl.startsWith("/")) {
-            imageUrl = SERVER_URL + imageUrl;
-          } else {
-            imageUrl = SERVER_URL + "/" + imageUrl;
-          }
-        }
-        if (type === "ambiance") {
-          setAmbianceImage(imageUrl);
-          console.log("[DEBUG] ambianceImage set to:", imageUrl);
-  }
-      } catch (err) {
-        showApiError(err);
-      }
+      setAmbianceImage(asset.uri); // just preview local image
     }
   };
 
   const handleRegister = async () => {
     setLoading(true);
-  // setError("");
     try {
       // Service type: send array if both selected, else single value or empty
       let restaurantType = "";
@@ -189,15 +194,57 @@ const formConfig = [
       else if (nonVeg) foodType = ["nonveg"];
       else foodType = [];
 
-      // Only send ambianceImage if it is not empty
+      let ambianceImageUrl = "";
+      if (ambianceImage) {
+        // Only upload if it's a local file (not already a URL)
+        if (ambianceImage.startsWith('file://') || ambianceImage.startsWith('content://')) {
+          const filename = ambianceImage.split("/").pop();
+          const match = /\.(\w+)$/.exec(filename ?? "");
+          const typeMime = match ? `image/${match[1]}` : `image/jpeg`;
+          const formData = new FormData();
+          formData.append('file', {
+            uri: ambianceImage,
+            name: filename,
+            type: typeMime,
+          });
+          try {
+            const data = await uploadImage(formData);
+            const SERVER_URL = "http://localhost:8080";
+            let imageUrl = data.url;
+            if (imageUrl && !imageUrl.startsWith("http")) {
+              imageUrl = SERVER_URL + (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
+            }
+            ambianceImageUrl = imageUrl;
+          } catch (err) {
+            showApiError(err);
+            ambianceImageUrl = "";
+          }
+        } else if (ambianceImage.startsWith('http')) {
+          // Already a URL, use as is
+          ambianceImageUrl = ambianceImage;
+        } else {
+          // If it's a data URL or base64, do not send it, show error
+          alert.error('Please select an image from your device, not a pasted or base64 image.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // If you add logo upload, repeat the same logic for logo here
+
+      // Always call upload API before registerManager
       const payload = {
-        phone: "", // Add phone logic if needed
+        phone: form.phone || "",
         role_id: 1,
         ...form,
         restaurantType,
         foodType,
-        ambianceImage: ambianceImage || "",
+        ambianceImage: ambianceImageUrl,
         enableBuffet,
+        enableVeg: pureVeg,
+        enableNonveg: nonVeg,
+        enableTableService: tableService,
+        enableSelfService: selfService,
       };
       const data = await registerManager(payload);
       alert.success(data.message || "Registered successfully");
@@ -208,7 +255,6 @@ const formConfig = [
       showApiError(err);
       const msg =
         err?.response?.data?.message || err?.message || "Registration failed";
-  // setError(msg);
       alert.error(msg);
     }
     setLoading(false);
@@ -265,12 +311,7 @@ const formConfig = [
                       mode="contained"
                       style={styles.locationBtnStep2}
                       icon="crosshairs-gps"
-                      onPress={() =>
-                        Alert.alert(
-                          "Location",
-                          "Use Current Location feature coming soon!"
-                        )
-                      }
+                      onPress={handleUseCurrentLocation}
                     >
                       Use Current Location
                     </Button>
@@ -287,7 +328,7 @@ const formConfig = [
                           onPress={() => setTableService(!tableService)}
                         >
                           <Image
-                            source={require("../../assets/images/table-service.png")}
+                            source={require("../../assets/images/table_service.jpg")}
                             style={styles.typeIconStep2}
                           />
                           <Text style={styles.typeLabelStep2Small}>
@@ -304,7 +345,7 @@ const formConfig = [
                           onPress={() => setSelfService(!selfService)}
                         >
                           <Image
-                            source={require("../../assets/images/self-service.jpg")}
+                            source={require("../../assets/images/self_service.jpg")}
                             style={styles.typeIconStep2}
                           />
                           <Text style={styles.typeLabelStep2Small}>
@@ -340,7 +381,7 @@ const formConfig = [
                           onPress={() => setPureVeg(!pureVeg)}
                           activeOpacity={0.8}
                         >
-                          <View style={styles.foodCircleVegStep2} />
+                          <Image source={require("../../assets/images/veg.png")} style={styles.foodCircleVegStep2} />
                           <Text style={styles.foodLabelStep2}>Pure Veg</Text>
                         </TouchableOpacity>
                       </View>
@@ -354,7 +395,7 @@ const formConfig = [
                           onPress={() => setNonVeg(!nonVeg)}
                           activeOpacity={0.8}
                         >
-                          <View style={styles.foodCircleNonVegStep2} />
+                          <Image source={require("../../assets/images/non-veg.png")} style={styles.foodCircleNonVegStep2} />
                           <Text style={styles.foodLabelStep2}>Non Veg</Text>
                         </TouchableOpacity>
                       </View>

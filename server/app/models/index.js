@@ -20,7 +20,6 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 db.message = require("./message.model.js")(sequelize, Sequelize);
 
-db.restaurantType = require("./restauranttype.model.js")(sequelize, Sequelize);
 db.users = require("./user.model.js")(sequelize, Sequelize);
 db.roles = require("./role.model.js")(sequelize, Sequelize);
 db.restaurant = require("./restaurant.model.js")(sequelize, Sequelize);
@@ -123,14 +122,9 @@ db.restaurant.hasMany(db.userFavorite, {
 });
 
 module.exports = db;
-db.restaurant.belongsTo(db.restaurantType, {
-  foreignKey: "typeId",
-  as: "type",
-});
-db.restaurantType.hasMany(db.restaurant, {
-  foreignKey: "typeId",
-  as: "restaurants",
-});
+
+
+// Associations
 // Removed duplicate association for restaurantReview and restaurant with alias 'restaurant'
 db.restaurantTable.belongsTo(db.restaurant, {
   foreignKey: "restaurantId",

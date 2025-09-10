@@ -1,63 +1,71 @@
 module.exports = (sequelize, Sequelize) => {
-  const Restaurant = sequelize.define(
-    "restaurant",
-    {
-      id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      name: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      address: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      restaurantType: {
-        type: Sequelize.STRING,
-        allowNull: true,
-        comment: "Comma separated values for service types (table,self,both)",
-      },
-      foodType: {
-        type: Sequelize.STRING,
-        allowNull: true,
-        comment: "Comma separated values for food types (veg,nonveg,both)",
-      },
-      enableBuffet: {
-        type: Sequelize.BOOLEAN,
-        allowNull: true,
-        defaultValue: false,
-      },
-      ambianceImage: {
-        type: Sequelize.STRING,
-      },
-      logoImage: {
-        type: Sequelize.STRING,
-      },
-      buffetitems: {
-        type: Sequelize.STRING,
-      },
-      buffetPrice: {
-        type: Sequelize.INTEGER,
-      },
+  const Restaurant = sequelize.define("restaurant", {
+    id: {
+      type: Sequelize.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
     },
-    {
-      tableName: "restaurant",
+    name: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+    address: {
+      type: Sequelize.STRING,
+      allowNull: false,
+    },
+    restaurantType: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      comment: 'Comma separated values for service types (table,self,both)',
+    },
+    foodType: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      comment: 'Comma separated values for food types (veg,nonveg,both)',
+    },
+    enableBuffet: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+    },
+    enableVeg: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+    },
+    enableNonveg: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+    },
+    enableTableService: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+    },
+    enableSelfService: {
+      type: Sequelize.BOOLEAN,
+      allowNull: true,
+      defaultValue: false,
+    },
+    ambianceImage: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
+    logoImage: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
+    createdAt: {
+      type: Sequelize.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: Sequelize.DATE,
+      allowNull: false,
     }
-  );
-
-  Restaurant.associate = function (models) {
-    Restaurant.hasMany(models.userFavorite, {
-      foreignKey: "restaurantId",
-      as: "favoritedBy",
-    });
-    Restaurant.hasMany(models.restaurantReview, {
-      foreignKey: "restaurantId",
-      as: "restaurantReviews",
-    });
-  };
-
+  }, {
+    tableName: 'restaurant'
+  });
   return Restaurant;
 };
