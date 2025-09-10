@@ -1,7 +1,8 @@
-const Restaurant = require('../models/restaurant.model');
-const RestaurantType = require('../models/restauranttype.model');
-const RestaurantReview = require('../models/restaurantreview.model');
-const RestaurantRating = require('../models/restaurantrating.model');
+const db = require("../models");
+const Restaurant = db.restaurant;
+const RestaurantType = db.restaurantType;
+const RestaurantReview = db.restaurantReview;
+const RestaurantRating = db.restaurantRating;
 
 // Create a new restaurant
 exports.create = async (req, res) => {
@@ -23,12 +24,20 @@ exports.findAll = async (req, res) => {
   }
 };
 
-// Get a single restaurant by id
+// Get a single restaurant by id with reviews
 exports.findOne = async (req, res) => {
   try {
-    const restaurant = await Restaurant.findByPk(req.params.id);
-    if (!restaurant) return res.status(404).json({ error: 'Not found' });
-    res.json(restaurant);
+    const restaurant = await Restaurant.findByPk(req.params.id, {
+      include: [
+        {
+          model: RestaurantReview,
+          as: "restaurantReviews",
+          attributes: ["id", "rating", "review", "createdAt", "userId"],
+        },
+      ],
+    });
+    if (!restaurant) return res.status(404).json({ error: "Not found" });
+    res.status(200).json(restaurant);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -37,9 +46,11 @@ exports.findOne = async (req, res) => {
 // Update a restaurant
 exports.update = async (req, res) => {
   try {
-    const [updated] = await Restaurant.update(req.body, { where: { id: req.params.id } });
-    if (!updated) return res.status(404).json({ error: 'Not found' });
-    res.json({ message: 'Updated successfully' });
+    const [updated] = await Restaurant.update(req.body, {
+      where: { id: req.params.id },
+    });
+    if (!updated) return res.status(404).json({ error: "Not found" });
+    res.json({ message: "Updated successfully" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -49,8 +60,8 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const deleted = await Restaurant.destroy({ where: { id: req.params.id } });
-    if (!deleted) return res.status(404).json({ error: 'Not found' });
-    res.json({ message: 'Deleted successfully' });
+    if (!deleted) return res.status(404).json({ error: "Not found" });
+    res.json({ message: "Deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -69,7 +80,9 @@ exports.getTypes = async (req, res) => {
 // List all reviews for a restaurant
 exports.getReviews = async (req, res) => {
   try {
-    const reviews = await RestaurantReview.findAll({ where: { restaurantId: req.params.id } });
+    const reviews = await RestaurantReview.findAll({
+      where: { restaurantId: req.params.id },
+    });
     res.json(reviews);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -79,7 +92,9 @@ exports.getReviews = async (req, res) => {
 // List all ratings for a restaurant
 exports.getRatings = async (req, res) => {
   try {
-    const ratings = await RestaurantRating.findAll({ where: { restaurantId: req.params.id } });
+    const ratings = await RestaurantRating.findAll({
+      where: { restaurantId: req.params.id },
+    });
     res.json(ratings);
   } catch (err) {
     res.status(500).json({ error: err.message });

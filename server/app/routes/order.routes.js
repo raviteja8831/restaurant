@@ -12,5 +12,11 @@ module.exports = (app) => {
   router.get("/pending/:restaurantId/:userId", orders.getPendingOrders);
   router.get("/selected/items/:orderId", orders.getSelectedOrderItems);
 
+  // Delete an order and its items
+  router.delete("/delete/:orderId", orders.deleteOrder);
+
+  // Update order status and items
+  router.put("/:orderId", orders.updateOrderStatus);
+
   app.use("/api/orders", router);
 };

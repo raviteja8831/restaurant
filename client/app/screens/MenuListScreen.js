@@ -11,6 +11,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { restaurantData } from "../Mock/CustomerHome";
@@ -19,6 +20,7 @@ import { menuliststyles, responsiveStyles } from "../styles/responsive";
 import { getMenusWithItems } from "../api/menuApi";
 import { AlertService } from "../services/alert.service";
 import { getOrderItemCount } from "../api/orderApi";
+import { getRestaurantById } from "../api/restaurantApi";
 
 // Image mapping object
 const categoryImages = {
@@ -38,14 +40,20 @@ export default function MenuListScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
+  const [hoteldetails, setHoteldetails] = useState(false);
+  const [restaurant, setRestaurant] = useState({});
+  const [isbuffet, setIsBuffet] = useState(false);
 
   const [totalAmount, setTotalAmount] = useState();
   const [menuCategories, setMenuCategories] = useState();
   const [orderSummary, setOrderSummary] = useState({});
-  useEffect(() => {
-    fetchselectedOrderCount();
-    fetchMenuData();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      // This will run when the screen comes into focus
+      fetchselectedOrderCount();
+      fetchMenuData();
+    }, [])
+  );
   const fetchMenuData = async () => {
     try {
       setLoading(true);
@@ -85,9 +93,8 @@ export default function MenuListScreen() {
     }
   };
   useEffect(() => {
-    console.log("Updated order summary:", orderSummary);
-  }, [orderSummary]);
-  const [restaurant, setRestaurant] = useState(restaurantData);
+    console.log("Updated order summary:", isbuffet);
+  }, [isbuffet]);
   const ishotel = params.ishotel || "false";
   const handleCategoryPress = (category) => {
     router.push({
@@ -102,33 +109,47 @@ export default function MenuListScreen() {
       },
     });
   };
+  useEffect(() => {
+    const fetchRestaurantData = async () => {
+      try {
+        params.hotelId = params.hotelId || 1;
+        const response = await getRestaurantById(params.hotelId);
+        setIsBuffet(response.enableBuffet);
+        setRestaurant(response);
+        console.log("Fetched bff data:", response);
+      } catch (error) {
+        console.error("Error fetching restaurant details:", error);
+        AlertService.error("Failed to load restaurant details");
+      }
+    };
+
+    fetchRestaurantData(); // Call the function here
+  }, [params.hotelId]);
 
   const handleBackPress = () => {
-    if (router.canGoBack() && ishotel == "false") {
-      router.back();
+    if (ishotel == "false") {
+      router.push({ pathname: "/customer-home" });
     } else {
-      router.push({ pathname: "/HotelDetails" });
+      router.push({
+        pathname: "/HotelDetails",
+        params: { id: params.hotelId },
+      });
     }
   };
 
   const handleFinalOrder = () => {
-    const orderData = orderSummary.orderDetails.map((item, index) => ({
+    /*  const orderData = orderSummary.orderDetails.map((item, index) => ({
       id: index + 1,
       item: item.name,
       qty: item.quantity,
       price: parseInt(item.price),
       status: "Waiting",
-    }));
-
-    console.log("Order summary:", orderSummary);
-    console.log("Transformed order data:", orderData);
-
+    })); */
     router.push({
       pathname: "/payorder",
       params: {
-        orderData: JSON.stringify(orderData),
-        totalAmount: orderSummary.totalCost.toString(),
-        hasOrderData: "true",
+        orderID: orderSummary.orderId,
+        userId: params.userId || 1,
       },
     });
   };
@@ -182,12 +203,13 @@ export default function MenuListScreen() {
             >
               <View style={menuliststyles.headerContent}>
                 <Text style={menuliststyles.hotelName}>
-                  {restaurant.name} ({restaurant.type})
+                  {restaurant.name}{" "}
+                  {restaurant.restaurantType &&
+                    `(${restaurant.restaurantType})`}
                 </Text>
                 <Text style={menuliststyles.title}>Menu</Text>
               </View>
             </View>
-
             {/* Menu Grid */}
             <View style={menuliststyles.gridContainer}>
               {menuCategories?.map((category, index) => (
@@ -208,12 +230,11 @@ export default function MenuListScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-
             {/* Spacing View */}
             {/* <View style={{ height: 20 }} /> */}
-
             {/* Buffet Option */}
-            {ishotel == "true" && (
+            {isbuffet}
+            {ishotel == "true" && isbuffet && (
               <View style={menuliststyles.buffetSection}>
                 <TouchableOpacity
                   style={[menuliststyles.buffetButton, responsiveStyles.bg1]}
@@ -234,7 +255,6 @@ export default function MenuListScreen() {
                 </TouchableOpacity>
               </View>
             )}
-
             {/* Total Amount */}
             {ishotel == "false" &&
               Object.keys(orderSummary).length > 0 &&

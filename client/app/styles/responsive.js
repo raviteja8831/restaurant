@@ -829,10 +829,16 @@ export const hoteldetailsstyles = {
     gap: 2,
     marginBottom: 4,
   },
-  reviewText: {
+  /*   reviewText: {
     fontSize: 13,
     color: "#111",
     lineHeight: 18,
+  }, */
+  reviewText: {
+    fontSize: 14,
+    color: "#222",
+    lineHeight: 20,
+    marginBottom: 4,
   },
   tooltipContent: {
     backgroundColor: "#fff",
@@ -892,6 +898,67 @@ export const buffetsimescreenstyles = {
   buffetInfo: {
     alignItems: "center",
     marginVertical: 10,
+  },
+  personsInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+    // backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 5,
+    // shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    maxWidth: 170,
+  },
+  personsInput: {
+    minWidth: 50,
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "bold",
+    paddingHorizontal: 10,
+  },
+  personButton: {
+    width: 40,
+    height: 40,
+    backgroundColor: "#6B4EFF",
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    margin: 5,
+  },
+  personButtonText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  actionContainer: {
+    flexDirection: "row",
+    // alignItems: "center",
+    justifyContent: "space-between",
+    // marginVertical: 15,
+    paddingHorizontal: 20,
+    width: "100%",
+  },
+  totalContainer: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+  },
+  totalLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+  },
+  totalAmount: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#6B4EFF",
+  },
+  payButtonDisabled: {
+    backgroundColor: "#ccc",
+    opacity: 0.7,
   },
   buffetTitle: {
     fontSize: 18,

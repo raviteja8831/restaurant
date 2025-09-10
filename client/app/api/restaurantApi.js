@@ -1,47 +1,12 @@
 import axiosService from "./axiosService";
 import { API_BASE_URL } from "../constants/constants";
-import { ORDER_API } from "../constants/orderApi";
+import { RESTAURANT_API } from "../constants/restaurantApi";
+import { showApiError } from "../services/messagingService";
 
-export const createOrder = async (orderData) => {
+/* export const createRestaurant = async (data) => {
   try {
     const res = await axiosService.post(
-      `${API_BASE_URL}${ORDER_API.CREATE_ORDER}`,
-      orderData
-    );
-    return res.data;
-  } catch (error) {
-    showApiError(error);
-    throw error;
-  }
-};
-
-export const getOrderItemCount = async (restaurantId, userId) => {
-  try {
-    const res = await axiosService.get(
-      `${API_BASE_URL}/orders/pending/${restaurantId}/${userId}`
-    );
-    return res.data;
-  } catch (error) {
-    showApiError(error);
-    throw error;
-  }
-};
-export const getOrderItemList = async (orderId, userId) => {
-  try {
-    const res = await axiosService.get(
-      `${API_BASE_URL}/orders/selected/items/${orderId}`
-    );
-    return res.data;
-  } catch (error) {
-    showApiError(error);
-    throw error;
-  }
-};
-
-export const updateOrderStatus = async (orderId, data) => {
-  try {
-    const res = await axiosService.put(
-      `${API_BASE_URL}/orders/${orderId}`,
+      `${API_BASE_URL}${RESTAURANT_API.CREATE}`,
       data
     );
     return res.data;
@@ -49,12 +14,24 @@ export const updateOrderStatus = async (orderId, data) => {
     showApiError(error);
     throw error;
   }
-};
+}; */
 
-export const deleteOrder = async (orderId) => {
+/* export const getAllRestaurants = async () => {
   try {
-    const res = await axiosService.delete(
-      `${API_BASE_URL}${ORDER_API.DELETE_ORDER}/${orderId}`
+    const res = await axiosService.get(
+      `${API_BASE_URL}${RESTAURANT_API.GET_ALL}`
+    );
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+}; */
+
+export const getRestaurantById = async (id) => {
+  try {
+    const res = await axiosService.get(
+      `${API_BASE_URL}${RESTAURANT_API.GET_ONE(id)}`
     );
     return res.data;
   } catch (error) {
@@ -62,3 +39,28 @@ export const deleteOrder = async (orderId) => {
     throw error;
   }
 };
+
+/* export const updateRestaurant = async (id, data) => {
+  try {
+    const res = await axiosService.put(
+      `${API_BASE_URL}${RESTAURANT_API.UPDATE(id)}`,
+      data
+    );
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+}; */
+
+/* export const deleteRestaurant = async (id) => {
+  try {
+    const res = await axiosService.delete(
+      `${API_BASE_URL}${RESTAURANT_API.DELETE(id)}`
+    );
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+}; */
