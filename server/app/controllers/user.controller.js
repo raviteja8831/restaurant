@@ -452,18 +452,33 @@ exports.register = async (req, res) => {
   console.log("Request headers:", req.headers);
   console.log("Request body:", req.body);
   try {
-    const {
+      const {
+     
       phone,
+     
       firstname,
+     
       lastname,
+     
       email,
+     
       name,
+     
       restaurantAddress,
-      restaurantType,
+     
+     
       ambiancePhoto,
+     
       logo,
+     
       foodType,
+     
       enableBuffet,
+      enableVeg,
+      enableNonveg,
+      enableTableService,
+      enableSelfService
+   ,
     } = req.body;
 
     // Convert restaurantType and foodType to comma-separated values if array
@@ -481,21 +496,20 @@ exports.register = async (req, res) => {
     }
 
     // Upload ambiancePhoto if it's a file (base64 or file path)
-    let ambianceImageUrl = "";
-    ambianceImageUrl = ambiancePhoto;
-
+    let ambianceImageUrl = ambiancePhoto;
     // Upload logo if needed (similar logic)
-    let logoImageUrl = "";
-
-    logoImageUrl = logo;
+    let logoImageUrl = logo;
 
     // Create restaurant first
     const restaurant = await db.restaurant.create({
       name: name,
       address: restaurantAddress,
-      restaurantType: restaurantTypeStr,
       foodType: foodTypeStr,
-      enableBuffet: enableBuffet === true || enableBuffet === "true",
+      enableBuffet: enableBuffet === true || enableBuffet === 'true',
+      enableVeg: enableVeg === true || enableVeg === 'true',
+      enableNonveg: enableNonveg === true || enableNonveg === 'true',
+      enableTableService: enableTableService === true || enableTableService === 'true',
+      enableSelfService: enableSelfService === true || enableSelfService === 'true',
       ambianceImage: ambianceImageUrl,
       logoImage: logoImageUrl,
     });
@@ -563,19 +577,16 @@ exports.login = async (req, res) => {
       firstname: user.firstname,
       lastname: user.lastname,
       role: user.role ? { id: user.role.id, name: user.role.name } : null,
-      restaurant: user.restaurant
-        ? {
-            id: user.restaurant.id,
-            name: user.restaurant.name,
-            address: user.restaurant.address,
-            restaurantType: user.restaurant.restaurantType,
-            foodType: user.restaurant.foodType,
-            enableBuffet: user.restaurant.enableBuffet,
-            ambianceImage: user.restaurant.ambianceImage,
-            logoImage: user.restaurant.logoImage,
-          }
-        : null,
-      accessToken: token,
+      restaurant: user.restaurant ? {
+        id: user.restaurant.id,
+        name: user.restaurant.name,
+        address: user.restaurant.address,
+        foodType: user.restaurant.foodType,
+        enableBuffet: user.restaurant.enableBuffet,
+        ambianceImage: user.restaurant.ambianceImage,
+        logoImage: user.restaurant.logoImage
+      } : null,
+      accessToken: token
     });
   } catch (error) {
     res.status(500).send({ message: error.message });
