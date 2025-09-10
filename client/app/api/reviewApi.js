@@ -14,7 +14,10 @@ export const getUserReviews = async (userId) => {
 
 export const addReview = async (reviewData) => {
   try {
-    const response = await axiosService.post(REVIEWS_API, reviewData);
+    const response = await axiosService.post(
+      `${REVIEWS_API}/create`,
+      reviewData
+    );
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;

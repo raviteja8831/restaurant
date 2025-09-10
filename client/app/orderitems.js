@@ -23,8 +23,9 @@ import { createOrder, getOrderItemList } from "./api/orderApi";
 
 export default function ItemsListScreen() {
   const router = useRouter();
-  const { category, categoryName, restaurantId, userId, orderID, ishotel } =
-    useLocalSearchParams();
+  const params = useLocalSearchParams();
+  /*  const { category, categoryName, restaurantId, userId, orderID, ishotel } =
+    params; */
   // console.log("ghgsd", useLocalSearchParams());
 
   // ✅ Initialize items state from menuItemsData
@@ -43,54 +44,59 @@ export default function ItemsListScreen() {
   var itemfirstcalling = false;
 
   useEffect(() => {
-    const initializeData = async () => {
-      try {
-        setLoading(true);
-        // First fetch the menu items
-        const menuItems = await getitemsbasedonmenu(category);
-
-        // Then fetch the order items
-        const orderResponse = await getOrderItemList(orderID || 1, userId || 1);
-
-        // Create a map of order items
-        const orderItems = orderResponse.reduce((acc, orderItem) => {
-          acc[orderItem.menuItemId] = orderItem;
-          return acc;
-        }, {});
-
-        // Combine menu items with order data
-        const combinedItems = menuItems.map((item) => ({
-          ...item,
-          selected: !!orderItems[item.id],
-          quantity: orderItems[item.id]?.quantity || 0,
-          comment: orderItems[item.id]?.comment || "",
-          orderItemId: orderItems[item.id]?.id || null,
-        }));
-
-        setItems(combinedItems);
-      } catch (error) {
-        AlertService.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     initializeData();
-  }, [category, orderID, userId]);
+  }, [params.category, params.orderID, params.userId]);
+  const initializeData = async () => {
+    try {
+      setLoading(true);
+      // First fetch the menu items
+      const menuItems = await getitemsbasedonmenu(params.category);
 
-  const createOrder_data = async (path_re) => {
+      // Then fetch the order items
+      var orderResponse = [];
+      if (params.orderID) {
+        const ord_res = await getOrderItemList(params.orderID, params.userId);
+        if (ord_res.orderItems) {
+          orderResponse = ord_res.orderItems;
+        }
+      }
+      // Create a map of order items
+      const orderItems = orderResponse.reduce((acc, orderItem) => {
+        acc[orderItem.menuItemId] = orderItem;
+        return acc;
+      }, {});
+
+      // Combine menu items with order data
+      const combinedItems = menuItems.map((item) => ({
+        ...item,
+        selected: !!orderItems[item.id],
+        quantity: orderItems[item.id]?.quantity || 0,
+        comment: orderItems[item.id]?.comment || "",
+        orderItemId: orderItems[item.id]?.id || null,
+      }));
+
+      setItems(combinedItems);
+    } catch (error) {
+      AlertService.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createOrder_data = async (path_re, calling_source) => {
     const order = {
-      userId: userId || 1,
-      restaurantId: restaurantId,
+      userId: params.userId || 1,
+      restaurantId: params.restaurantId,
       total: 0,
       status: "PENDING",
       orderItems: selectedItems || [],
-      orderID: orderID || null,
+      orderID: params.orderID || null,
       removedItems: remove_list,
     };
     // console.log("items", order);
     try {
       const response = await createOrder(order);
+      initializeData();
       console.log("Order created successfully:", response);
     } catch (error) {
       // console.error("Error creating order:", error);
@@ -103,7 +109,7 @@ export default function ItemsListScreen() {
     }
   };
   // ✅ Handle checkbox toggle
-  const handleItemSelect = (itemId) => {
+  /*  const handleItemSelect = (itemId) => {
     setItems((prevData) =>
       prevData.map((item) => {
         if (item.id === itemId) {
@@ -125,7 +131,41 @@ export default function ItemsListScreen() {
         return item;
       })
     );
+  }; */
+  const handleItemSelect = (itemId) => {
+    setItems((prevData) => {
+      const updatedItems = prevData.map((item) => {
+        if (item.id === itemId) {
+          if (item.selected) {
+            // If item is being unselected, add it to remove_list
+            setRemoveList((prev) => [...prev, item]);
+          } else {
+            // If item is being selected, remove it from remove_list if it exists
+            setRemoveList((prev) =>
+              prev.filter((removedItem) => removedItem.id !== item.id)
+            );
+          }
+
+          return {
+            ...item,
+            selected: !item.selected,
+            quantity: item.selected ? 0 : 1,
+          };
+        }
+        return item;
+      });
+
+      // ✅ After update, check if any selected items left
+      const selected = updatedItems.filter((i) => i.selected);
+      if (selected.length === 0) {
+        // params.orderID = null;
+        createOrder_data(false, "calling_selected");
+      }
+
+      return updatedItems;
+    });
   };
+
   useEffect(() => {
     console.log("remove_list:", remove_list);
   }, [remove_list]);
@@ -171,7 +211,7 @@ export default function ItemsListScreen() {
   };
 
   // ✅ Handle quantity increment/decrement
-  const handleQuantityChange = (itemId, increment) => {
+  /*  const handleQuantityChange = (itemId, increment) => {
     setItems((prevData) =>
       prevData.map((item) => {
         if (item.id === itemId) {
@@ -194,22 +234,59 @@ export default function ItemsListScreen() {
         return item;
       })
     );
+    
+  }; */
+  const handleQuantityChange = (itemId, increment) => {
+    setItems((prevData) => {
+      const updatedItems = prevData.map((item) => {
+        if (item.id === itemId) {
+          const newQuantity = Math.max(0, item.quantity + increment);
+
+          // Handle remove_list updates
+          if (newQuantity === 0 && item.orderItemId) {
+            setRemoveList((prev) => [...prev, item]);
+          } else if (newQuantity > 0) {
+            setRemoveList((prev) =>
+              prev.filter((removedItem) => removedItem.id !== item.id)
+            );
+          }
+
+          return {
+            ...item,
+            quantity: newQuantity,
+            selected: newQuantity > 0,
+          };
+        }
+        return item;
+      });
+
+      // ✅ After items updated, check selected count
+      const selected = updatedItems.filter((i) => i.selected);
+
+      if (selected.length === 0) {
+        // 👇 Only call API here
+        // params.orderID = null;
+        createOrder_data(false, "calling_selected");
+      }
+
+      return updatedItems;
+    });
   };
 
   // ✅ Recalculate selected items + total cost
   useEffect(() => {
     const selected = items.filter((item) => item.selected);
     setSelectedItems(selected);
-    itemfirstcalling = true;
+    // itemfirstcalling = true;
     const total = selected.reduce((sum, item) => {
       const price = parseInt(item.price);
       return sum + price * item.quantity;
     }, 0);
     setTotalCost(total);
-    if (selected == 0) {
-      createOrder_data(false);
-    }
-  }, [items, itemfirstcalling]);
+    /*  if (selected == 0) {
+      createOrder_data(false, "calling_selected");
+    } */
+  }, [items]);
 
   const handleConfirmOrder = () => {
     router.push({
@@ -223,11 +300,13 @@ export default function ItemsListScreen() {
   };
 
   const handleBackPress = () => {
-    if (router.canGoBack()) {
-      router.back();
+    var obj = { pathname: "/menu-list" };
+    if (params.ishotel == "true") {
+      obj.params = { hotelId: params.restaurantId, ishotel: "true" };
     } else {
-      router.push({ pathname: "/menu-list" }); // 👈 fallback route
+      obj.params = { hotelId: params.restaurantId };
     }
+    router.push(obj);
   };
 
   return (
@@ -252,7 +331,7 @@ export default function ItemsListScreen() {
         </TouchableOpacity>
         <View style={orderitemsstyle.headerContent}>
           <MaterialCommunityIcons name="food-variant" size={24} color="#000" />
-          <Text style={orderitemsstyle.title}>{categoryName}</Text>
+          <Text style={orderitemsstyle.title}>{params.categoryName}</Text>
         </View>
       </View>
 
@@ -269,7 +348,7 @@ export default function ItemsListScreen() {
           <View key={item.id} style={orderitemsstyle.itemRow}>
             {/* Checkbox */}
             {/* {ishotel} */}
-            {ishotel == "false" && (
+            {params.ishotel == "false" && (
               <TouchableOpacity
                 style={orderitemsstyle.checkboxContainer}
                 onPress={() => handleItemSelect(item.id)}
@@ -294,7 +373,7 @@ export default function ItemsListScreen() {
               <Text style={orderitemsstyle.itemPrice}>{item.price}</Text>
             </View>
 
-            {ishotel == "false" &&
+            {params.ishotel == "false" &&
               (item.selected ? (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <View style={orderitemsstyle.quantityContainer}>
@@ -337,7 +416,7 @@ export default function ItemsListScreen() {
       </ScrollView>
 
       {/* Order Summary */}
-      {ishotel == "false" && (
+      {params.ishotel == "false" && (
         <View style={orderitemsstyle.orderSummary}>
           <Text style={orderitemsstyle.summaryText}>
             No of item Selected: {selectedItems.length}

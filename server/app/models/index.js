@@ -25,10 +25,12 @@ db.users = require("./user.model.js")(sequelize, Sequelize);
 db.roles = require("./role.model.js")(sequelize, Sequelize);
 db.restaurant = require("./restaurant.model.js")(sequelize, Sequelize);
 db.restaurantUser = require("./restaurantuser.model.js")(sequelize, Sequelize);
+db.buffetOrder = require("./buffetOrder.model.js")(sequelize, Sequelize);
 db.restaurantReview = require("./restaurantreview.model.js")(
   sequelize,
   Sequelize
 );
+
 db.restaurantRating = require("./restaurantrating.model.js")(
   sequelize,
   Sequelize
@@ -56,6 +58,14 @@ db.restaurantReview.belongsTo(db.restaurant, {
 db.restaurantReview.belongsTo(db.users, {
   foreignKey: "userId",
   as: "reviewer",
+});
+db.buffetOrder.belongsTo(db.restaurant, {
+  foreignKey: "restaurantId",
+  as: "restaurant",
+});
+db.buffetOrder.belongsTo(db.users, {
+  foreignKey: "userId",
+  as: "user",
 });
 
 db.menu.belongsTo(db.restaurant, {

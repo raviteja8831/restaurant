@@ -22,9 +22,9 @@ const TableDiningScreen = () => {
     router.push({
       pathname: "/HotelDetails",
       params: {
-        hotelName: params.hotelName,
-        hotelId: params.hotelId,
-        ishotel: params.ishotel,
+        // hotelName: params.hotelName,
+        id: params.hotelId,
+        // ishotel: params.ishotel,
       },
     });
   };

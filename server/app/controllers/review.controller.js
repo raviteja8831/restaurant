@@ -1,5 +1,47 @@
 const db = require("../models");
 
+// Create a review
+exports.createReview = async (req, res) => {
+  try {
+    const { userId, restaurantId, rating, review, orderId } = req.body;
+
+    if (!userId || !restaurantId || !rating) {
+      return res.status(400).json({
+        status: "error",
+        message: "userId, restaurantId, and rating are required",
+      });
+    }
+
+    const newReview = await db.restaurantReview.create({
+      userId,
+      restaurantId,
+      rating,
+      review,
+      orderId,
+    });
+
+    // Get the created review with user details
+    const reviewWithUser = await db.restaurantReview.findOne({
+      where: { id: newReview.id },
+      include: [
+        { model: db.users, as: "user", attributes: ["firstname", "lastname"] },
+      ],
+    });
+
+    res.status(201).json({
+      status: "success",
+      data: reviewWithUser,
+    });
+  } catch (error) {
+    console.error("Error in createReview:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Error creating review",
+      error: error.message,
+    });
+  }
+};
+
 // List all reviews for a restaurant
 exports.listReviews = async (req, res) => {
   try {

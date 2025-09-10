@@ -36,6 +36,12 @@ module.exports = (sequelize, Sequelize) => {
       logoImage: {
         type: Sequelize.STRING,
       },
+      buffetitems: {
+        type: Sequelize.STRING,
+      },
+      buffetPrice: {
+        type: Sequelize.INTEGER,
+      },
     },
     {
       tableName: "restaurant",
@@ -46,6 +52,10 @@ module.exports = (sequelize, Sequelize) => {
     Restaurant.hasMany(models.userFavorite, {
       foreignKey: "restaurantId",
       as: "favoritedBy",
+    });
+    Restaurant.hasMany(models.restaurantReview, {
+      foreignKey: "restaurantId",
+      as: "restaurantReviews",
     });
   };
 

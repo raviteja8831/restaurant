@@ -9,79 +9,97 @@ import {
   Image,
   Dimensions,
   ScrollViewBase,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
-import { orderData } from "../app/Mock/CustomerHome";
+// import { orderData } from "../app/Mock/CustomerHome";
 import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { wp, hp, responsiveStyles } from "./styles/responsive";
+import { addReview } from "./api/reviewsApi";
+import {
+  getOrderItemList,
+  deleteOrder,
+  updateOrderStatus,
+} from "./api/orderApi";
+import CommentModal from "./Modals/CommentModal";
 const { width, height } = Dimensions.get("window");
 
 export default function OrderSummaryScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const [orderItems, setOrderItems] = useState(orderData);
+  const [orderItems, setOrderItems] = useState([]);
+  const [orderDetails, setOrderDetails] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [totalAmount, setTotalAmount] = useState(0);
   const [userRating, setUserRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-
-  // Load order data from parameters if available
-  useEffect(() => {
-    console.log("Params received:", params);
-    console.log("Has order data flag:", params.hasOrderData);
-
-    if (params.orderData && params.hasOrderData === "true") {
-      try {
-        const parsedOrderData = JSON.parse(params.orderData);
-        console.log("Parsed order data:", parsedOrderData);
-
-        // Validate and ensure proper data structure
-        if (Array.isArray(parsedOrderData) && parsedOrderData.length > 0) {
-          const validatedData = parsedOrderData.map((item, index) => ({
-            id: item.id || index + 1,
-            item: item.item || item.name || "Unknown Item",
-            qty: parseInt(item.qty || item.quantity || 1),
-            price: parseInt(item.price || 0),
-            status: item.status || "Waiting",
-          }));
-          setOrderItems(validatedData);
-        } else {
-          console.log("Invalid order data structure, using default");
-        }
-      } catch (error) {
-        console.error("Error parsing order data:", error);
-        console.log("Using default order data due to error");
-      }
-    } else {
-      console.log("No order data found, using default data");
+  const [removedItems, setRemovedItems] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  function router_call() {
+    router.push({
+      pathname: "/menu-list",
+    });
+  }
+  const handleDeleteOrder = async (orderId) => {
+    // alert("Are you sure you want to delete this order?");
+    try {
+      await deleteOrder(orderId);
+      router_call();
+    } catch (error) {
+      console.error("Failed to delete order:", error);
+      Alert.alert("Error", "Failed to delete order. Please try again.");
     }
-  }, [params.orderData, params.hasOrderData]);
+  };
 
-  const totalAmount = orderItems.reduce((sum, item) => {
-    const qty = parseInt(item.qty) || 0;
-    const price = parseInt(item.price) || 0;
-    return sum + qty * price;
-  }, 0);
+  useEffect(() => {
+    initializeData();
+  }, [params.orderID]);
+
+  const initializeData = async () => {
+    try {
+      setLoading(true);
+      // First fetch the menu items
+      const menuItems = await getOrderItemList(params.orderID, params.userId);
+
+      setOrderItems(menuItems.orderItems || []);
+      setOrderDetails(menuItems.order_details || {});
+    } catch (error) {
+      AlertService.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (loading) {
+      /*   return (
+        <ActivityIndicator
+          size="large"
+          color="#6c63b5"
+          style={{ marginTop: 20 }}
+        />
+      ); */
+    }
+  }, [loading]);
+  useEffect(() => {
+    setTotalAmount(
+      orderItems.reduce((sum, item) => {
+        const qty = parseInt(item.quantity) || 0;
+        const price = parseInt(item.price) || 0;
+        return sum + qty * price;
+      }, 0)
+    );
+  }, [orderItems]);
 
   const handleBackPress = () => {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.push({
-        pathname: "/menu-list",
-        params: {
-          orderData: params.orderData,
-          totalAmount: totalAmount.toString(),
-        },
-      }); // 👈 fallback route
+      router_call();
+      // 👈 fallback route
     }
   };
-  useEffect(() => {
-    if (totalAmount == 0) {
-      router.push({
-        pathname: "/menu-list",
-      }); //
-    }
-  }, [totalAmount]);
 
   const handleStarPress = (rating) => {
     setUserRating(rating);
@@ -92,18 +110,99 @@ export default function OrderSummaryScreen() {
     setEditingItem(editingItem === itemId ? null : itemId);
   };
 
-  const handleQuantityChange = (itemId, change) => {
-    setOrderItems((prevItems) => {
-      const updatedItems = prevItems.map((item) =>
-        item.id === itemId
-          ? { ...item, qty: Math.max(0, item.qty + change) }
-          : item
-      );
-      // Remove items with quantity 0
-      return updatedItems.filter((item) => item.qty > 0);
-    });
-    // Don't close edit mode when changing quantity - only close on blur
+  const handleModalSubmit = async () => {
+    if (params.orderID) {
+      await handleDeleteOrder(params.orderID);
+    }
+    setIsModalOpen(false);
   };
+
+  const handleSubmitAndPay = async () => {
+    try {
+      setLoading(true);
+      const response = await updateOrderStatus(params.orderID, {
+        status: "Completed",
+        // Send updated quantities for remaining items
+        updatedItems: orderItems.map((item) => ({
+          id: item.id,
+          quantity: item.quantity,
+        })),
+        totalAmount: totalAmount,
+        // Send removed items for deletion
+        removedItems: removedItems.map((item) => ({
+          id: item.id,
+        })),
+      });
+
+      // Update the total amount and status from the response
+      if (response.data && response.data.order) {
+        setTotalAmount(response.data.order.totalAmount);
+        // Update order items with new status
+        const updatedItems = orderItems.map((item) => ({
+          ...item,
+          status: "Completed",
+        }));
+        setOrderItems(updatedItems);
+        initializeData();
+      }
+      if (userRating > 0) {
+        await addReview({
+          userId: params.userId,
+          restaurantId: orderDetails.restaurantId,
+          rating: userRating,
+          orderId: params.orderID,
+        });
+      }
+      router.push({
+        pathname: "/customer-home",
+      });
+    } catch (error) {
+      console.error("Failed to process order:", error);
+      Alert.alert("Error", "Failed to process order. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    // setIsModalOpen(false);
+    setEditingItem(null); // Reset edit state to show pencil icon
+    initializeData(); // Refresh the data
+  };
+
+  const handleQuantityChange = async (itemId, change) => {
+    const updatedItems = orderItems.map((item) =>
+      item.id === itemId
+        ? { ...item, quantity: Math.max(0, item.quantity + change) }
+        : item
+    );
+
+    // Find items that now have quantity 0
+    const itemsToRemove = updatedItems.filter((item) => item.quantity === 0);
+    if (itemsToRemove.length > 0) {
+      setRemovedItems((prev) => [...prev, ...itemsToRemove]);
+    }
+
+    // Remove items with quantity 0
+    const filteredItems = updatedItems.filter((item) => item.quantity > 0);
+
+    // Calculate new total after filtering
+    const newTotal = filteredItems.reduce(
+      (sum, item) => sum + item.quantity * item.price,
+      0
+    );
+
+    // Update the items first
+    setOrderItems(filteredItems);
+
+    // Then check if total is 0 and show modal
+    if (newTotal === 0) {
+      setIsModalOpen(true);
+    }
+  };
+  useEffect(() => {
+    console.log("Order summary:", removedItems);
+  }, [removedItems]);
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -151,14 +250,16 @@ export default function OrderSummaryScreen() {
                 {order.status}
               </Text>
               <Text style={[styles.cell, styles.orderColumn]}>
-                {order.item}
+                {order.menuItemName}
               </Text>
-              <Text style={[styles.cell, styles.qtyColumn]}>{order.qty}</Text>
+              <Text style={[styles.cell, styles.qtyColumn]}>
+                {order.quantity}
+              </Text>
               <Text style={[styles.cell, styles.priceColumn]}>
                 {order.price}
               </Text>
               <Text style={[styles.cell, styles.totalColumn]}>
-                {order.qty * order.price}
+                {order.quantity * order.price}
               </Text>
               {/* Edit icon or quantity controls */}
               <View style={styles.editColumn}>
@@ -237,9 +338,17 @@ export default function OrderSummaryScreen() {
         </View>
 
         {/* Pay Button */}
-        <TouchableOpacity style={[styles.payButton, responsiveStyles.bg1]}>
-          <Text style={styles.payText}>Pay</Text>
+        <TouchableOpacity
+          style={[styles.payButton, responsiveStyles.bg1]}
+          onPress={handleSubmitAndPay}
+        >
+          <Text style={styles.payText}>Submit & Pay</Text>
         </TouchableOpacity>
+        <CommentModal
+          visible={isModalOpen}
+          onClose={handleModalClose}
+          onSubmit={handleModalSubmit}
+        />
       </SafeAreaView>
     </ScrollView>
   );
