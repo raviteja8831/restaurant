@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from "expo-router";
 import { fetchManagerDashboard, addUserByManager } from "../api/managerApi";
 import { fetchChefStats } from "../api/chefApi";
@@ -75,10 +76,19 @@ export default function ManagerDashboardScreenNew() {
     async function fetchData() {
       setLoading(true);
       try {
-        // Manager dashboard
-        const dash = await fetchManagerDashboard();
+        // Get user data from AsyncStorage
+        const userStr = await AsyncStorage.getItem('user_profile');
+        const token = await AsyncStorage.getItem('auth_token');
+        let user = null;
+        if (userStr) {
+          user = JSON.parse(userStr);
+          setManagerName(user.firstname || user.name || '');
+          setProfile({ name: user.firstname || user.name || '', phone: user.phone || '' });
+        }
+        // Pass token to API if needed (example: setApiAuthToken(token))
+        // Fetch dashboard data (optionally pass userId or token)
+        const dash = await fetchManagerDashboard(user?.id, token);
         setDashboard(dash);
-        setManagerName(dash.managerName || '');
         setRestaurantName(dash.restaurantName || HEADINGS.ManagerDashboardScreen);
         setToday(dash.today || '');
         setDate(dash.date || '');
@@ -92,10 +102,6 @@ export default function ManagerDashboardScreenNew() {
           name: dash.buffetName || 'Breakfast Buffet',
           items: dash.buffetItems || 'Poori, All types of Dosa, Chow Chow Bath, Rice Bath',
           price: dash.buffetPrice || '800 Rs',
-        });
-        setProfile({
-          name: dash.managerName || '',
-          phone: dash.managerPhone || '',
         });
         setSalesData(dash.salesData || []);
         setIncomeData(dash.incomeData || []);

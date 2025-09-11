@@ -180,37 +180,25 @@ export default function ManagerRegisterScreen() {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      // Service type: send array if both selected, else single value or empty
-      let restaurantType = "";
-      if (tableService && selfService) restaurantType = ["table", "self"];
-      else if (tableService) restaurantType = ["table"];
-      else if (selfService) restaurantType = ["self"];
-      else restaurantType = [];
-
-      // Food type: send array if both selected, else single value or empty
-      let foodType = "";
-      if (pureVeg && nonVeg) foodType = ["veg", "nonveg"];
-      else if (pureVeg) foodType = ["veg"];
-      else if (nonVeg) foodType = ["nonveg"];
-      else foodType = [];
-
+      // Service type: send array if both selected, else single value or empt
       let ambianceImageUrl = "";
+      console.log(ambianceImage, 'ambianceImage');
       if (ambianceImage) {
-        // Only upload if it's a local file (not already a URL)
         if (ambianceImage.startsWith('file://') || ambianceImage.startsWith('content://')) {
+          // Local file, upload as file object
           const filename = ambianceImage.split("/").pop();
           const match = /\.(\w+)$/.exec(filename ?? "");
           const typeMime = match ? `image/${match[1]}` : `image/jpeg`;
-          const formData = new FormData();
-          formData.append('file', {
+          const fileObj = {
             uri: ambianceImage,
             name: filename,
             type: typeMime,
-          });
+          };
           try {
-            const data = await uploadImage(formData);
+            const data = await uploadImage(fileObj);
             const SERVER_URL = "http://localhost:8080";
             let imageUrl = data.url;
+            imageUrl = SERVER_URL + (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
             if (imageUrl && !imageUrl.startsWith("http")) {
               imageUrl = SERVER_URL + (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
             }
@@ -222,9 +210,49 @@ export default function ManagerRegisterScreen() {
         } else if (ambianceImage.startsWith('http')) {
           // Already a URL, use as is
           ambianceImageUrl = ambianceImage;
+        } else if (ambianceImage.startsWith('data:image/')) {
+          // Handle base64 data URL
+          try {
+            // Extract mime and base64 data
+            const matches = ambianceImage.match(/^data:(image\/(png|jpeg|jpg));base64,(.+)$/);
+            if (!matches) throw new Error('Invalid base64 image format');
+            const mimeType = matches[1];
+            const base64Data = matches[3];
+            // Create a blob from base64 (browser only)
+            let fileObj;
+            if (typeof window !== 'undefined' && window.File) {
+              const byteCharacters = atob(base64Data);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: mimeType });
+              const filename = `ambiance_${Date.now()}.${mimeType.split('/')[1]}`;
+              fileObj = new File([blob], filename, { type: mimeType });
+            } else {
+              // React Native: just pass uri, name, type
+              const filename = `ambiance_${Date.now()}.${mimeType.split('/')[1]}`;
+              fileObj = {
+                uri: ambianceImage,
+                name: filename,
+                type: mimeType,
+              };
+            }
+            const data = await uploadImage(fileObj);
+            const SERVER_URL = "http://localhost:8080";
+            let imageUrl = data.url;
+            imageUrl = SERVER_URL + (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
+            if (imageUrl && !imageUrl.startsWith("http")) {
+              imageUrl = SERVER_URL + (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
+            }
+            ambianceImageUrl = imageUrl;
+          } catch (err) {
+            showApiError(err);
+            ambianceImageUrl = "";
+          }
         } else {
-          // If it's a data URL or base64, do not send it, show error
-          alert.error('Please select an image from your device, not a pasted or base64 image.');
+          alert.error('Please select a valid image.');
           setLoading(false);
           return;
         }
@@ -237,8 +265,6 @@ export default function ManagerRegisterScreen() {
         phone: form.phone || "",
         role_id: 1,
         ...form,
-        restaurantType,
-        foodType,
         ambianceImage: ambianceImageUrl,
         enableBuffet,
         enableVeg: pureVeg,

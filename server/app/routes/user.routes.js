@@ -44,7 +44,6 @@ module.exports = (app) => {
   router.post("/:userId/menu-items", users.addMenuItemToUser);
 
   // CRUD endpoints
-  router.post("/", users.create);
   router.get("/", users.findAll);
   router.get("/:id", users.findOne);
   router.put("/:id", users.update);
