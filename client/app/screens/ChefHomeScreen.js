@@ -16,12 +16,17 @@ export default function ChefHomeScreen() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const token = await AsyncStorage.getItem('chef_token');
-        const user = await AsyncStorage.getItem('chef_profile');
+        // Use common user profile and token keys
+        const userStr = await AsyncStorage.getItem('user_profile');
+        const token = await AsyncStorage.getItem('auth_token');
+        let user = null;
         if (token) {
           setApiAuthToken(token);
         }
-        const ordersRes = await fetchChefOrders(user ? JSON.parse(user).id : null);
+        if (userStr) {
+          user = JSON.parse(userStr);
+        }
+        const ordersRes = await fetchChefOrders(user ? user.id : null);
         setOrders(ordersRes.orders || []);
         const msgRes = await fetchChefMessages();
         setMessages(msgRes.messages || []);

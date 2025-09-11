@@ -1,5 +1,37 @@
 const db = require("../models");
 const { Op } = require("sequelize");
+// Secret key for JWT
+const SECRET_KEY = "your_secret_key";
+
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, getUploadFilename(file));
+  },
+});
+const {
+  ensureUploadDir,
+  getUploadFilename,
+} = require("../utils/imageUploadHelper.js");
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 } // 20 MB
+});
+
+// Ensure the upload directory exists
+const uploadDir = path.join(__dirname, "../../assets/images");
+ensureUploadDir(uploadDir);
+
+const User = db.users;
+const Role = db.roles;
 
 // Get user profile with orders, favorites and transactions
 exports.getUserProfile = async (req, res) => {
@@ -415,35 +447,6 @@ exports.uploadImage = async (req, res) => {
 };
 // Add Restaurant User (Chef or other role)
 
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const path = require("path");
-const fs = require("fs");
-const multer = require("multer");
-const {
-  ensureUploadDir,
-  getUploadFilename,
-} = require("../utils/imageUploadHelper");
-
-const User = db.users;
-const Role = db.roles;
-
-// Secret key for JWT
-const SECRET_KEY = "your_secret_key";
-
-// Ensure the upload directory exists
-const uploadDir = path.join(__dirname, "../../assets/images");
-ensureUploadDir(uploadDir);
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, getUploadFilename(file));
-  },
-});
-const upload = multer({ storage });
 
 // User registration (manager)
 exports.register = async (req, res) => {
@@ -459,9 +462,7 @@ exports.register = async (req, res) => {
       firstname,
      
       lastname,
-     
-      email,
-     
+          
       name,
      
       restaurantAddress,
@@ -470,9 +471,6 @@ exports.register = async (req, res) => {
       ambiancePhoto,
      
       logo,
-     
-      foodType,
-     
       enableBuffet,
       enableVeg,
       enableNonveg,
@@ -481,19 +479,7 @@ exports.register = async (req, res) => {
    ,
     } = req.body;
 
-    // Convert restaurantType and foodType to comma-separated values if array
-    let restaurantTypeStr = "";
-    if (Array.isArray(restaurantType)) {
-      restaurantTypeStr = restaurantType.join(",");
-    } else {
-      restaurantTypeStr = restaurantType;
-    }
-    let foodTypeStr = "";
-    if (Array.isArray(foodType)) {
-      foodTypeStr = foodType.join(",");
-    } else {
-      foodTypeStr = foodType;
-    }
+    // Convert restaurantType and foodType to comma-separated values if arra
 
     // Upload ambiancePhoto if it's a file (base64 or file path)
     let ambianceImageUrl = ambiancePhoto;
@@ -504,7 +490,6 @@ exports.register = async (req, res) => {
     const restaurant = await db.restaurant.create({
       name: name,
       address: restaurantAddress,
-      foodType: foodTypeStr,
       enableBuffet: enableBuffet === true || enableBuffet === 'true',
       enableVeg: enableVeg === true || enableVeg === 'true',
       enableNonveg: enableNonveg === true || enableNonveg === 'true',
@@ -519,7 +504,7 @@ exports.register = async (req, res) => {
       phone,
       firstname,
       lastname,
-      restaurant: restaurant.id,
+      restaurantId: restaurant.id,
       role_id: 1, // 1 = manager
     });
 
@@ -547,61 +532,35 @@ exports.login = async (req, res) => {
           attributes: ["id", "name"],
         },
         {
-          model: db.restaurant,
-          as: "restaurant",
-          attributes: [
-            "id",
-            "name",
-            "address",
-            "restaurantType",
-            "foodType",
-            "enableBuffet",
-            "ambianceImage",
-            "logoImage",
-          ],
-        },
-      ],
-    });
-    if (!user) {
-      return res.status(404).send({ message: "User not found!" });
-    }
-    // Mock OTP validation (replace with real OTP logic)
-    if (otp !== "1234") {
-      return res.status(401).send({ message: "Invalid OTP!" });
-    }
-    // Generate JWT token
-    const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: "1h" });
-    res.status(200).send({
-      id: user.id,
-      phone: user.phone,
-      firstname: user.firstname,
-      lastname: user.lastname,
-      role: user.role ? { id: user.role.id, name: user.role.name } : null,
-      restaurant: user.restaurant ? {
-        id: user.restaurant.id,
-        name: user.restaurant.name,
-        address: user.restaurant.address,
-        foodType: user.restaurant.foodType,
-        enableBuffet: user.restaurant.enableBuffet,
-        ambianceImage: user.restaurant.ambianceImage,
-        logoImage: user.restaurant.logoImage
-      } : null,
-      accessToken: token
-    });
-  } catch (error) {
-    res.status(500).send({ message: error.message });
+      
+                  model: db.restaurant,
+                  as: "restaurant"
+                },
+              ],
+            });
+            if (!user) {
+              return res.status(404).send({ message: "User not found!" });
+            }
+            // Mock OTP validation (replace with real OTP logic)
+            if (otp !== "1234") {
+              return res.status(401).send({ message: "Invalid OTP!" });
+            }
+            // Generate JWT token
+            const token = jwt.sign({ id: user.id, role: user.role?.name, phone: user.phone }, SECRET_KEY, { expiresIn: "1h" });
+            res.status(200).send({
+              id: user.id,
+              phone: user.phone,
+              firstname: user.firstname,
+              lastname: user.lastname,
+              role: user.role || null,
+              restaurant: user.restaurant || null,
+              token // <-- send token in response
+            });
+          } catch (error) {
+            res.status(500).send({ message: error.message });
+          }
   }
-};
 
-// Create user (admin use)
-exports.create = async (req, res) => {
-  try {
-    const user = await User.create(req.body);
-    res.status(201).json(user);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
 
 // Get all users
 exports.findAll = async (req, res) => {

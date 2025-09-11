@@ -10,19 +10,10 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
     },
     address: {
-      type: Sequelize.STRING,
+      type: Sequelize.TEXT,
       allowNull: false,
     },
-    restaurantType: {
-      type: Sequelize.STRING,
-      allowNull: true,
-      comment: 'Comma separated values for service types (table,self,both)',
-    },
-    foodType: {
-      type: Sequelize.STRING,
-      allowNull: true,
-      comment: 'Comma separated values for food types (veg,nonveg,both)',
-    },
+   
     enableBuffet: {
       type: Sequelize.BOOLEAN,
       allowNull: true,

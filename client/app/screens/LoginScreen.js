@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { StyleSheet, Alert, View, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput, Text } from 'react-native-paper';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
@@ -42,15 +43,27 @@ export default function LoginScreen() {
         otp: otpValue.join(''),
       });
       const user = response.data;
-      const role = user?.role?.name.toLowerCase();
+      const role = user?.role?.name?.toLowerCase();
+      // Save token and user details using AsyncStorage (same as chef-login)
+      if (user.token) {
+        await AsyncStorage.setItem('auth_token', user.token);
+      }
+      // Save user profile (manager/chef details and restaurant details)
+      await AsyncStorage.setItem('user_profile', JSON.stringify(user));
       Alert.alert('API user', JSON.stringify(user));
       if (role === 'manager') {
-        router.push('/manager-dashboard');
+        router.push('/dashboard');
       } else if (role === 'chef') {
         router.push('/chef-home');
       } else {
         Alert.alert('Login Failed', 'Unknown user role: ' + (user?.role || 'none'));
       }
+// Example: How to use the token for authenticated requests elsewhere
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+// const token = await AsyncStorage.getItem('auth_token');
+// const response = await axios.get('http://localhost:8080/api/your-protected-route', {
+//   headers: { Authorization: `Bearer ${token}` }
+// });
     } catch (err) {
       Alert.alert('Login Failed', err?.message || 'Invalid credentials');
     }
