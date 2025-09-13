@@ -20,6 +20,7 @@ import {
   getUserTransactions,
 } from "../api/profileApi";
 import { AlertService } from "../services/alert.service";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 
@@ -32,6 +33,7 @@ export default function UserProfileScreen() {
   const [reviews, setReviews] = useState([]);
   const [favoritesData, setFavoritesData] = useState([]);
   const [transactionsData, setTransactionsData] = useState([]);
+  const [userId, setUserId] = useState(null);
   const [userData, setUserData] = useState({
     orders: [],
     favorites: [],
@@ -39,28 +41,57 @@ export default function UserProfileScreen() {
   });
   const router = useRouter();
 
-  // TODO: Get actual userId from auth context
-  const userId = 1;
-
+  // Get userId from AsyncStorage and fetch profile data
   useEffect(() => {
-    // if (activeTab === "orders") {
-    fetchProfileData();
-    // } else if (activeTab === "favorites") {
-    //   fetchFavorites();
-    // } else if (activeTab === "payments") {
-    //   fetchTransactions();
-    // }
-  }, [activeTab]);
+    const initializeProfile = async () => {
+      try {
+        const userProfile = await AsyncStorage.getItem("user_profile");
+        if (userProfile) {
+          const user = JSON.parse(userProfile);
+          console.log("User Profile:", user); // Debug log
+          setUserId(user.id);
+          // Only fetch profile data if we have a userId
+          if (user.id) {
+            await fetchProfileData(user.id);
+          }
+        } else {
+          console.log("No user profile found");
+          router.push("/customer-login");
+        }
+      } catch (error) {
+        console.error("Error initializing profile:", error);
+        AlertService.error("Error loading profile");
+      }
+    };
 
-  const fetchProfileData = async () => {
+    initializeProfile();
+  }, []);
+
+  // Handle tab changes
+  useEffect(() => {
+    if (userId) {
+      fetchProfileData();
+    }
+  }, [activeTab, userId]);
+  // }
+  // }, [activeTab]);
+
+  const fetchProfileData = async (id = userId) => {
     try {
+      if (!id) {
+        console.log("No user ID available");
+        return;
+      }
+      console.log("Fetching profile data for user:", id); // Debug log
       setLoading(true);
-      const response = await getUserProfile(userId);
+      const response = await getUserProfile(id);
+      console.log("Profile response:", response); // Debug log
       setUserData(response.data.user || {});
       setFavoritesData(response.data.favorites || []);
       setTransactionsData(response.data.payments || []);
       setReviews(response.data.orders || []);
     } catch (error) {
+      console.error("Error fetching profile:", error);
       AlertService.error(error);
     } finally {
       setLoading(false);

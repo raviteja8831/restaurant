@@ -50,7 +50,7 @@ exports.createOrder = async (req, res) => {
       // Update existing order
       const existingOrder = await Order.findByPk(req.body.orderID); // Changed from orderId to orderID
       if (!existingOrder) {
-        const order = await Order.create(req.body);
+        /*  const order = await Order.create(req.body);
 
         // Check if order items exist in the request body
         if (req.body.orderItems && Array.isArray(req.body.orderItems)) {
@@ -63,8 +63,8 @@ exports.createOrder = async (req, res) => {
 
           // Bulk create all order products
           await OrderProduct.bulkCreate(orderProducts_);
-        }
-        res.status(201).json(order);
+        } */
+        res.status(201).json("");
         return;
       }
       await existingOrder.update(req.body);
@@ -219,9 +219,9 @@ exports.getSelectedOrderItems = async (req, res) => {
     });
 
     if (!order) {
-      return res.status(404).json({
-        status: "error",
-        message: "Order not found",
+      return res.status(200).json({
+        order_details: {},
+        orderItems: [],
       });
     }
 
