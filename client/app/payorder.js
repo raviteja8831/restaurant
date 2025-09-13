@@ -23,6 +23,7 @@ import {
   updateOrderStatus,
 } from "./api/orderApi";
 import CommentModal from "./Modals/CommentModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width, height } = Dimensions.get("window");
 
 export default function OrderSummaryScreen() {
@@ -37,6 +38,7 @@ export default function OrderSummaryScreen() {
   const [editingItem, setEditingItem] = useState(null);
   const [removedItems, setRemovedItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userId, setUserId] = useState(null);
   function router_call() {
     router.push({
       pathname: "/menu-list",
@@ -52,21 +54,44 @@ export default function OrderSummaryScreen() {
       Alert.alert("Error", "Failed to delete order. Please try again.");
     }
   };
+  useEffect(() => {
+    const initializeProfile = async () => {
+      try {
+        const userProfile = await AsyncStorage.getItem("user_profile");
+        if (userProfile) {
+          const user = JSON.parse(userProfile);
+          console.log("User Profile:", user); // Debug log
+          setUserId(user.id);
+          // Only fetch profile data if we have a userId
+          if (user.id) {
+            await fetchProfileData(user.id);
+          }
+        } else {
+          console.log("No user profile found");
+          router.push("/customer-login");
+        }
+      } catch (error) {
+        console.error("Error initializing profile:", error);
+        // AlertService.error("Error loading profile");
+      }
+    };
 
+    initializeProfile();
+  }, []);
   useEffect(() => {
     initializeData();
-  }, [params.orderID]);
+  }, [params.orderID, userId]);
 
   const initializeData = async () => {
     try {
       setLoading(true);
       // First fetch the menu items
-      const menuItems = await getOrderItemList(params.orderID, params.userId);
+      const menuItems = await getOrderItemList(params.orderID, userId);
 
       setOrderItems(menuItems.orderItems || []);
       setOrderDetails(menuItems.order_details || {});
     } catch (error) {
-      AlertService.error(error);
+      // AlertService.error(error);
     } finally {
       setLoading(false);
     }
@@ -147,7 +172,7 @@ export default function OrderSummaryScreen() {
       }
       if (userRating > 0) {
         await addReview({
-          userId: params.userId,
+          userId: userId,
           restaurantId: orderDetails.restaurantId,
           rating: userRating,
           orderId: params.orderID,
@@ -158,7 +183,7 @@ export default function OrderSummaryScreen() {
       });
     } catch (error) {
       console.error("Failed to process order:", error);
-      Alert.alert("Error", "Failed to process order. Please try again.");
+      // Alert.alert("Error", "Failed to process order. Please try again.");
     } finally {
       setLoading(false);
     }

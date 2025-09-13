@@ -20,6 +20,7 @@ import { orderitemsstyle, responsiveStyles } from "./styles/responsive";
 import { AlertService } from "./services/alert.service";
 import { getitemsbasedonmenu } from "./api/menuApi";
 import { createOrder, getOrderItemList } from "./api/orderApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ItemsListScreen() {
   const router = useRouter();
@@ -35,17 +36,40 @@ export default function ItemsListScreen() {
   const [totalCost, setTotalCost] = useState(0);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  const [userId, setUserId] = useState(null);
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [comment, setComment] = useState("");
   const [items, setItems] = useState([]);
   var itemfirstcalling = false;
+  useEffect(() => {
+    const initializeProfile = async () => {
+      try {
+        const userProfile = await AsyncStorage.getItem("user_profile");
+        if (userProfile) {
+          const user = JSON.parse(userProfile);
+          console.log("User Profile:", user); // Debug log
+          setUserId(user.id);
+          // Only fetch profile data if we have a userId
+          if (user.id) {
+            await fetchProfileData(user.id);
+          }
+        } else {
+          console.log("No user profile found");
+          router.push("/customer-login");
+        }
+      } catch (error) {
+        console.error("Error initializing profile:", error);
+        AlertService.error("Error loading profile");
+      }
+    };
 
+    initializeProfile();
+  }, []);
   useEffect(() => {
     initializeData();
-  }, [params.category, params.orderID, params.userId]);
+  }, [params.category, params.orderID, userId]);
   const initializeData = async () => {
     try {
       setLoading(true);
@@ -55,7 +79,7 @@ export default function ItemsListScreen() {
       // Then fetch the order items
       var orderResponse = [];
       if (params.orderID) {
-        const ord_res = await getOrderItemList(params.orderID, params.userId);
+        const ord_res = await getOrderItemList(params.orderID, userId);
         if (ord_res.orderItems) {
           orderResponse = ord_res.orderItems;
         }
@@ -85,7 +109,7 @@ export default function ItemsListScreen() {
 
   const createOrder_data = async (path_re, calling_source) => {
     const order = {
-      userId: params.userId || 1,
+      userId: userId,
       restaurantId: params.restaurantId,
       total: 0,
       status: "PENDING",
@@ -173,7 +197,7 @@ export default function ItemsListScreen() {
   // ✅ Handle edit
   const handleEdit = (itemId) => {
     let foundItem = null;
-    setItems(
+    /*  setItems(
       (prevSections) =>
         prevSections.map((item) => {
           if (item.id === itemId) {
@@ -187,21 +211,22 @@ export default function ItemsListScreen() {
           return item;
         })
       // }))
-    );
-    if (foundItem) {
-      setSelectedItem(foundItem);
-      setComment(foundItem.comment || "");
+    ); */
+    if (itemId) {
+      setSelectedItem(itemId);
+      setComment(comment || "");
       setIsModalOpen(true);
     }
   };
 
   // ✅ Handle comment submit
   const handleCommentSubmit = () => {
+    console.log("Submitting comment:", comment, "for item:", selectedItem);
     setItems((prevSections) =>
       prevSections.map((section) => ({
         ...section,
-        items: section.items.map((item) =>
-          item.id === selectedItem.id ? { ...item, comment } : item
+        items: items.map((item) =>
+          item.id === selectedItem.id ? { ...item, comments: comment } : item
         ),
       }))
     );
@@ -373,42 +398,50 @@ export default function ItemsListScreen() {
               <Text style={orderitemsstyle.itemPrice}>{item.price}</Text>
             </View>
 
-            {params.ishotel == "false" &&
-              (item.selected ? (
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <View style={orderitemsstyle.quantityContainer}>
+            {
+              params.ishotel == "false" &&
+                (item.selected ? (
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <View style={orderitemsstyle.quantityContainer}>
+                      <TouchableOpacity
+                        style={orderitemsstyle.quantityButton}
+                        onPress={() => handleQuantityChange(item.id, -1)}
+                      >
+                        <Text style={orderitemsstyle.quantityButtonText}>
+                          -
+                        </Text>
+                      </TouchableOpacity>
+                      <Text style={orderitemsstyle.quantityText}>
+                        {item.quantity}
+                      </Text>
+                      <TouchableOpacity
+                        style={orderitemsstyle.quantityButton}
+                        onPress={() => handleQuantityChange(item.id, 1)}
+                      >
+                        <Text style={orderitemsstyle.quantityButtonText}>
+                          +
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
                     <TouchableOpacity
-                      style={orderitemsstyle.quantityButton}
-                      onPress={() => handleQuantityChange(item.id, -1)}
+                      onPress={() => handleEdit(item.id)}
+                      style={{ marginHorizontal: 6 }}
                     >
-                      <Text style={orderitemsstyle.quantityButtonText}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={orderitemsstyle.quantityText}>
-                      {item.quantity}
-                    </Text>
-                    <TouchableOpacity
-                      style={orderitemsstyle.quantityButton}
-                      onPress={() => handleQuantityChange(item.id, 1)}
-                    >
-                      <Text style={orderitemsstyle.quantityButtonText}>+</Text>
+                      <Feather name="edit-2" size={18} color="#000" />
                     </TouchableOpacity>
                   </View>
-
-                  <TouchableOpacity
-                    onPress={() => handleEdit(item.id)}
-                    style={{ marginHorizontal: 6 }}
-                  >
-                    <Feather name="edit-2" size={18} color="#000" />
-                  </TouchableOpacity>
-                </View>
-              ) : (
+                ) : (
+                  ""
+                )) /* (
                 <TouchableOpacity
                   onPress={() => handleEdit(item.id)}
                   style={{ marginHorizontal: 6 }}
                 >
                   <Feather name="edit-2" size={18} color="#000" />
                 </TouchableOpacity>
-              ))}
+              ) */
+            }
           </View>
         ))}
         {/*  </View>

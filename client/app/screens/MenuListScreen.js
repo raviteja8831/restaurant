@@ -21,6 +21,7 @@ import { getMenusWithItems } from "../api/menuApi";
 import { AlertService } from "../services/alert.service";
 import { getOrderItemCount } from "../api/orderApi";
 import { getRestaurantById } from "../api/restaurantApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Image mapping object
 const categoryImages = {
@@ -43,16 +44,40 @@ export default function MenuListScreen() {
   const [hoteldetails, setHoteldetails] = useState(false);
   const [restaurant, setRestaurant] = useState({});
   const [isbuffet, setIsBuffet] = useState(false);
-
+  const [userId, setUserId] = useState(null);
   const [totalAmount, setTotalAmount] = useState();
   const [menuCategories, setMenuCategories] = useState();
   const [orderSummary, setOrderSummary] = useState({});
+  useEffect(() => {
+    const initializeProfile = async () => {
+      try {
+        const userProfile = await AsyncStorage.getItem("user_profile");
+        if (userProfile) {
+          const user = JSON.parse(userProfile);
+          console.log("User Profile:", user); // Debug log
+          setUserId(user.id);
+          // Only fetch profile data if we have a userId
+          if (user.id) {
+            await fetchProfileData(user.id);
+          }
+        } else {
+          console.log("No user profile found");
+          router.push("/customer-login");
+        }
+      } catch (error) {
+        console.error("Error initializing profile:", error);
+        AlertService.error("Error loading profile");
+      }
+    };
+
+    initializeProfile();
+  }, []);
   useFocusEffect(
     React.useCallback(() => {
       // This will run when the screen comes into focus
       fetchselectedOrderCount();
       fetchMenuData();
-    }, [])
+    }, [userId])
   );
   const fetchMenuData = async () => {
     try {
@@ -73,10 +98,7 @@ export default function MenuListScreen() {
     try {
       setLoading(true);
       restaurant.id = 1;
-      const response = await getOrderItemCount(
-        restaurant.id,
-        params.userId || 1
-      );
+      const response = await getOrderItemCount(restaurant.id, userId);
       console.log("Fetched order item count:", response);
       setOrderSummary((prev) => ({
         ...prev,
@@ -103,7 +125,7 @@ export default function MenuListScreen() {
         category: category.id,
         categoryName: category.name,
         restaurantId: restaurant.id,
-        userId: params.userId || 1,
+        // userId: params.userId || 1,
         orderID: orderSummary.orderId || null,
         ishotel: ishotel,
       },
@@ -149,7 +171,7 @@ export default function MenuListScreen() {
       pathname: "/payorder",
       params: {
         orderID: orderSummary.orderId,
-        userId: params.userId || 1,
+        // userId: params.userId || 1,
       },
     });
   };

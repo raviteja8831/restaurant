@@ -17,12 +17,37 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
 import { createBuffetOrder } from "./api/buffetOrder";
 import { getRestaurantById } from "./api/restaurantApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const BuffetTimeScreen = () => {
   const [persons, setPersons] = React.useState(0);
   const [currentBuffet, setcurrentBuffet] = React.useState(0);
-
+  const [userId, setUserId] = React.useState(null);
   const params = useLocalSearchParams();
   // const currentBuffet = buffetData[0];
+  useEffect(() => {
+    const initializeProfile = async () => {
+      try {
+        const userProfile = await AsyncStorage.getItem("user_profile");
+        if (userProfile) {
+          const user = JSON.parse(userProfile);
+          console.log("User Profile:", user); // Debug log
+          setUserId(user.id);
+          // Only fetch profile data if we have a userId
+          if (user.id) {
+            await fetchProfileData(user.id);
+          }
+        } else {
+          console.log("No user profile found");
+          router.push("/customer-login");
+        }
+      } catch (error) {
+        console.error("Error initializing profile:", error);
+        // AlertService.error("Error loading profile");
+      }
+    };
+
+    initializeProfile();
+  }, []);
   const handleBack = () => {
     router.push({
       pathname: "/menu-list",
@@ -53,7 +78,7 @@ const BuffetTimeScreen = () => {
     // Logic to create buffet order and navigate to payment
     try {
       var obj = {
-        userId: params.userId || 1,
+        userId: userId, //params.
         restaurantId: params.hotelId || 1,
         persons: persons,
       };

@@ -36,6 +36,7 @@ require("./app/routes/review.routes.js")(app);
 require("./app/routes/manager.routes.js")(app);
 require("./app/routes/chef.routes.js")(app);
 require("./app/routes/bufferOrder.routes.js")(app);
+require("./app/routes/customer.routes.js")(app);
 require("dotenv").config();
 var corsOptions = {
   origin: "*",

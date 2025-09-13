@@ -1,133 +1,188 @@
-import React, { useState } from 'react';
-import { StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, Text, Appbar, useTheme, Surface } from 'react-native-paper';
-import { useDispatch, useSelector } from 'react-redux';
-import { registerUser, selectLoading, selectError } from '../userSlice';
-import { API_BASE_URL, MESSAGES } from '../constants/constants';
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  View,
+  Dimensions,
+  ActivityIndicator,
+} from "react-native";
+import { TextInput, Button, Text, Surface } from "react-native-paper";
+import { MESSAGES } from "../constants/constants";
+import { AlertService } from "../services/alert.service";
+import { createCustomer } from "../api/customerApi";
 
-export default function CustomerRegisterScreen({ navigation }) {
-  const [step, setStep] = useState(1);
-  const [firstname, setFirstname] = useState('');
-  const [lastname, setLastname] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const dispatch = useDispatch();
-  const loading = useSelector(selectLoading);
-  const error = useSelector(selectError);
-  const theme = useTheme();
+const { width, height } = Dimensions.get("window");
 
-  const handleNext = () => {
-    if (!firstname.trim() || !lastname.trim()) {
-      Alert.alert('Error', 'Please enter your first and last name');
-      return;
-    }
-    setStep(2);
-  };
+export default function CustomerRegisterScreen() {
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState("");
+
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!phone || phone.length !== 10) {
-      Alert.alert('Error', MESSAGES.invalidPhone);
+    if (!firstname.trim() || !lastname.trim() || !phone.trim()) {
+      Alert.alert(
+        "Error",
+        "Please enter your first name, last name and phone number"
+      );
       return;
     }
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return;
-    }
-    const resultAction = await dispatch(registerUser({ phone, email, firstname, lastname, roleName: 'customer', apiUrl: API_BASE_URL }));
-    if (registerUser.fulfilled.match(resultAction)) {
-      Alert.alert('Success', MESSAGES.registrationSuccess);
-      navigation.replace('Login');
-    } else {
-      Alert.alert(MESSAGES.registrationFailed, resultAction.payload || MESSAGES.registrationFailed);
+
+    try {
+      setLoading(true);
+      const response = await createCustomer({
+        firstname: firstname.trim(),
+        lastname: lastname.trim(),
+        phone: phone.trim(),
+      });
+
+      if (response.data) {
+        Alert.alert("Success", MESSAGES.registrationSuccess);
+        navigation.replace("Login");
+      }
+    } catch (error) {
+      AlertService.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Surface style={[styles.container, { backgroundColor: '#a6a6e7' }]}> 
-        {/* <Appbar.Header style={styles.appbar}>
-          <Appbar.BackAction onPress={() => navigation.goBack()} />
-          <Appbar.Content title="Customer Registration" titleStyle={styles.appbarTitle} />
-        </Appbar.Header> */}
-        <Surface style={styles.formSurface}>
-          {step === 1 ? (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="First Name"
-                value={firstname}
-                onChangeText={setFirstname}
-                mode="outlined"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Last Name"
-                value={lastname}
-                onChangeText={setLastname}
-                mode="outlined"
-              />
-            </>
-          ) : (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="Phone Number"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                maxLength={10}
-                mode="outlined"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                mode="outlined"
-              />
-            </>
-          )}
-          {error ? <Text style={{ color: 'red', marginTop: 10 }}>{error}</Text> : null}
-        </Surface>
-        <Surface style={styles.bottomBar}>
-          {step === 1 ? (
-            <Button
-              mode="contained"
-              style={styles.bottomButton}
-              labelStyle={styles.buttonText}
-              onPress={handleNext}
-            >
-              Next
-            </Button>
-          ) : (
-            <Button
-              mode="contained"
-              style={styles.bottomButton}
-              labelStyle={styles.buttonText}
-              onPress={handleRegister}
-              loading={loading}
-              disabled={loading}
-            >
-              Register
-            </Button>
-          )}
-        </Surface>
+      <Surface style={styles.container}>
+        {/* Top-right icon */}
+        <View style={styles.topRightIcon}>
+          <Image
+            source={require("../../assets/images/logo.png")}
+            style={{ width: 28, height: 28 }}
+          />
+        </View>
+
+        {/* Title */}
+        <Text style={styles.title}>Menutha</Text>
+
+        {/* Form */}
+        <View style={styles.formContainer}>
+          <TextInput
+            style={styles.input}
+            label="First Name"
+            value={firstname}
+            onChangeText={setFirstname}
+            mode="outlined"
+            theme={{ colors: { primary: "#6B4EFF" } }}
+          />
+          <TextInput
+            style={styles.input}
+            label="Last Name"
+            value={lastname}
+            onChangeText={setLastname}
+            mode="outlined"
+            theme={{ colors: { primary: "#6B4EFF" } }}
+          />
+          <TextInput
+            style={styles.input}
+            label="Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            mode="outlined"
+            theme={{ colors: { primary: "#6B4EFF" } }}
+          />
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        </View>
+
+        {/* Loading indicator */}
+        {loading && (
+          <ActivityIndicator
+            size="large"
+            color="#6B4EFF"
+            style={styles.loadingIndicator}
+          />
+        )}
+
+        {/* Register button */}
+        <View style={styles.buttonContainer}>
+          <Button
+            mode="contained"
+            style={styles.registerButton}
+            labelStyle={styles.buttonText}
+            onPress={handleRegister}
+            loading={loading}
+            disabled={loading}
+          >
+            Register
+          </Button>
+        </View>
       </Surface>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 0, backgroundColor: '#a6a6e7' },
-  appbar: { backgroundColor: '#a6a6e7', elevation: 0 },
-  appbarTitle: { fontWeight: 'bold', fontSize: 20, textAlign: 'center' },
-  formSurface: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: 'transparent', elevation: 0 },
-  input: { width: 260, marginBottom: 15, alignSelf: 'center', backgroundColor: '#eae6ff' },
-  bottomBar: { padding: 16, backgroundColor: '#a6a6e7', borderTopLeftRadius: 24, borderTopRightRadius: 24, elevation: 8 },
-  bottomButton: { borderRadius: 24, width: '100%', alignSelf: 'center', paddingVertical: 10, backgroundColor: '#7b6eea' },
-  buttonText: { fontWeight: 'bold', fontSize: 18, color: '#fff' },
+  loadingIndicator: {
+    marginVertical: 20,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#A6A6E7",
+    paddingHorizontal: width * 0.05,
+    paddingVertical: height * 0.02,
+  },
+  topRightIcon: {
+    position: "absolute",
+    top: height * 0.05,
+    right: width * 0.05,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: height * 0.08,
+    marginBottom: height * 0.05,
+    fontFamily: "Cochin", // replace with custom font for exact match
+    color: "black",
+  },
+  formContainer: {
+    flex: 1,
+    justifyContent: "flex-start",
+  },
+  input: {
+    marginBottom: 20,
+    backgroundColor: "white",
+    fontSize: 16,
+  },
+  buttonContainer: {
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: height * 0.05,
+  },
+  registerButton: {
+    width: "70%",
+    borderRadius: 12,
+    paddingVertical: 8,
+    backgroundColor: "#D0CEF8",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "black",
+  },
+  errorText: {
+    color: "red",
+    marginTop: 10,
+    textAlign: "center",
+  },
 });
