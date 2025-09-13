@@ -155,14 +155,14 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   gpsIndicator: {
-    backgroundColor: "white",
+    // backgroundColor: "white",
     borderRadius: 20,
     padding: 8,
-    shadowColor: "#000",
+    /*   shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 5, */
   },
   filterImage: {
     width: 16,
@@ -170,14 +170,14 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   searchButton: {
-    backgroundColor: "white",
+    // backgroundColor: "white",
     borderRadius: 25,
     padding: 12,
-    shadowColor: "#000",
+    /*   shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 5, */
   },
   mapArea: {
     flex: 1,
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   navButton: {
-    backgroundColor: "#6854ff",
+    backgroundColor: "#BBBAEF",
     borderRadius: 16,
     padding: 16,
     shadowColor: "#000",
