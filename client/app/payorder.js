@@ -230,6 +230,7 @@ export default function OrderSummaryScreen() {
   }, [removedItems]);
   return (
     <ScrollView
+      style={{ backgroundColor: "#EBEBFF", padding: 15 }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.mainScrollViewContent}
     >
@@ -333,7 +334,6 @@ export default function OrderSummaryScreen() {
           <Text style={[styles.cell, styles.totalColumn]}>{totalAmount}</Text>
           <View style={styles.editColumn} />
         </View>
-
         {/* Rating Section */}
         <View style={styles.ratingSection}>
           <Text style={styles.feedback}>
@@ -349,7 +349,7 @@ export default function OrderSummaryScreen() {
                 <MaterialCommunityIcons
                   name={star <= userRating ? "star" : "star-outline"}
                   size={28}
-                  color={star <= userRating ? "#FFD700" : "#DDD"}
+                  color={star <= userRating ? "#FFD700" : "#240d0dff"}
                 />
               </TouchableOpacity>
             ))}
@@ -380,14 +380,9 @@ export default function OrderSummaryScreen() {
 }
 
 const styles = StyleSheet.create({
-  // container: {
-  //   flex: 1,
-  //   backgroundColor: "#f2f0ff",
-  //   padding: 16,
-  // },
-  contentWrapper: {
-    flex: 1,
-    marginTop: 30,
+  container: {
+    backgroundColor: "#EBEBFF",
+    padding: 15,
   },
   mainScrollView: {
     flex: 1,
@@ -413,8 +408,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: 36,
+    fontWeight: "700",
     textAlign: "center",
     // alignItems: "center",
 
@@ -571,174 +566,3 @@ const styles = StyleSheet.create({
 
   payText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#f2f0ff",
-//     padding: wp(20),
-//   },
-//   header: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     marginBottom: hp(16),
-//     paddingTop: hp(8),
-//   },
-//   backButton: {
-//     marginRight: wp(20),
-//     padding: wp(8),
-//   },
-//   headerContent: {
-//     flex: 1,
-//     alignItems: "center",
-//   },
-//   headerTitle: {
-//     ...responsiveStyles.headerText,
-//     fontWeight: "bold",
-//     textAlign: "center",
-//     color: "#333",
-//   },
-//   tableHeader: {
-//     flexDirection: "row",
-//     paddingVertical: hp(8),
-//     marginBottom: hp(4),
-//     backgroundColor: "transparent",
-//   },
-//   tableRow: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     paddingVertical: hp(8),
-//     minHeight: hp(40),
-//   },
-//   hcell: {
-//     ...responsiveStyles.bodyText,
-//     fontWeight: "bold",
-//     color: "#333",
-//   },
-//   cell: {
-//     ...responsiveStyles.bodyText,
-//     color: "#333",
-//   },
-//   // Column styles for proper alignment
-//   statusColumn: {
-//     width: wp(60),
-//     textAlign: "left",
-//     paddingLeft: wp(4),
-//   },
-//   orderColumn: {
-//     flex: 1,
-//     paddingLeft: wp(8),
-//     textAlign: "left",
-//   },
-//   qtyColumn: {
-//     width: wp(40),
-//     textAlign: "right",
-//     paddingRight: wp(8),
-//   },
-//   priceColumn: {
-//     width: wp(48),
-//     textAlign: "right",
-//     paddingRight: wp(8),
-//   },
-//   totalColumn: {
-//     width: wp(60),
-//     textAlign: "right",
-//     paddingRight: wp(8),
-//   },
-//   editColumn: {
-//     width: wp(48),
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-//   quantityControls: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     gap: wp(4),
-//   },
-//   quantityButton: {
-//     width: wp(16),
-//     height: wp(16),
-//     borderRadius: wp(4),
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-//   quantityButtonText: {
-//     color: "#fff",
-//     fontSize: wp(12),
-//     fontWeight: "bold",
-//   },
-//   // Total row styles - matching image
-//   totalRow: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     paddingVertical: hp(8),
-//     backgroundColor: "transparent",
-//     marginTop: hp(4),
-//   },
-//   ratingSection: {
-//     backgroundColor: "transparent",
-//     padding: wp(20),
-//     marginVertical: hp(24),
-//   },
-//   feedback: {
-//     textAlign: "center",
-//     marginBottom: hp(16),
-//     fontSize: wp(20),
-//     fontWeight: "500",
-//     color: "#333",
-//   },
-//   stars: {
-//     flexDirection: "row",
-//     justifyContent: "center",
-//     marginBottom: hp(8),
-//   },
-//   starButton: {
-//     padding: wp(4),
-//     marginHorizontal: wp(2),
-//   },
-//   stampContainer: {
-//     position: "relative",
-//     alignItems: "center",
-//     justifyContent: "center",
-//     marginVertical: hp(40),
-//     height: hp(160),
-//   },
-//   paidStamp: {
-//     position: "absolute",
-//     fontSize: wp(32),
-//     fontWeight: "bold",
-//     color: "#DC143C",
-//     transform: [{ rotate: "-15deg" }],
-//     textShadowColor: "rgba(0, 0, 0, 0.3)",
-//     textShadowOffset: { width: 2, height: 2 },
-//     textShadowRadius: 4,
-//     letterSpacing: wp(2),
-//     zIndex: 2,
-//   },
-//   thankYouText: {
-//     position: "absolute",
-//     fontSize: wp(48),
-//     fontWeight: "300",
-//     color: "rgba(0, 0, 0, 0.4)",
-//     fontStyle: "italic",
-//     transform: [{ rotate: "-15deg" }],
-//     marginTop: hp(24),
-//     marginLeft: wp(8),
-//     zIndex: 1,
-//   },
-//   payButton: {
-//     backgroundColor: "#6A5ACD",
-//     paddingVertical: 12,
-//     paddingHorizontal: 40,
-//     borderRadius: 25,
-//     marginBottom: 20,
-//   },
-//   tableContainer: {
-//     marginTop: hp(16),
-//     backgroundColor: "transparent",
-//   },
-//   payText: {
-//     color: "#fff",
-//     fontSize: wp(16),
-//     fontWeight: "bold",
-//   },
-// });

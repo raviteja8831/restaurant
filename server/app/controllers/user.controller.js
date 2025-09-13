@@ -21,9 +21,9 @@ const {
   ensureUploadDir,
   getUploadFilename,
 } = require("../utils/imageUploadHelper.js");
-const upload = multer({ 
+const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 } // 20 MB
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
 });
 
 // Ensure the upload directory exists
@@ -88,42 +88,42 @@ exports.getUserProfile = async (req, res) => {
       date: new Date(order.createdAt).toLocaleDateString(),
       time: new Date(order.createdAt).toLocaleTimeString(),
       totalAmount: order?.total,
+      method: order?.paymentMethod,
       items: order.orderProducts.map((product) => ({
         name: product.menuitem.name,
         quantity: product.quantity,
-        price: product.price,
-        total: product.quantity * product.price,
+        price: product.menuitem.price,
+        total: product.quantity * product.menuitem.price,
       })),
     }));
-
-    // Get user favorites
-    const favorites = await db.userFavorite.findAll({
+    const favorites = await db.restaurantReview.findAll({
       where: {
         userId,
+        rating: 5,
       },
       include: [
         {
           model: db.restaurant,
-          as: "ratedRestaurant",
+          as: "reviewedRestaurant",
           attributes: ["id", "name", "address"], //, "image"
         },
       ],
-      order: [["createdAt", "DESC"]],
     });
 
     // Format favorites for response
     const formattedFavorites = favorites.map((favorite) => ({
       id: favorite.id,
-      restaurantId: favorite.ratedRestaurant.id,
-      restaurantName: favorite.ratedRestaurant.name,
-      restaurantAddress: favorite.ratedRestaurant.address,
-      restaurantImage: favorite.ratedRestaurant.image,
-      comment: favorite.comment,
+      restaurantId: favorite.reviewedRestaurant.id,
+      restaurantName: favorite.reviewedRestaurant.name,
+      restaurantAddress: favorite.reviewedRestaurant.address,
+      restaurantImage: favorite.reviewedRestaurant.image,
+      review: favorite.review,
+      rating: favorite.rating,
       addedAt: new Date(favorite.createdAt).toLocaleDateString(),
     }));
 
     // Get recent payments/transactions
-    const payments = await db.orders.findAll({
+    /*   const payments = await db.orders.findAll({
       where: {
         userId,
         status: "COMPLETED",
@@ -149,7 +149,7 @@ exports.getUserProfile = async (req, res) => {
       date: new Date(payment.createdAt).toLocaleDateString(),
       time: new Date(payment.createdAt).toLocaleTimeString(),
       method: payment?.paymentMethod || "ONLINE",
-    }));
+    })); */
 
     // Return formatted response
     return res.status(200).send({
@@ -164,7 +164,7 @@ exports.getUserProfile = async (req, res) => {
         },
         orders: formattedOrders,
         favorites: formattedFavorites,
-        payments: formattedPayments,
+        // payments: formattedPayments,
       },
     });
   } catch (error) {
@@ -447,7 +447,6 @@ exports.uploadImage = async (req, res) => {
 };
 // Add Restaurant User (Chef or other role)
 
-
 // User registration (manager)
 exports.register = async (req, res) => {
   console.log("--- Register endpoint hit ---");
@@ -455,28 +454,25 @@ exports.register = async (req, res) => {
   console.log("Request headers:", req.headers);
   console.log("Request body:", req.body);
   try {
-      const {
-     
+    const {
       phone,
-     
+
       firstname,
-     
+
       lastname,
-          
+
       name,
-     
+
       restaurantAddress,
-     
-     
+
       ambiancePhoto,
-     
+
       logo,
       enableBuffet,
       enableVeg,
       enableNonveg,
       enableTableService,
-      enableSelfService
-   ,
+      enableSelfService,
     } = req.body;
 
     // Convert restaurantType and foodType to comma-separated values if arra
@@ -490,11 +486,13 @@ exports.register = async (req, res) => {
     const restaurant = await db.restaurant.create({
       name: name,
       address: restaurantAddress,
-      enableBuffet: enableBuffet === true || enableBuffet === 'true',
-      enableVeg: enableVeg === true || enableVeg === 'true',
-      enableNonveg: enableNonveg === true || enableNonveg === 'true',
-      enableTableService: enableTableService === true || enableTableService === 'true',
-      enableSelfService: enableSelfService === true || enableSelfService === 'true',
+      enableBuffet: enableBuffet === true || enableBuffet === "true",
+      enableVeg: enableVeg === true || enableVeg === "true",
+      enableNonveg: enableNonveg === true || enableNonveg === "true",
+      enableTableService:
+        enableTableService === true || enableTableService === "true",
+      enableSelfService:
+        enableSelfService === true || enableSelfService === "true",
       ambianceImage: ambianceImageUrl,
       logoImage: logoImageUrl,
     });
@@ -532,35 +530,37 @@ exports.login = async (req, res) => {
           attributes: ["id", "name"],
         },
         {
-      
-                  model: db.restaurant,
-                  as: "restaurant"
-                },
-              ],
-            });
-            if (!user) {
-              return res.status(404).send({ message: "User not found!" });
-            }
-            // Mock OTP validation (replace with real OTP logic)
-            if (otp !== "1234") {
-              return res.status(401).send({ message: "Invalid OTP!" });
-            }
-            // Generate JWT token
-            const token = jwt.sign({ id: user.id, role: user.role?.name, phone: user.phone }, SECRET_KEY, { expiresIn: "1h" });
-            res.status(200).send({
-              id: user.id,
-              phone: user.phone,
-              firstname: user.firstname,
-              lastname: user.lastname,
-              role: user.role || null,
-              restaurant: user.restaurant || null,
-              token // <-- send token in response
-            });
-          } catch (error) {
-            res.status(500).send({ message: error.message });
-          }
+          model: db.restaurant,
+          as: "restaurant",
+        },
+      ],
+    });
+    if (!user) {
+      return res.status(404).send({ message: "User not found!" });
+    }
+    // Mock OTP validation (replace with real OTP logic)
+    if (otp !== "1234") {
+      return res.status(401).send({ message: "Invalid OTP!" });
+    }
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id, role: user.role?.name, phone: user.phone },
+      SECRET_KEY,
+      { expiresIn: "1h" }
+    );
+    res.status(200).send({
+      id: user.id,
+      phone: user.phone,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      role: user.role || null,
+      restaurant: user.restaurant || null,
+      token, // <-- send token in response
+    });
+  } catch (error) {
+    res.status(500).send({ message: error.message });
   }
-
+};
 
 // Get all users
 exports.findAll = async (req, res) => {

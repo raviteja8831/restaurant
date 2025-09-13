@@ -51,7 +51,7 @@ const TableDiningScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+          <Ionicons name="chevron-back" size={34} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Table Dining</Text>
         <View style={{ width: 24 }} />
@@ -64,7 +64,7 @@ const TableDiningScreen = () => {
       />
 
       {/* Table Counter */}
-      <View style={styles.counterContainer}>
+      {/* <View style={styles.counterContainer}>
         <TouchableOpacity
           style={styles.counterButton}
           onPress={() => setTableCount(Math.max(1, tableCount - 1))}
@@ -89,6 +89,46 @@ const TableDiningScreen = () => {
             style={[styles.arrowImage, styles.rightArrow]}
           />
         </TouchableOpacity>
+      </View> */}
+
+      <View style={styles.counterContainer}>
+        {/* Left Arrow */}
+        <TouchableOpacity
+          style={styles.counterButton}
+          onPress={() => setTableCount(Math.max(1, tableCount - 1))}
+        >
+          <Image
+            source={require("../assets/images/left-arrow.png")}
+            style={styles.arrowImage}
+          />
+        </TouchableOpacity>
+
+        {/* Number + Label */}
+        <View style={styles.counterTextContainer}>
+          <Text style={styles.counterNumber}>{tableCount}</Text>
+          <Text style={styles.tableText}>
+            {tableCount} {tableCount > 1 ? "Tables" : "Table"}
+          </Text>
+        </View>
+
+        {/* Right Arrow */}
+        <TouchableOpacity
+          style={styles.counterButton}
+          onPress={() => setTableCount(tableCount + 1)}
+        >
+          <Image
+            source={require("../assets/images/left-arrow.png")}
+            style={[styles.arrowImage, styles.rightArrow]}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Card Section */}
+      <View style={styles.card}>
+        <Text style={styles.text}>Number of tables in Restaurant: 20</Text>
+        <Text style={styles.text}>Number of tables reserved: 12</Text>
+        <Text style={styles.text}>Number of tables available to book: 08</Text>
+        <Text style={styles.text}>Reserved table No: Table no 6</Text>
       </View>
 
       {/* Bottom Info Container */}
@@ -115,9 +155,25 @@ const TableDiningScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#E8E7FF",
+    backgroundColor: "#D8D8F6",
     paddingHorizontal: width * 0.05,
   },
+  card: {
+    backgroundColor: "#E8E7FF", // light purple shade
+    borderRadius: 15,
+    padding: 16,
+    width: "90%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+
+    alignItems: "flex-start",
+    width: "70%",
+    marginLeft: "15%",
+  },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -137,40 +193,83 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tableImage: {
-    width: width * 0.85,
+    width: width * 0.75,
     height: height * 0.28,
     resizeMode: "contain",
     alignSelf: "center",
-    marginTop: height * 0.02,
+    // marginTop: height * 0.02,
   },
+  // counterContainer: {
+  //   flexDirection: "row",
+  //   alignItems: "center",
+  //   justifyContent: "space-between",
+  //   marginBottom: height * 0.04,
+  //   paddingHorizontal: width * 0.1,
+  // },
+  // counterButton: {
+  //   width: width * 0.12,
+  //   height: width * 0.12,
+  //   alignItems: "center",
+  //   justifyContent: "center",
+  // },
+  // counterTextContainer: {
+  //   alignItems: "center",
+  //   width: width * 0.3,
+  // },
+  // counterNumber: {
+  //   fontSize: Math.min(width * 0.08, 36),
+  //   fontWeight: "bold",
+  //   color: "#000",
+  // },
+  // tableText: {
+  //   fontSize: Math.min(width * 0.035, 14),
+  //   color: "#000",
+  //   marginTop: height * 0.01,
+  // },
   counterContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: height * 0.04,
+    justifyContent: "center",
     marginBottom: height * 0.04,
-    paddingHorizontal: width * 0.1,
+    backgroundColor: "#D8D8F6", // same lavender bg
+    paddingVertical: 16,
+    borderRadius: 12,
   },
+
   counterButton: {
     width: width * 0.12,
     height: width * 0.12,
     alignItems: "center",
     justifyContent: "center",
   },
+
+  arrowImage: {
+    width: 30,
+    height: 30,
+    resizeMode: "contain",
+  },
+
+  rightArrow: {
+    transform: [{ rotate: "180deg" }], // flips right arrow
+  },
+
   counterTextContainer: {
     alignItems: "center",
     width: width * 0.3,
   },
+
   counterNumber: {
     fontSize: Math.min(width * 0.08, 36),
     fontWeight: "bold",
     color: "#000",
   },
+
   tableText: {
-    fontSize: Math.min(width * 0.035, 14),
+    fontSize: 16,
     color: "#000",
-    marginTop: height * 0.01,
+    marginTop: 4,
   },
+
   bottomContainer: {
     position: "absolute",
     bottom: 0,

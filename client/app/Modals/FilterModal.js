@@ -30,9 +30,6 @@ export default function FilterModal({ visible, onClose, onFilterSelect }) {
       {/* popup */}
       <View style={styles.filterContent}>
         <View style={styles.filterHeader}>
-          {/* <TouchableOpacity style={styles.backButton} onPress={onClose}>
-            <MaterialIcons name="arrow-back" size={20} color="#000" />
-          </TouchableOpacity> */}
           <Text style={styles.filterTitle}>Filter</Text>
           <View style={styles.placeholder} />
         </View>
@@ -61,18 +58,24 @@ export default function FilterModal({ visible, onClose, onFilterSelect }) {
 const styles = StyleSheet.create({
   overlay: {
     position: "absolute",
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: "flex-start",
     alignItems: "flex-start",
     zIndex: 2,
   },
   overlayTouch: {
     position: "absolute",
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   filterContent: {
     marginTop: 70,
-    backgroundColor: "#E8E4FF",
+    backgroundColor: "#BBBAEF",
     borderRadius: 20,
     padding: 20,
     width: "50%",

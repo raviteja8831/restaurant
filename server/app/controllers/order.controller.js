@@ -50,20 +50,6 @@ exports.createOrder = async (req, res) => {
       // Update existing order
       const existingOrder = await Order.findByPk(req.body.orderID); // Changed from orderId to orderID
       if (!existingOrder) {
-        /*  const order = await Order.create(req.body);
-
-        // Check if order items exist in the request body
-        if (req.body.orderItems && Array.isArray(req.body.orderItems)) {
-          // Create order products for each item
-          const orderProducts_ = req.body.orderItems.map((item) => ({
-            orderId: order.id,
-            menuItemId: item.id,
-            quantity: item.quantity,
-          }));
-
-          // Bulk create all order products
-          await OrderProduct.bulkCreate(orderProducts_);
-        } */
         res.status(201).json("");
         return;
       }
@@ -75,7 +61,7 @@ exports.createOrder = async (req, res) => {
           if (item.orderItemId) {
             // Update existing order item
             await OrderProduct.update(
-              { quantity: item.quantity },
+              { quantity: item.quantity, comments: item.comments || "" },
               { where: { id: item.orderItemId, orderId: req.body.orderID } } // Changed from orderId to orderID
             );
           } else {
@@ -84,6 +70,7 @@ exports.createOrder = async (req, res) => {
               orderId: req.body.orderID, // Changed from orderId to orderID
               menuItemId: item.id,
               quantity: item.quantity,
+              comments: item.comments || "",
             });
           }
         }
@@ -109,12 +96,12 @@ exports.createOrder = async (req, res) => {
       });
 
       // If no products remain, delete the order
-      if (remainingProducts === 0) {
+      /*    if (remainingProducts === 0) {
         await existingOrder.destroy();
         return res
           .status(200)
           .json({ message: "Order deleted as no items remain" });
-      }
+      } */
 
       return res.status(200).json(existingOrder);
     } else {
@@ -139,6 +126,38 @@ exports.createOrder = async (req, res) => {
     res
       .status(500)
       .json({ error: err.message, from: " Error creating order." });
+  }
+};
+exports.deleteOrderItems = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { removedItems } = req.body;
+    const existingOrder = await Order.findByPk(req.body.orderID); // Changed from orderId to orderID
+    if (!existingOrder) {
+      res.status(201).json("");
+      return;
+    }
+    // Remove items from the order
+    if (Array.isArray(removedItems) && removedItems.length > 0) {
+      await OrderProduct.destroy({
+        where: {
+          id: removedItems.map((item) => item.orderItemId),
+          orderId: req.body.orderID,
+        },
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Order items deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error in deleteOrderItems:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Error deleting order items",
+      error: error.message,
+    });
   }
 };
 
@@ -247,6 +266,7 @@ exports.getSelectedOrderItems = async (req, res) => {
       price: item.menuitem.price,
       quantity: item.quantity,
       status: order.status,
+      comments: item.comments || "",
     }));
 
     // Combine order details and items

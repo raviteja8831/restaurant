@@ -22,6 +22,7 @@ import { AlertService } from "../services/alert.service";
 import { getOrderItemCount } from "../api/orderApi";
 import { getRestaurantById } from "../api/restaurantApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUserData } from "../services/getUserData";
 
 // Image mapping object
 const categoryImages = {
@@ -44,37 +45,23 @@ export default function MenuListScreen() {
   const [hoteldetails, setHoteldetails] = useState(false);
   const [restaurant, setRestaurant] = useState({});
   const [isbuffet, setIsBuffet] = useState(false);
-  const [userId, setUserId] = useState(null);
+  // const [userId, setUserId] = useState(null);
   const [totalAmount, setTotalAmount] = useState();
   const [menuCategories, setMenuCategories] = useState();
   const [orderSummary, setOrderSummary] = useState({});
-  useEffect(() => {
-    const initializeProfile = async () => {
-      try {
-        const userProfile = await AsyncStorage.getItem("user_profile");
-        if (userProfile) {
-          const user = JSON.parse(userProfile);
-          console.log("User Profile:", user); // Debug log
-          setUserId(user.id);
-          // Only fetch profile data if we have a userId
-          if (user.id) {
-            await fetchProfileData(user.id);
-          }
-        } else {
-          console.log("No user profile found");
-          router.push("/customer-login");
-        }
-      } catch (error) {
-        console.error("Error initializing profile:", error);
-        AlertService.error("Error loading profile");
-      }
-    };
+  const { userId, error } = useUserData();
 
-    initializeProfile();
-  }, []);
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text>Error loading user data. Please try again.</Text>
+      </View>
+    );
+  }
+
   useFocusEffect(
     React.useCallback(() => {
-      // This will run when the screen comes into focus
+      console.log("MenuListScreen focused, User ID:", userId);
       fetchselectedOrderCount();
       fetchMenuData();
     }, [userId])
@@ -160,13 +147,6 @@ export default function MenuListScreen() {
   };
 
   const handleFinalOrder = () => {
-    /*  const orderData = orderSummary.orderDetails.map((item, index) => ({
-      id: index + 1,
-      item: item.name,
-      qty: item.quantity,
-      price: parseInt(item.price),
-      status: "Waiting",
-    })); */
     router.push({
       pathname: "/payorder",
       params: {
@@ -177,24 +157,11 @@ export default function MenuListScreen() {
   };
   useEffect(() => {
     if (loading) {
-      /* return (
-        <ActivityIndicator
-          size="large"
-          color="#6c63b5"
-          style={{ marginTop: 20 }}
-        />
-      ); */
+      // Show a loading indicator or placeholder
     }
   }, [loading]);
 
   return (
-    // <LinearGradient
-    //     colors={['rgba(232, 224, 255, 0.6)', 'rgba(180, 170, 240, 0.6)']}
-    //     style={menuliststyles.gradientOverlay}
-    //     start={{ x: 0, y: 0 }}
-    //     end={{ x: 1, y: 1 }}
-    //   >
-
     <ImageBackground
       source={require("../../assets/images/menu-bg.png")}
       style={menuliststyles.backgroundImage}
@@ -207,7 +174,11 @@ export default function MenuListScreen() {
             style={menuliststyles.backButton}
             onPress={() => handleBackPress(ishotel)}
           >
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
+            <MaterialCommunityIcons
+              name="chevron-left"
+              size={44}
+              color="#000"
+            />
           </TouchableOpacity>
 
           <ScrollView
@@ -252,9 +223,6 @@ export default function MenuListScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            {/* Spacing View */}
-            {/* <View style={{ height: 20 }} /> */}
-            {/* Buffet Option */}
             {isbuffet}
             {ishotel == "true" && isbuffet && (
               <View style={menuliststyles.buffetSection}>

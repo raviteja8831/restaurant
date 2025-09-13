@@ -15,13 +15,13 @@ const { height } = Dimensions.get("window");
 export default function SearchModal({ visible, onClose, onSearch }) {
   const [searchText, setSearchText] = useState("");
   const [modalHeight, setModalHeight] = useState(200); // Initial height
-  
+
   const [recentSearches] = useState([
     "Pizza near me",
     "Italian restaurants",
     "Coffee shops",
     "Fast food",
-    "Vegetarian restaurants"
+    "Vegetarian restaurants",
   ]);
 
   const [popularSearches] = useState([
@@ -30,7 +30,7 @@ export default function SearchModal({ visible, onClose, onSearch }) {
     "KFC",
     "Domino's",
     "Subway",
-    "Burger King"
+    "Burger King",
   ]);
 
   // Calculate dynamic height based on content
@@ -38,17 +38,18 @@ export default function SearchModal({ visible, onClose, onSearch }) {
     const baseHeight = 120; // Header + input container height
     const itemHeight = 50; // Height per search item
     const maxHeight = height / 2; // Maximum height (half screen)
-    
+
     let contentHeight = 0;
-    
+
     if (searchText.length === 0) {
       // Show recent + popular searches
-      contentHeight = (recentSearches.length + popularSearches.length + 2) * itemHeight; // +2 for section titles
+      contentHeight =
+        (recentSearches.length + popularSearches.length + 2) * itemHeight; // +2 for section titles
     } else {
       // Show search results
       contentHeight = 2 * itemHeight; // 1 result + 1 section title
     }
-    
+
     const totalHeight = baseHeight + contentHeight;
     return Math.min(totalHeight, maxHeight);
   };
@@ -90,18 +91,14 @@ export default function SearchModal({ visible, onClose, onSearch }) {
 
       {/* Search Modal */}
       <View style={[styles.searchContent, { height: modalHeight }]}>
-        {/* Header */}
-      {/*   <View style={styles.searchHeader}>
-          <TouchableOpacity style={styles.backButton} onPress={onClose}>
-            <MaterialIcons name="arrow-back" size={24} color="#000" />
-          </TouchableOpacity>
-          <Text style={styles.searchTitle}>Search</Text>
-          <View style={styles.placeholder} />
-        </View> */}
-
         {/* Search Input */}
         <View style={styles.searchInputContainer}>
-          <MaterialIcons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <MaterialIcons
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search restaurants, food, or location"
@@ -117,9 +114,12 @@ export default function SearchModal({ visible, onClose, onSearch }) {
           )}
         </View>
 
-        <ScrollView style={styles.searchResults} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.searchResults}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Recent Searches */}
-         {/*  {searchText.length === 0 && (
+          {/*  {searchText.length === 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Recent Searches</Text>
               {recentSearches.map((search, index) => (
@@ -155,9 +155,14 @@ export default function SearchModal({ visible, onClose, onSearch }) {
           {searchText.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Search Results</Text>
-              <TouchableOpacity style={styles.searchItem} onPress={handleSearch}>
+              <TouchableOpacity
+                style={styles.searchItem}
+                onPress={handleSearch}
+              >
                 <MaterialIcons name="search" size={20} color="#666" />
-                <Text style={styles.searchItemText}>Search for "{searchText}"</Text>
+                <Text style={styles.searchItemText}>
+                  Search for "{searchText}"
+                </Text>
               </TouchableOpacity>
             </View>
           )}

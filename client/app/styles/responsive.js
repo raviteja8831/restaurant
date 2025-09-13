@@ -98,6 +98,11 @@ export const responsiveStyles = {
 };
 
 export const orderitemsstyle = {
+  categoryImage: {
+    width: Math.min(width * 0.12, 150),
+    height: Math.min(width * 0.12, 150),
+    marginBottom: Math.min(height * 0.01, 8),
+  },
   container: {
     flex: 1,
     backgroundColor: "#E8E0FF",
@@ -122,14 +127,15 @@ export const orderitemsstyle = {
   headerContent: {
     flex: 1,
     alignItems: "center",
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "center",
+    width: "100px !important",
+    height: "100px !important",
   },
   title: {
-    fontSize: 20,
+    fontSize: 13,
     color: "#000",
-    fontWeight: "bold",
-    marginLeft: 8,
+    fontWeight: "400",
   },
   scrollView: {
     flex: 1,
@@ -229,7 +235,7 @@ export const orderitemsstyle = {
     textAlign: "center",
   },
   orderSummary: {
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -242,12 +248,13 @@ export const orderitemsstyle = {
   summaryText: {
     fontSize: 16,
     color: "#000",
-    fontWeight: "500",
     marginBottom: 5,
+    fontWeight: "400",
+    textAlign: "center",
   },
   placeOrderButton: {
     // backgroundColor: "#6B46C1",
-    borderRadius: 12,
+    borderRadius: 18,
     paddingVertical: 15,
     alignItems: "center",
     marginTop: 15,
@@ -257,8 +264,8 @@ export const orderitemsstyle = {
   },
   placeOrderButtonText: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 24,
+    fontWeight: "400",
   },
   modalOverlay: {
     flex: 1,
@@ -316,7 +323,7 @@ export const orderitemsstyle = {
     fontSize: 14,
     fontWeight: "500",
   },
-  scrollView: { padding: 16 },
+  scrollView: { padding: 40 },
   category: {
     fontSize: 18,
     fontWeight: "bold",
@@ -331,18 +338,20 @@ export const orderitemsstyle = {
     height: 18,
     borderRadius: 4,
     borderWidth: 1,
+    borderRadius: 15,
     borderColor: "#999",
+    backgroundColor: "#eae1e1ff",
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxSelected: { backgroundColor: "#333" },
   itemInfo: { flex: 1, flexDirection: "row", alignItems: "center" },
-  itemName: { fontSize: 15, color: "#333" },
+  itemName: { fontSize: 15, color: "black" },
   dottedLine: {
     flex: 1,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
     borderStyle: "dotted",
-    borderColor: "#aaa",
+    borderColor: "black",
     marginHorizontal: 4,
   },
   itemPrice: { fontSize: 15, fontWeight: "500" },
@@ -403,19 +412,19 @@ export const menuliststyles = {
     marginBottom: Math.min(height * 0.02, 16),
   },
   hotelName: {
-    fontSize: Math.min(width * 0.06, 24),
+    fontSize: Math.min(width * 0.06, 32),
     color: "#333",
-    fontWeight: "500",
+    fontWeight: "400",
     width: "85%",
     textAlign: "center",
     marginBottom: Math.min(height * 0.015, 12),
   },
   title: {
-    fontSize: Math.min(width * 0.07, 28),
+    fontSize: Math.min(width * 0.07, 36),
     color: "#000",
-    fontWeight: "700",
+    fontWeight: "400",
     textAlign: "center",
-    paddingVertical: Math.min(height * 0.01, 8),
+    paddingVertical: Math.min(height * 0.01, 0),
     width: "100%",
   },
   gridContainer: {
@@ -459,30 +468,25 @@ export const menuliststyles = {
     paddingHorizontal: "5%",
     marginTop: Math.min(height * 0.02, 16),
     marginBottom: Math.min(height * 0.02, 16),
+    bottom: 0,
+    left: 0,
+    position: "fixed",
   },
   totalContainer: {
     width: "100%",
     alignItems: "center",
-    // backgroundColor: "rgba(255, 255, 255, 0.95)",
     paddingVertical: Math.min(height * 0.02, 16),
     borderRadius: 15,
     elevation: 2,
-    // shadowColor: "#000",
-    // shadowOffset: {
-    //   width: 0,
-    //   height: 2,
-    // },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 3,
   },
   totalText: {
-    fontSize: Math.min(width * 0.045, 18),
+    fontSize: Math.min(width * 0.045, 24),
     color: "#000",
-    fontWeight: "bold",
+    fontWeight: "400",
     marginBottom: Math.min(height * 0.02, 16),
   },
   finalOrderButton: {
-    borderRadius: 12,
+    borderRadius: 18,
     paddingVertical: Math.min(height * 0.015, 12),
     paddingHorizontal: Math.min(width * 0.08, 32),
     alignItems: "center",
@@ -491,8 +495,8 @@ export const menuliststyles = {
   },
   finalOrderButtonText: {
     color: "#fff",
-    fontSize: Math.min(width * 0.04, 16),
-    fontWeight: "bold",
+    fontSize: Math.min(width * 0.04, 24),
+    fontWeight: "400",
   },
   buffetSection: {
     width: "100%",

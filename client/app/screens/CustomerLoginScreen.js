@@ -6,14 +6,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TextInput, Text } from "react-native-paper";
 import axios from "axios";
 import { useRouter } from "expo-router";
-import { getCustomerLogin } from "./api/customerApi";
+import { getCustomerLogin } from "../api/customerApi";
 
-export default function LoginScreen() {
+export default function CustomerLoginScreen() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState(["", "", "", ""]);
   const otpInputs = [useRef(null), useRef(null), useRef(null), useRef(null)];
@@ -35,44 +36,88 @@ export default function LoginScreen() {
 
   React.useEffect(() => {
     if (otp.every((d) => d.length === 1)) {
-      handleLogin(phone.trim(), otp);
+      handleLogin(phone, otp);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otp]);
 
-  const handleLogin = async (phoneValue, otpValue) => {
+  /*   const handleLogin = async (phoneValue, otpValue) => {
     if (!phoneValue || otpValue.some((d) => d.length !== 1)) {
       Alert.alert("Error", "Please enter a valid phone and OTP");
       return;
     }
     try {
-      const response = await getCustomerLogin({
-        phone: phoneValue,
-        otp: otpValue.join(""),
-      });
-      const user = response;
+      const response = await axios.post(
+        "http://localhost:8080/api/users/login",
+        {
+          phone: phoneValue,
+          otp: otpValue.join(""),
+        }
+      );
+      const user = response.data;
       const role = user?.role?.name?.toLowerCase();
-      console.log("User role:", response);
+      // Save token and user details using AsyncStorage (same as chef-login)
       if (user.token) {
-        alert("Token", user.token);
         await AsyncStorage.setItem("auth_token", user.token);
       }
+      // Save user profile (manager/chef details and restaurant details)
       await AsyncStorage.setItem("user_profile", JSON.stringify(user));
       Alert.alert("API user", JSON.stringify(user));
-
-      router.push("/customer-home");
+      if (role === "manager") {
+        router.push("/dashboard");
+      } else if (role === "chef") {
+        router.push("/chef-home");
+      } else {
+        Alert.alert(
+          "Login Failed",
+          "Unknown user role: " + (user?.role || "none")
+        );
+      }
+      // Example: How to use the token for authenticated requests elsewhere
+      // import AsyncStorage from '@react-native-async-storage/async-storage';
+      // const token = await AsyncStorage.getItem('auth_token');
+      // const response = await axios.get('http://localhost:8080/api/your-protected-route', {
+      //   headers: { Authorization: `Bearer ${token}` }
+      // });
     } catch (err) {
       Alert.alert("Login Failed", err?.message || "Invalid credentials");
     }
-  };
+  }; */
+  const handleLogin = async () => {
+    if (!phone.trim()) {
+      Alert.alert("Error", "Please enter your phone number");
+      return;
+    }
 
+    try {
+      //   setLoading(true);
+      const response = await getCustomerLogin({
+        phone: phone.trim(),
+      });
+
+      if (response) {
+        // Save user data
+        await AsyncStorage.setItem("user_profile", JSON.stringify(response));
+        if (response.token) {
+          await AsyncStorage.setItem("auth_token", response.token);
+        }
+        // Navigate to customer home
+        router.push("/customer-home");
+      }
+    } finally {
+      // catch (error) {
+      //   AlertServiceice.error(error);
+      // }
+      //   setLoading(false);
+    }
+  };
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <Image
-        source={require("../assets/images/logo.png")}
+        source={require("../../assets/images/logo.png")}
         style={styles.logo}
         resizeMode="contain"
       />
@@ -80,7 +125,8 @@ export default function LoginScreen() {
         <TextInput
           style={styles.input}
           placeholder="Enter phone number"
-          keyboardType="phone-pad"
+          // keyboardType="phone-pad"
+          keyboardType="numeric"
           value={phone}
           onChangeText={setPhone}
           maxLength={10}
@@ -109,6 +155,14 @@ export default function LoginScreen() {
         </View>
       </View>
       {/* No Login button, auto-submit on OTP complete */}
+
+      {/* Register Link */}
+      <View style={styles.registerContainer}>
+        <Text style={styles.registerText}>Don’t have an account? </Text>
+        <TouchableOpacity onPress={() => router.push("/customer-register")}>
+          <Text style={styles.registerLink}>Register</Text>
+        </TouchableOpacity>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -120,8 +174,40 @@ const styles = StyleSheet.create({
     backgroundColor: "#a6a6e7",
     alignItems: "center",
     justifyContent: "flex-start",
-    marginTop: 25,
+    // marginTop: 25,
   },
+  log1inButton: {
+    // backgroundColor: "#8C8AEB",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: "auto",
+    width: 350,
+    alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  registerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 16,
+  },
+
+  registerText: {
+    fontSize: 14,
+    color: "#444",
+  },
+
+  registerLink: {
+    fontSize: 14,
+    color: "#007BFF", // nice blue link color
+    fontWeight: "bold",
+  },
+
   // Removed formSurface and formWrapper for flat design
   logo: {
     width: 180,
