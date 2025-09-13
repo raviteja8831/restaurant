@@ -17,6 +17,7 @@ module.exports = (app) => {
 
   // Update order status and items
   router.put("/:orderId", orders.updateOrderStatus);
+  router.post("/delete/items/", orders.deleteOrderItems);
 
   app.use("/api/orders", router);
 };

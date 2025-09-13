@@ -5,4 +5,5 @@ export const MENU_API = {
   GET_MENUS_WITH_ITEMS: "/api/menus/with-items",
   SAVE_USER_MENUITEMS: "/api/users/:userId/allotted-menuitems",
   GET_ITEMS_BASED_ON_MENU: "/api/menus/items/:menuId",
+  GET_SPECIFIC_MENU: "/api/menus/:id",
 };

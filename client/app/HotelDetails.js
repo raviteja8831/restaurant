@@ -94,7 +94,7 @@ const HotelDetails = () => {
             style={hoteldetailsstyles.backButton}
             onPress={handleBackPress}
           >
-            <Ionicons name="arrow-back" size={24} color="black" />
+            <Ionicons name="chevron-back" size={34} color="black" />
           </TouchableOpacity>
           <View style={hoteldetailsstyles.topIcons}>
             <TouchableOpacity style={hoteldetailsstyles.iconCircle}>

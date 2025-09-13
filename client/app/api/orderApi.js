@@ -14,6 +14,18 @@ export const createOrder = async (orderData) => {
     throw error;
   }
 };
+export const deleteOrderItems = async (data) => {
+  try {
+    const res = await axiosService.post(
+      `${API_BASE_URL}${ORDER_API.DELETE_ORDER_ITEMS}`,
+      data
+    );
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+};
 
 export const getOrderItemCount = async (restaurantId, userId) => {
   try {

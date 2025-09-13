@@ -6,11 +6,14 @@ import {
   Text,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import FilterModal from "../Modals/FilterModal";
 import SearchModal from "../Modals/SearchModal";
+import { useEffect } from "react";
+import { useUserData } from "../services/getUserData";
 // import MapView, { Marker } from "react-native-maps";
 
 const { width, height } = Dimensions.get("window");
@@ -19,6 +22,23 @@ export default function CustomerHomeScreen() {
   const [showFilter, setShowFilter] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const router = useRouter();
+  const { userId, loading, error } = useUserData();
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#6B4EFF" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text>Error loading user data. Please try again.</Text>
+      </View>
+    );
+  }
 
   const handleFilterPress = () => {
     setShowFilter(!showFilter);
@@ -128,6 +148,10 @@ export default function CustomerHomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  centerContent: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",

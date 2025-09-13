@@ -62,3 +62,14 @@ export const updateMenuItemsStatus = async (menuitemIds, status) => {
     throw error;
   }
 };
+export const getSpecificMenu = async (menuId) => {
+  try {
+    const res = await api.get(
+      `${MENU_API.GET_SPECIFIC_MENU.replace(":id", menuId)}`
+    );
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+};

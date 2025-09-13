@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -18,10 +19,25 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import CommentModal from "./Modals/menueditModal"; // 👈 new component
 import { orderitemsstyle, responsiveStyles } from "./styles/responsive";
 import { AlertService } from "./services/alert.service";
-import { getitemsbasedonmenu } from "./api/menuApi";
-import { createOrder, getOrderItemList } from "./api/orderApi";
+import { getitemsbasedonmenu, getSpecificMenu } from "./api/menuApi";
+import {
+  createOrder,
+  getOrderItemList,
+  deleteOrderItems,
+} from "./api/orderApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { useUserData } from "./services/getUserData";
+// import { deleteOrderItems } from "../../server/app/controllers/order.controller";
+const categoryImages = {
+  "bevereage.png": require("../assets/images/bevereage.png"),
+  "soup.png": require("../assets/images/soup.png"),
+  "breakfast.png": require("../assets/images/breakfast.png"),
+  "staters.png": require("../assets/images/staters.png"),
+  "indian-bread.png": require("../assets/images/indian-bread.png"),
+  "main-course.png": require("../assets/images/main-course.png"),
+  "salads.png": require("../assets/images/salads.png"),
+  "ice-cream-sesserts.png": require("../assets/images/ice-cream-sesserts.png"),
+};
 export default function ItemsListScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -36,39 +52,50 @@ export default function ItemsListScreen() {
   const [totalCost, setTotalCost] = useState(0);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState(null);
+  // const [userId, setUserId] = useState(null);
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [comment, setComment] = useState("");
   const [items, setItems] = useState([]);
-  var itemfirstcalling = false;
-  useEffect(() => {
-    const initializeProfile = async () => {
-      try {
-        const userProfile = await AsyncStorage.getItem("user_profile");
-        if (userProfile) {
-          const user = JSON.parse(userProfile);
-          console.log("User Profile:", user); // Debug log
-          setUserId(user.id);
-          // Only fetch profile data if we have a userId
-          if (user.id) {
-            await fetchProfileData(user.id);
-          }
-        } else {
-          console.log("No user profile found");
-          router.push("/customer-login");
-        }
-      } catch (error) {
-        console.error("Error initializing profile:", error);
-        AlertService.error("Error loading profile");
-      }
-    };
+  const { userId, error } = useUserData();
+  const [menuData, setMenuData] = useState({});
 
-    initializeProfile();
-  }, []);
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text>Error loading user data. Please try again.</Text>
+      </View>
+    );
+  }
+  var itemfirstcalling = false;
+  // useEffect(() => {
+  //   const initializeProfile = async () => {
+  //     try {
+  //       const userProfile = await AsyncStorage.getItem("user_profile");
+  //       if (userProfile) {
+  //         const user = JSON.parse(userProfile);
+  //         console.log("User Profile:", user); // Debug log
+  //         setUserId(user.id);
+  //         // Only fetch profile data if we have a userId
+  //         if (user.id) {
+  //           await fetchProfileData(user.id);
+  //         }
+  //       } else {
+  //         console.log("No user profile found");
+  //         router.push("/customer-login");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error initializing profile:", error);
+  //       AlertService.error("Error loading profile");
+  //     }
+  //   };
+
+  //   initializeProfile();
+  // }, []);
   useEffect(() => {
     initializeData();
+    getMenu();
   }, [params.category, params.orderID, userId]);
   const initializeData = async () => {
     try {
@@ -95,11 +122,23 @@ export default function ItemsListScreen() {
         ...item,
         selected: !!orderItems[item.id],
         quantity: orderItems[item.id]?.quantity || 0,
-        comment: orderItems[item.id]?.comment || "",
+        comments: orderItems[item.id]?.comments || "",
         orderItemId: orderItems[item.id]?.id || null,
       }));
 
       setItems(combinedItems);
+      setSelectedItems(combinedItems.filter((item) => item.selected));
+    } catch (error) {
+      AlertService.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const getMenu = async () => {
+    try {
+      setLoading(true);
+      const menu = await getSpecificMenu(params.category);
+      setMenuData(menu);
     } catch (error) {
       AlertService.error(error);
     } finally {
@@ -107,7 +146,7 @@ export default function ItemsListScreen() {
     }
   };
 
-  const createOrder_data = async (path_re, calling_source) => {
+  const createOrder_data = async () => {
     const order = {
       userId: userId,
       restaurantId: params.restaurantId,
@@ -126,36 +165,31 @@ export default function ItemsListScreen() {
       // console.error("Error creating order:", error);
     }
     setShowOrderModal(true);
-    if (path_re) {
-      router.push({
-        pathname: "/menu-list",
-      });
-    }
+    // if (path_re) {
+    router.push({
+      pathname: "/menu-list",
+    });
+    // }
   };
-  // ✅ Handle checkbox toggle
-  /*  const handleItemSelect = (itemId) => {
-    setItems((prevData) =>
-      prevData.map((item) => {
-        if (item.id === itemId) {
-          // If item is being unselected, add it to remove_list
-          if (item.selected) {
-            setRemoveList((prev) => [...prev, item]);
-          } else {
-            // If item is being selected, remove it from remove_list if it exists
-            setRemoveList((prev) =>
-              prev.filter((removedItem) => removedItem.id !== item.id)
-            );
-          }
-          return {
-            ...item,
-            selected: !item.selected,
-            quantity: item.selected ? 0 : 1,
-          };
-        }
-        return item;
-      })
-    );
-  }; */
+  const deleteOrder_items = async () => {
+    const order = {
+      userId: userId,
+      restaurantId: params.restaurantId,
+      removedItems: remove_list,
+      orderID: params.orderID || null,
+    };
+    // console.log("items", order);
+    try {
+      const response = await deleteOrderItems(order);
+      initializeData();
+      setRemoveList([]);
+      console.log("Order created successfully:", response);
+    } catch (error) {
+      // console.error("Error creating order:", error);
+    }
+    setShowOrderModal(true);
+  };
+
   const handleItemSelect = (itemId) => {
     setItems((prevData) => {
       const updatedItems = prevData.map((item) => {
@@ -179,23 +213,17 @@ export default function ItemsListScreen() {
         return item;
       });
 
-      // ✅ After update, check if any selected items left
-      const selected = updatedItems.filter((i) => i.selected);
-      if (selected.length === 0) {
-        // params.orderID = null;
-        createOrder_data(false, "calling_selected");
-      }
-
       return updatedItems;
     });
   };
-
   useEffect(() => {
-    console.log("remove_list:", remove_list);
-  }, [remove_list]);
+    const selected = items.filter((i) => i.selected);
+    if (selected.length === 0 && remove_list.length > 0) {
+      deleteOrder_items();
+    }
+  }, [items, remove_list]);
 
-  // ✅ Handle edit
-  const handleEdit = (itemId) => {
+  const handleEdit = (item) => {
     let foundItem = null;
     /*  setItems(
       (prevSections) =>
@@ -212,55 +240,40 @@ export default function ItemsListScreen() {
         })
       // }))
     ); */
-    if (itemId) {
-      setSelectedItem(itemId);
-      setComment(comment || "");
+    if (item.id) {
+      console.log("Editing item:", item);
+      setSelectedItem(item.id);
+      setComment(item.comments || "");
       setIsModalOpen(true);
     }
   };
 
-  // ✅ Handle comment submit
   const handleCommentSubmit = () => {
-    console.log("Submitting comment:", comment, "for item:", selectedItem);
+    console.log(
+      "Submitting comment:",
+      comment,
+      "for item:",
+      selectedItem,
+      items
+    );
     setItems((prevSections) =>
       prevSections.map((section) => ({
         ...section,
-        items: items.map((item) =>
-          item.id === selectedItem.id ? { ...item, comments: comment } : item
-        ),
+        comments: section.id === selectedItem ? comment : section.comment,
+        /*  items: items.map((item) =>
+          item.id === selectedItem ? { ...item, comments: comment } : item
+        ), */
       }))
+    );
+    setSelectedItems((prev) =>
+      prev.map((item) =>
+        item.id === selectedItem ? { ...item, comments: comment } : item
+      )
     );
     setIsModalOpen(false);
     setSelectedItem(null);
     setComment("");
   };
-
-  // ✅ Handle quantity increment/decrement
-  /*  const handleQuantityChange = (itemId, increment) => {
-    setItems((prevData) =>
-      prevData.map((item) => {
-        if (item.id === itemId) {
-          const newQuantity = Math.max(0, item.quantity + increment);
-          // Add to remove_list if quantity becomes 0
-          if (newQuantity === 0 && item.orderItemId) {
-            setRemoveList((prev) => [...prev, item]);
-          } else if (newQuantity > 0) {
-            // Remove from remove_list if quantity becomes > 0
-            setRemoveList((prev) =>
-              prev.filter((removedItem) => removedItem.id !== item.id)
-            );
-          }
-          return {
-            ...item,
-            quantity: newQuantity,
-            selected: newQuantity > 0,
-          };
-        }
-        return item;
-      })
-    );
-    
-  }; */
   const handleQuantityChange = (itemId, increment) => {
     setItems((prevData) => {
       const updatedItems = prevData.map((item) => {
@@ -288,29 +301,25 @@ export default function ItemsListScreen() {
       // ✅ After items updated, check selected count
       const selected = updatedItems.filter((i) => i.selected);
 
-      if (selected.length === 0) {
+      /*  if (selected.length === 0) {
         // 👇 Only call API here
         // params.orderID = null;
-        createOrder_data(false, "calling_selected");
-      }
+        deleteOrder_items();
+        // createOrder_data(false, "calling_selected");
+      } */
 
       return updatedItems;
     });
   };
 
-  // ✅ Recalculate selected items + total cost
   useEffect(() => {
     const selected = items.filter((item) => item.selected);
     setSelectedItems(selected);
-    // itemfirstcalling = true;
     const total = selected.reduce((sum, item) => {
       const price = parseInt(item.price);
       return sum + price * item.quantity;
     }, 0);
     setTotalCost(total);
-    /*  if (selected == 0) {
-      createOrder_data(false, "calling_selected");
-    } */
   }, [items]);
 
   const handleConfirmOrder = () => {
@@ -342,20 +351,26 @@ export default function ItemsListScreen() {
         resizeMode="repeat"
       />
       <View style={orderitemsstyle.header}>
-        {/* <TouchableOpacity
-          style={orderitemsstyle.backButton}
-          onPress={() => router.back()}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity> */}
         <TouchableOpacity
           style={orderitemsstyle.backButton}
           onPress={handleBackPress}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
+          <MaterialCommunityIcons name="chevron-left" size={44} color="#000" />
         </TouchableOpacity>
-        <View style={orderitemsstyle.headerContent}>
-          <MaterialCommunityIcons name="food-variant" size={24} color="#000" />
+        <View
+          style={[
+            orderitemsstyle.headerContent, //,
+            // { width: "100px", height: "100px" },
+          ]}
+        >
+          <Image
+            source={categoryImages[menuData.icon]}
+            resizeMode="contain"
+            style={
+              orderitemsstyle.categoryImage //,
+              // { width: "100px", height: "100px" },
+            }
+          />
           <Text style={orderitemsstyle.title}>{params.categoryName}</Text>
         </View>
       </View>
@@ -365,14 +380,8 @@ export default function ItemsListScreen() {
         style={orderitemsstyle.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/*         {items.map((section) => (
-          <View key={section.name}>
-            <Text style={orderitemsstyle.category}>{section.name}</Text> */}
-
         {items.map((item) => (
           <View key={item.id} style={orderitemsstyle.itemRow}>
-            {/* Checkbox */}
-            {/* {ishotel} */}
             {params.ishotel == "false" && (
               <TouchableOpacity
                 style={orderitemsstyle.checkboxContainer}
@@ -398,81 +407,68 @@ export default function ItemsListScreen() {
               <Text style={orderitemsstyle.itemPrice}>{item.price}</Text>
             </View>
 
-            {
-              params.ishotel == "false" &&
-                (item.selected ? (
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    <View style={orderitemsstyle.quantityContainer}>
-                      <TouchableOpacity
-                        style={orderitemsstyle.quantityButton}
-                        onPress={() => handleQuantityChange(item.id, -1)}
-                      >
-                        <Text style={orderitemsstyle.quantityButtonText}>
-                          -
-                        </Text>
-                      </TouchableOpacity>
-                      <Text style={orderitemsstyle.quantityText}>
-                        {item.quantity}
-                      </Text>
-                      <TouchableOpacity
-                        style={orderitemsstyle.quantityButton}
-                        onPress={() => handleQuantityChange(item.id, 1)}
-                      >
-                        <Text style={orderitemsstyle.quantityButtonText}>
-                          +
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-
+            {params.ishotel == "false" &&
+              (item.selected ? (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <View style={orderitemsstyle.quantityContainer}>
                     <TouchableOpacity
-                      onPress={() => handleEdit(item.id)}
-                      style={{ marginHorizontal: 6 }}
+                      style={orderitemsstyle.quantityButton}
+                      onPress={() => handleQuantityChange(item.id, -1)}
                     >
-                      <Feather name="edit-2" size={18} color="#000" />
+                      <Text style={orderitemsstyle.quantityButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={orderitemsstyle.quantityText}>
+                      {item.quantity}
+                    </Text>
+                    <TouchableOpacity
+                      style={orderitemsstyle.quantityButton}
+                      onPress={() => handleQuantityChange(item.id, 1)}
+                    >
+                      <Text style={orderitemsstyle.quantityButtonText}>+</Text>
                     </TouchableOpacity>
                   </View>
-                ) : (
-                  ""
-                )) /* (
-                <TouchableOpacity
-                  onPress={() => handleEdit(item.id)}
-                  style={{ marginHorizontal: 6 }}
-                >
-                  <Feather name="edit-2" size={18} color="#000" />
-                </TouchableOpacity>
-              ) */
-            }
+
+                  <TouchableOpacity
+                    onPress={() => handleEdit(item)}
+                    style={{ marginHorizontal: 6 }}
+                  >
+                    <Feather name="edit-2" size={24} color="#000" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                ""
+              ))}
           </View>
         ))}
         {/*  </View>
         ))} */}
+        {params.ishotel == "false" && (
+          <View style={orderitemsstyle.orderSummary}>
+            <Text style={orderitemsstyle.summaryText}>
+              No of item Selected: {selectedItems.length}
+            </Text>
+            <Text style={orderitemsstyle.summaryText}>
+              Total Cost of Selection = ₹{totalCost}
+            </Text>
+            <TouchableOpacity
+              style={[
+                orderitemsstyle.placeOrderButton,
+                responsiveStyles.bg1,
+                selectedItems.length === 0 &&
+                  orderitemsstyle.placeOrderButtonDisabled,
+              ]}
+              onPress={() => createOrder_data(true)}
+              disabled={selectedItems.length === 0}
+            >
+              <Text style={orderitemsstyle.placeOrderButtonText}>
+                Place Order
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
 
       {/* Order Summary */}
-      {params.ishotel == "false" && (
-        <View style={orderitemsstyle.orderSummary}>
-          <Text style={orderitemsstyle.summaryText}>
-            No of item Selected: {selectedItems.length}
-          </Text>
-          <Text style={orderitemsstyle.summaryText}>
-            Total Cost of Selection = ₹{totalCost}
-          </Text>
-          <TouchableOpacity
-            style={[
-              orderitemsstyle.placeOrderButton,
-              responsiveStyles.bg1,
-              selectedItems.length === 0 &&
-                orderitemsstyle.placeOrderButtonDisabled,
-            ]}
-            onPress={() => createOrder_data(true)}
-            disabled={selectedItems.length === 0}
-          >
-            <Text style={orderitemsstyle.placeOrderButtonText}>
-              Place Order
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* Comment Modal */}
       <CommentModal

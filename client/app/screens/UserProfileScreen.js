@@ -21,6 +21,7 @@ import {
 } from "../api/profileApi";
 import { AlertService } from "../services/alert.service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUserData } from "../services/getUserData";
 
 const { width } = Dimensions.get("window");
 
@@ -33,43 +34,26 @@ export default function UserProfileScreen() {
   const [reviews, setReviews] = useState([]);
   const [favoritesData, setFavoritesData] = useState([]);
   const [transactionsData, setTransactionsData] = useState([]);
-  const [userId, setUserId] = useState(null);
+  // const [userId, setUserId] = useState(null);
   const [userData, setUserData] = useState({
     orders: [],
     favorites: [],
     transactions: [],
   });
   const router = useRouter();
-
-  // Get userId from AsyncStorage and fetch profile data
-  useEffect(() => {
-    const initializeProfile = async () => {
-      try {
-        const userProfile = await AsyncStorage.getItem("user_profile");
-        if (userProfile) {
-          const user = JSON.parse(userProfile);
-          console.log("User Profile:", user); // Debug log
-          setUserId(user.id);
-          // Only fetch profile data if we have a userId
-          if (user.id) {
-            await fetchProfileData(user.id);
-          }
-        } else {
-          console.log("No user profile found");
-          router.push("/customer-login");
-        }
-      } catch (error) {
-        console.error("Error initializing profile:", error);
-        AlertService.error("Error loading profile");
-      }
-    };
-
-    initializeProfile();
-  }, []);
+  const { userId, error } = useUserData();
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text>Error loading user data. Please try again.</Text>
+      </View>
+    );
+  }
 
   // Handle tab changes
   useEffect(() => {
     if (userId) {
+      // alert(userId);
       fetchProfileData();
     }
   }, [activeTab, userId]);
@@ -88,7 +72,7 @@ export default function UserProfileScreen() {
       console.log("Profile response:", response); // Debug log
       setUserData(response.data.user || {});
       setFavoritesData(response.data.favorites || []);
-      setTransactionsData(response.data.payments || []);
+      setTransactionsData(response.data.orders || []);
       setReviews(response.data.orders || []);
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -98,101 +82,34 @@ export default function UserProfileScreen() {
     }
   };
 
-  /*  const fetchFavorites = async () => {
-    try {
-      setLoading(true);
-      const response = await getUserFavorites(userId);
-      setFavoritesData(response.data);
-    } catch (error) {
-      AlertService.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-      const response = await getUserTransactions(userId);
-      setTransactionsData(response.data);
-    } catch (error) {
-      AlertService.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }; */
-
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
       <MaterialIcons
         key={index}
         name="star"
-        size={16}
+        size={24}
         color={index < rating ? "#FFD700" : "#E0E0E0"}
         style={styles.star}
       />
     ));
   };
 
-  /*   const renderHistoryTab = () => (
-    <ScrollView style={styles.tabContent}>
-      {historyData.map((item) => (
-        <View key={item.id} style={styles.historyItem}>
-          <View style={styles.hotelHeader}>
-            <MaterialIcons name="location-on" size={20} color="#666" />
-            <View style={styles.hotelInfo}>
-              <Text style={styles.hotelName}>{item.hotelName}</Text>
-              <Text style={styles.hotelAddress}>{item.address}</Text>
-              <Text style={styles.hotelDate}>(on {item.date})</Text>
-              <Text style={styles.hotelTime}>{item.time}</Text>
-            </View>
-          </View>
-
-          {item.items && (
-            <View style={styles.orderDetails}>
-              <Text style={styles.membersText}>{item.members} Members</Text>
-              <Text style={styles.ordersText}>Orders</Text>
-              {item.items.map((orderItem, idx) => (
-                <View key={`${item.id}-${idx}`} style={styles.orderItem}>
-                  <Text style={styles.itemName}>{orderItem.name}</Text>
-                  <Text style={styles.itemDetails}>
-                    {orderItem.quantity} units, {orderItem.price} per unit,
-                    total {orderItem.total}
-                  </Text>
-                </View>
-              ))}
-              <Text style={styles.totalAmount}>Total: {item.totalAmount}</Text>
-            </View>
-          )}
-
-          {!item.items && (
-            <View style={styles.simpleOrder}>
-              <Text style={styles.membersText}>{item.members} Members</Text>
-              <Text style={styles.ordersText}>Orders</Text>
-              <Text style={styles.totalAmount}>
-                Total amount: {item.totalAmount}
-              </Text>
-            </View>
-          )}
-
-          {item.id !== historyData[historyData.length - 1].id && (
-            <View style={styles.separator} />
-          )}
-        </View>
-      ))}
-    </ScrollView>
-  ); */
-
   const renderFavoritesTab = () => (
     <ScrollView style={styles.tabContent}>
       {favoritesData.map((item, index) => (
         <View key={item.id} style={styles.favoriteItem}>
           <View style={styles.favoriteHeader}>
-            <MaterialIcons name="star" size={24} color="#FFD700" />
+            <MaterialIcons name="star" size={34} color="#FFD700" />
             <View style={styles.favoriteInfo}>
               <Text style={styles.hotelName}>{item.restaurantName}</Text>
-              <Text style={styles.favoriteDescription}>{item?.comment}</Text>
-              <Text style={styles.hotelDate}>Added: {item.addedAt}</Text>
+              <Text style={styles.favoriteDescription}>{item?.review}</Text>
+              {/*  // add rating stars */}
+              <View style={styles.ratingContainer}>
+                <View style={styles.starsContainer}>
+                  {renderStars(item.rating)}
+                </View>
+              </View>
+              {/* <Text style={styles.hotelDate}>Added: {item.addedAt}</Text> */}
             </View>
           </View>
           {index < favoritesData.length - 1 && (
@@ -206,15 +123,51 @@ export default function UserProfileScreen() {
   const renderTransactionsTab = () => (
     <ScrollView style={styles.tabContent}>
       {transactionsData.map((item, index) => (
-        <View key={item.id} style={styles.transactionItem}>
-          <View style={styles.transactionHeader}>
+        <View key={item.id} style={styles.transactionCard}>
+          {/* Header */}
+          <View style={styles.cardHeader}>
             <Text style={styles.hotelName}>{item.restaurantName}</Text>
-            <Text style={styles.hotelAddress}>{item.restaurantAddress}</Text>
-            <Text style={styles.hotelDate}>Date: {item.date}</Text>
-            <Text style={styles.hotelTime}>Time: {item.time}</Text>
-            <Text style={styles.totalAmount}>Amount: ₹{item.amount}</Text>
-            <Text style={styles.ordersText}>Payment Method: {item.method}</Text>
+            <Text style={styles.members}>{item.members}</Text>
+            <Text style={styles.totalAmount}>₹{item.totalAmount}/-</Text>
           </View>
+
+          {/* Orders Section */}
+          <View style={styles.ordersSection}>
+            <Text style={styles.ordersTitle}>Orders</Text>
+
+            {item.items && item.items.length > 0 ? (
+              <>
+                {item.items.map((order, idx) => (
+                  <View key={idx} style={styles.tableRow}>
+                    <Text style={[styles.cell, styles.orderColumn]}>
+                      {order.name}
+                    </Text>
+                    <Text style={[styles.cell, styles.qtyColumn]}>
+                      {order.quantity}
+                    </Text>
+                    <Text style={[styles.cell, styles.priceColumn]}>
+                      {order.price}
+                    </Text>
+                    <Text style={[styles.cell, styles.totalColumn]}>
+                      {order.total}
+                    </Text>
+                  </View>
+                ))}
+
+                {/* Footer Total */}
+                <View style={styles.tableFooter}>
+                  <Text style={[styles.cell, styles.orderColumn]}>Total</Text>
+                  <Text style={[styles.cell, styles.totalColumn]}>
+                    {item.totalAmount}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <Text style={styles.noOrders}>No Orders</Text>
+            )}
+          </View>
+
+          {/* Separator */}
           {index < transactionsData.length - 1 && (
             <View style={styles.separator} />
           )}
@@ -240,6 +193,7 @@ export default function UserProfileScreen() {
         {reviews.map((review) => (
           <View key={review.id} style={styles.reviewItem}>
             <View style={styles.reviewHeader}>
+              <MaterialIcons name="location-on" size={20} color="#666" />
               <Text style={styles.hotelName}>{review.restaurantName}</Text>
               <Text style={styles.reviewDate}>
                 {new Date(review.createdAt).toLocaleDateString()}
@@ -266,6 +220,7 @@ export default function UserProfileScreen() {
       case "transactions":
         return renderTransactionsTab();
       default:
+        setActiveTab("reviews");
         return renderReviewsTab();
     }
   };
@@ -275,12 +230,24 @@ export default function UserProfileScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push("/customer-home")}>
-          <MaterialIcons name="arrow-back" size={24} color="#000" />
+          <MaterialIcons name="chevron-left" size={34} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity>
-          <MaterialIcons name="translate" size={24} color="#000" />
+
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={async () => {
+            await AsyncStorage.clear();
+            router.push("/Customer-Login");
+          }}
+        >
+          <MaterialIcons name="logout" size={24} color="#fff" />
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
+
+      {/* <TouchableOpacity>
+        <MaterialIcons name="translate" size={24} color="#000" />
+      </TouchableOpacity> */}
 
       {/* Profile Section */}
       <View style={styles.profileSection}>
@@ -316,7 +283,7 @@ export default function UserProfileScreen() {
           style={styles.tabButton}
           onPress={() => setActiveTab("reviews")}
         >
-          <MaterialIcons name="rate-review" size={32} color="#000" />
+          <MaterialIcons name="history" size={32} color="#000" />
           {activeTab === "reviews" && <View style={styles.tabArrow} />}
         </TouchableOpacity>
 
@@ -358,8 +325,36 @@ export default function UserProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  ordersTitle: { fontWeight: "bold", marginBottom: 4 },
+  ordersSection: { marginTop: 4 },
+  tableHeader: { flexDirection: "row", borderBottomWidth: 1, paddingBottom: 2 },
+  tableRow: { flexDirection: "row", paddingVertical: 2 },
+  tableFooter: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    marginTop: 4,
+    paddingTop: 2,
+  },
+
+  hcell: { fontWeight: "bold", fontSize: 12 },
+  cell: { fontSize: 12 },
+
+  orderColumn: { flex: 2 },
+  qtyColumn: { flex: 1, textAlign: "center" },
+  priceColumn: { flex: 1, textAlign: "center" },
+  totalColumn: { flex: 1, textAlign: "center" },
+
+  noOrders: { fontSize: 12, fontStyle: "italic", color: "gray" },
+  separator: { height: 8 },
+  logoutButton: {
+    backgroundColor: "#d9534f",
+    borderRadius: 5,
+    padding: 10,
+    flexDirection: "row",
+    alignSelf: "right",
+  },
   reviewItem: {
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
@@ -377,11 +372,11 @@ const styles = StyleSheet.create({
   },
   reviewDate: {
     fontSize: 12,
-    color: "#666",
+    color: "#000",
   },
   reviewText: {
     fontSize: 14,
-    color: "#333",
+    color: "#000",
     marginBottom: 8,
     lineHeight: 20,
   },
@@ -403,21 +398,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   profileImageContainer: {
-    marginBottom: 60,
+    marginBottom: 10,
     alignSelf: "center",
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 145,
+    height: 145,
+    borderRadius: 67,
   },
   profileImagePlaceholder: {
-    width: 100,
-    height: 100,
+    width: 145,
+    height: 145,
     borderRadius: 40,
     backgroundColor: "#D0D0D0",
     justifyContent: "center",
     alignItems: "center",
+    marginLeft: "12%",
   },
   userInfo: {
     alignItems: "flex-start",
@@ -483,21 +479,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 8,
+    marginRight: "auto",
   },
   hotelAddress: {
     fontSize: 14,
-    color: "#666",
+    color: "#000",
     marginBottom: 6,
     lineHeight: 18,
   },
   hotelDate: {
     fontSize: 14,
-    color: "#666",
+    color: "#000",
     marginBottom: 3,
   },
   hotelTime: {
     fontSize: 14,
-    color: "#666",
+    color: "#000",
     fontWeight: "500",
   },
   orderDetails: {
@@ -534,6 +531,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginTop: 10,
+    marginLeft: "auto",
   },
   separator: {
     height: 1,
