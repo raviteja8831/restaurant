@@ -103,7 +103,7 @@ export default function UserManagementScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#a6a6e7', paddingTop: 0 },
+  container: { flex: 1, backgroundColor: '#8D8BEA', paddingTop: 0 },
   header: { fontSize: 28, fontWeight: 'bold', margin: 16, color: '#fff' },
   userList: { alignItems: 'center', paddingHorizontal: 8 },
   userItem: { alignItems: 'center', marginHorizontal: 8 },

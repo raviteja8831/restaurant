@@ -56,7 +56,7 @@ chefController.chefProfile = async (req, res) => {
 chefController.chefDashboard = async (req, res) => {
   try {
     const { id } = req.params;
-    const chefId = parseInt(id, 10);
+    const chefId = parseInt(id, 10) || 2;
     console.log('Chef ID from params:', chefId, req.params);
     // Get menuitems allotted to chef
     const chef = await restaurantUser.findByPk(chefId, { include: [{ model: MenuItem, as: 'allottedMenuItems' }] });

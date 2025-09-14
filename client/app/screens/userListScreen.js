@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
   },
   qrTitle: {
     fontSize: 24,
@@ -789,11 +789,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     paddingTop: 0,
   },
   appbar: {
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     elevation: 0,
   },
   appbarTitle: {

@@ -14,7 +14,7 @@ export default function FooterMenu() {
 const styles = StyleSheet.create({
   footer: {
     width: '100%',
-    backgroundColor: '#a6a6e7',
+    backgroundColor: '#8D8BEA',
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',

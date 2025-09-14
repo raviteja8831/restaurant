@@ -90,7 +90,7 @@ export default function MenuScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     paddingTop: 40,
     alignItems: "center",
   },

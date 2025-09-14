@@ -113,7 +113,7 @@ export default function QRCodeOrdersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#a6a6e7', padding: 12 },
+  container: { flex: 1, backgroundColor: '#8D8BEA', padding: 12 },
   tableTitle: { flex: 1, fontWeight: 'bold', fontSize: 20, color: '#222', textAlign: 'center' },
   periodDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e6e1fa', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   periodText: { color: '#7b6eea', fontWeight: 'bold', fontSize: 15, marginRight: 4 },

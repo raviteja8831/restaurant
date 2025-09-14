@@ -12,7 +12,7 @@ export default function AppScreenWrapper({ children }) {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#a6a6e7',
+    backgroundColor: '#8D8BEA',
   },
   container: {
     flexGrow: 1,
