@@ -7,6 +7,7 @@ import { getUserDashboard, sendMessageToUser, getMessagesForUser, getUserAllotte
 import { getMenusWithItems, saveUserMenuItems } from "../api/menuApi";
 import AddUserScreen from './AddUserScreen';
 import EditUserScreen from './EditUserScreen';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function UsersTabScreen() {
 
@@ -27,26 +28,45 @@ const periodOptions = [
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState([]);
 const [userList, setUserList] = useState([]);
+const [action, setAction] = useState("Add");
   const [selectedUser, setSelectedUser] = useState(null);
   // Replace with actual restaurantId from context/auth if available
-  const restaurantId = 1; // TODO: get from context or props
   const chefRoleId = 2;
-
-  useEffect(() => {
-    fetchUserList();
-  }, [restaurantId]);
-
-  const fetchUserList = async () => {
+const [restaurantId, setRestaurantId] = useState("");
+useEffect(() => {
+  const loadUserAndFetchList = async () => {
     try {
-      const users = await getRestaurantUsers(restaurantId, chefRoleId);
-      // Do not map to name/role only, keep all fields for edit modal
-      setUserList(users);
-      if (users.length > 0) setSelectedUser(users[0]);
+      const userStr = await AsyncStorage.getItem('user_profile');
+      let user = null;
+      if (userStr) {
+        user = JSON.parse(userStr);
+        // Fix: set restaurantId using useState
+        setRestaurantId(user?.restaurant?.id || "");
+      }
     } catch (err) {
-      setUserList([]);
-      setSelectedUser(null);
+      // Optionally handle error
     }
   };
+  loadUserAndFetchList();
+}, []);
+
+const fetchUserList = async () => {
+  try {
+    if (!restaurantId) return;
+    const users = await getRestaurantUsers(restaurantId, chefRoleId);
+    setUserList(users);
+    if (users.length > 0) setSelectedUser(users[0]);
+  } catch (err) {
+    setUserList([]);
+    setSelectedUser(null);
+  }
+};
+
+useEffect(() => {
+  if (restaurantId) {
+    fetchUserList();
+  }
+}, [restaurantId]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -68,7 +88,7 @@ const [userList, setUserList] = useState([]);
 
   const fetchMenus = async () => {
     try {
-      const data = await getMenusWithItems();
+      const data = await getMenusWithItems(restaurantId);
       setMenusWithItems(data);
     } catch (err) {
       // Optionally show error
@@ -163,14 +183,14 @@ const [userList, setUserList] = useState([]);
             ))}
           </ScrollView>
             {/* Add User Plus Icon */}
-            <View style={{ alignItems: 'center', marginTop: 8 }}>
+            <View style={{ alignItems: 'left', marginTop: 8 }}>
               <TouchableOpacity
                 style={{ backgroundColor: '#ece9fa', borderRadius: 28, width: 56, height: 56, alignItems: 'center', justifyContent: 'center', elevation: 2 }}
                 onPress={() => setShowAddUserModal(true)}
               >
                 <MaterialCommunityIcons name="plus" size={32} color="#6c63b5" />
               </TouchableOpacity>
-              <Text style={{ fontSize: 13, color: '#222', fontWeight: 'bold', marginTop: 4 }}>Add</Text>
+              <Text style={{ fontSize: 13, color: '#222', fontWeight: 'bold', marginTop: 4, marginLeft:15 }}>Add</Text>
             </View>
             {/* Add User Modal */}
             <Modal visible={showAddUserModal} animationType="slide" transparent={true} onRequestClose={() => setShowAddUserModal(false)}>
@@ -218,8 +238,11 @@ const [userList, setUserList] = useState([]);
           {/* Allotted Dishes Column */}
           <View style={[styles.usersAllottedCard, { flex: 1.2, marginRight: 12, minHeight: 220 }]}> 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TouchableOpacity onPress={() => { setShowAddMenuModal(true); setAction("Remove"); }}>
+                <MaterialCommunityIcons name="minus" size={22} color="#6c63b5" />
+              </TouchableOpacity>
               <Text style={styles.usersAllottedTitle}>Allotted Dishes</Text>
-              <TouchableOpacity onPress={() => setShowAddMenuModal(true)}>
+              <TouchableOpacity onPress={() => {setShowAddMenuModal(true);setAction("Add");}}>
                 <MaterialCommunityIcons name="plus" size={22} color="#6c63b5" />
               </TouchableOpacity>
             </View>
@@ -331,17 +354,17 @@ const [userList, setUserList] = useState([]);
           onClose={() => setShowAddMenuModal(false)}
           menus={menusWithItems}
           allottedMenuItemIds={allottedMenuItemIds}
+          action={action}
           onAdd={handleAddMenuItem}
         />
         <TabBar />
       </ScrollView>
     </>
   );
-// ...existing code...
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#a6a6e7" },
+  container: { flex: 1, backgroundColor: "#8D8BEA" },
   usersHeader: {
     paddingHorizontal: 18,
     paddingTop: 20,

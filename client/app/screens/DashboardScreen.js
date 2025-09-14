@@ -3,9 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from "expo-router";
 import { fetchManagerDashboard, addUserByManager } from "../api/managerApi";
 import { fetchChefStats } from "../api/chefApi";
+import axios from 'axios';
 
 import { HEADINGS } from '../constants/headings';
 import ProfileModal from '../components/ProfileModal';
+import BuffetModal from './BuffetModal';
 import { LineChart } from 'react-native-chart-kit';
 import {
   StyleSheet,
@@ -71,6 +73,9 @@ export default function ManagerDashboardScreenNew() {
   const [buffetMenuVisible, setBuffetMenuVisible] = useState(false);
   const [buffetEnabled, setBuffetEnabled] = useState(true);
   const [profileVisible, setProfileVisible] = useState(false);
+  // BuffetModal state for create/edit
+  const [buffetModalVisible, setBuffetModalVisible] = useState(false);
+  const [buffetModalType, setBuffetModalType] = useState('');
   // Fetch dashboard data on mount
   useEffect(() => {
     async function fetchData() {
@@ -85,9 +90,9 @@ export default function ManagerDashboardScreenNew() {
           setManagerName(user.firstname || user.name || '');
           setProfile({ name: user.firstname || user.name || '', phone: user.phone || '' });
         }
-        // Pass token to API if needed (example: setApiAuthToken(token))
-        // Fetch dashboard data (optionally pass userId or token)
-        const dash = await fetchManagerDashboard(user?.id, token);
+  // Pass restaurantId to dashboard API
+  const restaurantId = user?.restaurantId || user?.restaurant_id || user?.id;
+  const dash = await fetchManagerDashboard(restaurantId, token);
         setDashboard(dash);
         setRestaurantName(dash.restaurantName || HEADINGS.ManagerDashboardScreen);
         setToday(dash.today || '');
@@ -106,7 +111,8 @@ export default function ManagerDashboardScreenNew() {
         setSalesData(dash.salesData || []);
         setIncomeData(dash.incomeData || []);
         // Chef stats
-        const chefStats = await fetchChefStats();
+        //const chefStats = await fetchChefStats();
+        const chefStats = "";
         setChefLogins(chefStats.logins || 0);
         setChefLogouts(chefStats.logouts || 0);
       } catch (e) {
@@ -236,70 +242,6 @@ export default function ManagerDashboardScreenNew() {
     setShowTableDetail(true);
   };
 
-  const renderQRCodeTab = () => {
-    return (
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.qrContainer}>
-          <Text style={styles.qrTitle}>QR Code Generator / Statistics</Text>
-
-          {/* Large QR Code */}
-          <View style={styles.qrCodeBox}>
-            <MaterialCommunityIcons name="qrcode" size={120} color="#000" />
-          </View>
-
-          {/* New QR Code Button */}
-          <TouchableOpacity
-            style={styles.newQRButton}
-            onPress={() => setShowNewQRModal(true)}
-          >
-            <MaterialCommunityIcons
-              name="plus"
-              size={20}
-              color="#000"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.newQRButtonText}>New QR Code</Text>
-          </TouchableOpacity>
-
-          {/* Customer Statistics Section */}
-          <View style={styles.qrStatsContainer}>
-            <View style={styles.qrStatsRow}>
-              <TouchableOpacity style={styles.qrPeriodButton}>
-                <Text style={styles.qrPeriodButtonText}>Today</Text>
-                <MaterialCommunityIcons
-                  name="chevron-down"
-                  size={16}
-                  color="#000"
-                />
-              </TouchableOpacity>
-              <View style={styles.qrCustomerCountContainer}>
-                <Text style={styles.qrCustomerCountText}>
-                  No of Customers today : 50
-                </Text>
-              </View>
-            </View>
-
-            {/* Table Buttons */}
-            <View style={styles.qrTableButtons}>
-              {[1, 2, 3, 4, 5, 6].map((num) => (
-                <TouchableOpacity
-                  key={num}
-                  style={styles.qrTableButton}
-                  onPress={() => handleTableClick(num)}
-                >
-                  <Text style={styles.qrTableButtonText}>Table {num}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
-      </ScrollView>
-    );
-  };
-
   return (
     <View style={styles.container}>
         <ScrollView
@@ -373,10 +315,30 @@ export default function ManagerDashboardScreenNew() {
               <TouchableOpacity style={styles.buffetIcon} onPress={() => setBuffetVisible(true)}>
                 <Image source={require('../../assets/images/buffet.png')} style={styles.buffetImg} resizeMode="contain" />
               </TouchableOpacity>
+              {/* Make buffet type clickable to open modal */}
+              <TouchableOpacity onPress={() => setBuffetVisible(true)} style={{marginTop: 8, alignItems: 'center', width: '100%'}}>
+                <Text style={{color: '#6c63b5', fontWeight: 'bold', fontSize: 15}}>
+                  {buffet.type || 'Buffet Type'}
+                </Text>
+              </TouchableOpacity>
               <View style={{marginTop: 8, alignItems: 'center', width: '100%'}}>
                 <Switch
                   value={buffetEnabled}
-                  onValueChange={setBuffetEnabled}
+                  onValueChange={async (val) => {
+                    setBuffetEnabled(val);
+                    try {
+                      const userStr = await AsyncStorage.getItem('user_profile');
+                      const user = userStr ? JSON.parse(userStr) : {};
+                      const restaurantId = user?.restaurantId || user?.restaurant_id || user?.id;
+                      await axios.post('/api/buffetdetails/all-status', {
+                        restaurantId,
+                        isActive: val
+                      });
+                      // Optionally, refresh dashboard/buffet info here
+                    } catch (err) {
+                      // Optionally show error
+                    }
+                  }}
                   trackColor={{ false: '#ccc', true: '#6c63b5' }}
                   thumbColor={buffetEnabled ? '#fff' : '#888'}
                   style={{ transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }] }}
@@ -387,15 +349,32 @@ export default function ManagerDashboardScreenNew() {
             <Modal visible={buffetMenuVisible} transparent animationType="fade" onRequestClose={() => setBuffetMenuVisible(false)}>
               <TouchableOpacity style={styles.menuOverlay} activeOpacity={1} onPress={() => setBuffetMenuVisible(false)}>
                 <View style={styles.buffetMenuPopupNew}>
-                  <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => { setBuffetMenuVisible(false); /* handle complimentary */ }}>
+                  <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => {
+                    setBuffetMenuVisible(false);
+                    setBuffetModalType('Complimentary');
+                    setBuffetModalVisible(true);
+                  }}>
                     <Text style={styles.buffetMenuTextNew}>Complimentary</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => { setBuffetMenuVisible(false); /* handle pay the price */ }}>
+                  <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => {
+                    setBuffetMenuVisible(false);
+                    setBuffetModalType('Pay the Price');
+                    setBuffetModalVisible(true);
+                  }}>
                     <Text style={styles.buffetMenuTextNew}>Pay the Price</Text>
                   </TouchableOpacity>
                 </View>
               </TouchableOpacity>
             </Modal>
+
+            {/* Buffet Create/Edit Modal */}
+            <BuffetModal
+              visible={buffetModalVisible}
+              onClose={() => setBuffetModalVisible(false)}
+              initialType={buffetModalType}
+              buffet={buffet}
+              setBuffet={setBuffet}
+            />
           </View>
           {/* Buffet Modal */}
           <Modal visible={buffetVisible} transparent animationType="fade" onRequestClose={() => setBuffetVisible(false)}>
@@ -703,7 +682,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
   },
   qrTitle: {
     fontSize: 24,
@@ -974,11 +953,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     paddingTop: 0,
   },
   appbar: {
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     elevation: 0,
   },
   appbarTitle: {
