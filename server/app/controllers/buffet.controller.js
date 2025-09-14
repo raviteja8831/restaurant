@@ -60,7 +60,7 @@ exports.findAll = async (req, res) => {
 exports.findOne = async (req, res) => {
   try {
     const id = req.params.id;
-    const buffetOrder = await BuffetOrder.findByPk(id, {
+    const buffetOrder = await BuffetOrder.findByPK(id, {
       include: [
         {
           model: db.users,
@@ -83,6 +83,7 @@ exports.findOne = async (req, res) => {
 
     res.json(buffetOrder);
   } catch (err) {
+    const id = req.params.id;
     res.status(500).send({
       message: "Error retrieving Buffet Order with id=" + id,
     });

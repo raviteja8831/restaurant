@@ -57,6 +57,75 @@ export default function CustomerRegisterScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      <Surface style={[styles.container, { backgroundColor: '#8D8BEA' }]}> 
+        {/* <Appbar.Header style={styles.appbar}>
+          <Appbar.BackAction onPress={() => navigation.goBack()} />
+          <Appbar.Content title="Customer Registration" titleStyle={styles.appbarTitle} />
+        </Appbar.Header> */}
+        <Surface style={styles.formSurface}>
+          {step === 1 ? (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="First Name"
+                value={firstname}
+                onChangeText={setFirstname}
+                mode="outlined"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                value={lastname}
+                onChangeText={setLastname}
+                mode="outlined"
+              />
+            </>
+          ) : (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Phone Number"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                maxLength={10}
+                mode="outlined"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                mode="outlined"
+              />
+            </>
+          )}
+          {error ? <Text style={{ color: 'red', marginTop: 10 }}>{error}</Text> : null}
+        </Surface>
+        <Surface style={styles.bottomBar}>
+          {step === 1 ? (
+            <Button
+              mode="contained"
+              style={styles.bottomButton}
+              labelStyle={styles.buttonText}
+              onPress={handleNext}
+            >
+              Next
+            </Button>
+          ) : (
+            <Button
+              mode="contained"
+              style={styles.bottomButton}
+              labelStyle={styles.buttonText}
+              onPress={handleRegister}
+              loading={loading}
+              disabled={loading}
+            >
+              Register
+            </Button>
+          )}
+        </Surface>
       <Surface style={styles.container}>
         {/* Top-right icon */}
         <View style={styles.topRightIcon}>

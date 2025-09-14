@@ -105,7 +105,7 @@ export default function NotificationsTabScreen() {
   const styles = StyleSheet.create({
         container: {
           flex: 1,
-          backgroundColor: '#a6a6e7',
+          backgroundColor: '#8D8BEA',
           borderTopLeftRadius: 48,
           borderTopRightRadius: 48,
           paddingTop: 0,
