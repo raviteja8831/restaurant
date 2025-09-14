@@ -13,6 +13,7 @@ import { TextInput, Button, Text, Surface } from "react-native-paper";
 import { MESSAGES } from "../constants/constants";
 import { AlertService } from "../services/alert.service";
 import { createCustomer } from "../api/customerApi";
+import { router, useNavigation, useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
@@ -41,9 +42,9 @@ export default function CustomerRegisterScreen() {
         phone: phone.trim(),
       });
 
-      if (response.data) {
+      if (response) {
         Alert.alert("Success", MESSAGES.registrationSuccess);
-        navigation.replace("Login");
+        useRouter().push("Customer-Login");
       }
     } catch (error) {
       AlertService.error(error);
@@ -90,6 +91,8 @@ export default function CustomerRegisterScreen() {
           <TextInput
             style={styles.input}
             label="Phone Number"
+            keyboardType="numeric"
+            maxLength={10}
             value={phone}
             onChangeText={setPhone}
             mode="outlined"
