@@ -4,8 +4,8 @@ const { Op } = require('sequelize');
 
 exports.dashboard = async (req, res) => {
   try {
-    // For demo, use restaurantId = 1 (replace with req.user/params as needed)
-    const restaurantId = 1;
+  // Use restaurantId from request (query or body)
+  const restaurantId = req.query.restaurantId || req.body.restaurantId || 1;
 
     // Get manager (first manager for this restaurant)
     const manager = await db.restaurantUser.findOne({

@@ -1,4 +1,3 @@
-// Association calls must be after db is fully initialized
 const dbConfig = require("../config/db.config.js");
 
 const Sequelize = require("sequelize");
@@ -214,3 +213,6 @@ db.users.hasOne(db.customer, {
   foreignKey: "userId",
   as: "customerProfile",
 });
+db.buffet = require("./buffet.model.js")(sequelize, Sequelize);
+db.buffet.belongsTo(db.restaurant, { foreignKey: "restaurantId", as: "restaurant" });
+// A

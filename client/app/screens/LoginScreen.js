@@ -53,8 +53,6 @@ export default function LoginScreen() {
       Alert.alert('API user', JSON.stringify(user));
       if (role === 'manager') {
         router.push('/dashboard');
-      } else if (role === 'chef') {
-        router.push('/chef-home');
       } else {
         Alert.alert('Login Failed', 'Unknown user role: ' + (user?.role || 'none'));
       }
@@ -123,7 +121,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 0,
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     alignItems: 'center',
     justifyContent: 'flex-start',
     marginTop: 25,

@@ -501,8 +501,8 @@ export default function ManagerRegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 0, backgroundColor: "#a6a6e7" },
-  appbar: { backgroundColor: "#a6a6e7", elevation: 0 },
+  container: { flex: 1, padding: 0, backgroundColor: "#8D8BEA" },
+  appbar: { backgroundColor: "#8D8BEA", elevation: 0 },
   appbarTitle: { fontWeight: "bold", fontSize: 20, textAlign: "center" },
   formSurface: {
     flex: 1,
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
   photoPreview: { width: 120, height: 100, borderRadius: 10 },
   bottomBar: {
     padding: 16,
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     elevation: 8,
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     width: "100%",
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     elevation: 8,
@@ -684,7 +684,7 @@ const styles = StyleSheet.create({
   stepBox: {
     flex: 1,
     width: "100%",
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     justifyContent: "flex-start",
     alignItems: "center",
     paddingTop: 32,
@@ -732,7 +732,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     width: "100%",
-    backgroundColor: "#a6a6e7",
+    backgroundColor: "#8D8BEA",
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     alignItems: "center",

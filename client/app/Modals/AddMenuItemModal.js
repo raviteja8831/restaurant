@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { View, Modal, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
 // menus: [{ id, name, items: [{id, name}] }], allottedMenuItemIds: [id]
-export default function AddMenuItemModal({ visible, onClose, menus = [], allottedMenuItemIds = [], onAdd }) {
+export default function AddMenuItemModal({ visible, onClose, menus = [], allottedMenuItemIds = [],action="", onAdd }) {
   const [selectedMenuId, setSelectedMenuId] = useState(null);
   const [selectedMenuItemIds, setSelectedMenuItemIds] = useState([]);
 
@@ -25,11 +24,18 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
         : [],
   }));
 
-  // Filter out already allotted menu items
-  const filteredMenus = normalizedMenus.map(menu => ({
-    ...menu,
-    items: (menu.items || []).filter(item => !allottedMenuItemIds.includes(item.id)),
-  })).filter(menu => menu.items.length > 0);
+  // Action-based filtering
+  let filteredMenus;
+  if (action === "remove") {
+    // Only show allotted items for removal
+    filteredMenus = normalizedMenus.map(menu => ({
+      ...menu,
+      items: (menu.items || []).filter(item => allottedMenuItemIds.includes(item.id)),
+    })).filter(menu => menu.items.length > 0);
+  } else {
+    // Show all items for add, auto-select allotted
+    filteredMenus = normalizedMenus;
+  }
 
   const selectedMenu = filteredMenus.find(m => m.id === selectedMenuId);
   const menuItems = selectedMenu ? selectedMenu.items : [];
@@ -63,19 +69,39 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
                   <ScrollView style={styles.dropdown}>
                     {menuItems.map(item => {
                       const isSelected = selectedMenuItemIds.includes(item.id);
+                      const isAllotted = allottedMenuItemIds.includes(item.id);
+                      let canSelect = true;
+                      let canDeselect = true;
+                      if (action === "add") {
+                        // Can select any, but cannot deselect already allotted
+                        canDeselect = !isAllotted;
+                      } else if (action === "remove") {
+                        // Can only deselect allotted
+                        canSelect = false;
+                      }
                       return (
                         <TouchableOpacity
                           key={item.id}
-                          style={[styles.dropdownItem, isSelected && styles.selected]}
+                          style={[styles.dropdownItem, isSelected && styles.selected, !canSelect && !isSelected ? { opacity: 0.5 } : {}]}
                           onPress={() => {
-                            setSelectedMenuItemIds(prev =>
-                              isSelected
-                                ? prev.filter(id => id !== item.id)
-                                : [...prev, item.id]
-                            );
+                            if (action === "add") {
+                              if (!isSelected) {
+                                setSelectedMenuItemIds(prev => [...prev, item.id]);
+                              } else if (canDeselect) {
+                                setSelectedMenuItemIds(prev => prev.filter(id => id !== item.id));
+                              }
+                            } else if (action === "remove") {
+                              if (isSelected) {
+                                setSelectedMenuItemIds(prev => prev.filter(id => id !== item.id));
+                              }
+                            }
                           }}
+                          disabled={action === "remove" ? !isSelected : (action === "add" ? (!isSelected && !canSelect) : false)}
                         >
-                          <Text>{item.name} {isSelected ? '✓' : ''}</Text>
+                          <Text>
+                            {item.name} {isSelected ? '✓' : ''}
+                            {action === "add" && isAllotted ? " (already allotted)" : ""}
+                          </Text>
                         </TouchableOpacity>
                       );
                     })}
