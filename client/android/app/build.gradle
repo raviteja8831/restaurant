@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.ft"
+    namespace 'com.anonymous.ft'
     defaultConfig {
-        applicationId 'com.naveen150.ft'
+        applicationId 'com.anonymous.ft'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -175,3 +175,7 @@ dependencies {
         implementation jscFlavor
     }
 }
+cd ..
+npm cache clean --force
+cd android
+.\gradlew.bat clean.\gradlew.bat --stop.\gradlew.bat --stop.\gradlew.bat assembleDebug.\gradlew.bat --stop
