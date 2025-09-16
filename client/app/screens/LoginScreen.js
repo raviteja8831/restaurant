@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TextInput, Text } from "react-native-paper";
@@ -115,6 +116,14 @@ export default function LoginScreen() {
         </View>
       </View>
       {/* No Login button, auto-submit on OTP complete */}
+
+      {/* Register Link */}
+      <View style={styles.registerContainer}>
+        <Text style={styles.registerText}>Don’t have an account? </Text>
+  <TouchableOpacity onPress={() => router.replace('/customer-register')}>
+          <Text style={styles.registerLink}>Register</Text>
+        </TouchableOpacity>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -175,5 +184,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     borderWidth: 0,
     elevation: 0,
+  },
+  registerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 16,
+  },
+  registerText: {
+    fontSize: 14,
+    color: "#444",
+  },
+  registerLink: {
+    fontSize: 14,
+    color: "#007BFF",
+    fontWeight: "bold",
   },
 });

@@ -44,7 +44,7 @@ export default function CustomerRegisterScreen() {
 
       if (response) {
         Alert.alert("Success", MESSAGES.registrationSuccess);
-        useRouter().push("Customer-Login");
+        useRouter().push("/Customer-Login");
       }
     } catch (error) {
       AlertService.error(error);
