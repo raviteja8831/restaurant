@@ -1,5 +1,5 @@
 import axiosService from "./axiosService";
-import { API_BASE_URL } from "../constants/constants";
+import { API_BASE_URL } from "../../client/app/constants/api.constants";
 
 const REVIEWS_API = `${API_BASE_URL}/reviews`;
 

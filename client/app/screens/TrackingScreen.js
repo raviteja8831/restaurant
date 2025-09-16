@@ -1,23 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { FlatList } from 'react-native';
-import { List, Appbar } from 'react-native-paper';
+import React, { useEffect, useState } from "react";
+import { FlatList } from "react-native";
+import { List, Appbar } from "react-native-paper";
+import { API_BASE_URL } from "../constants/api.constants";
 
 export default function TrackingScreen() {
   const [data, setData] = useState([]);
   useEffect(() => {
-    fetch('http://localhost:3000/api/tracking')
-      .then(res => res.json())
+    fetch(`${API_BASE_URL}/api/tracking`)
+      .then((res) => res.json())
       .then(setData);
   }, []);
   return (
     <>
-      <Appbar.Header><Appbar.Content title="Tracking" /></Appbar.Header>
+      <Appbar.Header>
+        <Appbar.Content title="Tracking" />
+      </Appbar.Header>
       <FlatList
         data={data}
         keyExtractor={(_, i) => i.toString()}
-        renderItem={({ item }) => (
-          <List.Item title={item.name} />
-        )}
+        renderItem={({ item }) => <List.Item title={item.name} />}
       />
     </>
   );

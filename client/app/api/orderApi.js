@@ -1,5 +1,5 @@
 import axiosService from "./axiosService";
-import { API_BASE_URL } from "../constants/constants";
+import { API_BASE_URL } from "../../client/app/constants/api.constants";
 import { ORDER_API } from "../constants/orderApi";
 
 export const createOrder = async (orderData) => {
