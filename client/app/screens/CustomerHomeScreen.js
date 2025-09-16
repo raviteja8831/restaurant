@@ -1,75 +1,53 @@
+
 import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
   TouchableOpacity,
   Text,
-  Dimensions,
   Image,
   ActivityIndicator,
   Platform,
-  TextInput,
 } from "react-native";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import FilterModal from "../Modals/FilterModal";
 import SearchModal from "../Modals/SearchModal";
-import { useUserData } from "../services/getUserData";
-import axiosInstance from '../api/axiosService';
-import { RESTAURANT_API } from '../constants/restaurantApi';
 import * as Location from 'expo-location';
+import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 
-// For web
-import { GoogleMap, Marker, useJsApiLoader, InfoWindow } from '@react-google-maps/api';
+// Mock Hyderabad restaurant data
+const RESTAURANTS = [
+  { id: 1, name: "Paradise Biryani", cuisine: "Biryani", latitude: 17.4375, longitude: 78.4456 },
+  { id: 2, name: "Chutneys", cuisine: "South Indian", latitude: 17.4239, longitude: 78.4867 },
+  { id: 3, name: "Barbeque Nation", cuisine: "BBQ", latitude: 17.4412, longitude: 78.3936 },
+  { id: 4, name: "Ohri's", cuisine: "Multi-cuisine", latitude: 17.4260, longitude: 78.4500 },
+  { id: 5, name: "Bawarchi", cuisine: "Biryani", latitude: 17.4065, longitude: 78.4891 },
+];
 
-let MapView, NativeMarker;
-if (Platform.OS === 'web') {
-  // Use Google Maps for web
-  MapView = GoogleMap;
-  NativeMarker = Marker;
-} else {
-  try {
-    const maps = require('expo-maps');
-    MapView = maps.MapView;
-    NativeMarker = maps.Marker;
-  } catch (e) {
-    MapView = null;
-    NativeMarker = null;
-  }
-}
 
-const { width, height } = Dimensions.get("window");
-const mapContainerStyle = { width: '100%', height: '100%' };
-const customMarkerIcon = {
-  url: 'https://img.icons8.com/ios-filled/50/6B4EFF/marker.png', // Example marker icon
-  scaledSize: { width: 40, height: 40 },
-};
-
-// Set Hyderabad as map center for web
-const HYDERABAD_CENTER = { lat: 17.3850, lng: 78.4867 };
-
-export default function CustomerHomeScreen() {
+function CustomerHomeScreen() {
+  const router = useRouter();
+  const [userLocation, setUserLocation] = useState({ latitude: 17.4375, longitude: 78.4456 });
   const [showFilter, setShowFilter] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [restaurants, setRestaurants] = useState([]);
-  const [userLocation, setUserLocation] = useState({ latitude: 37.78825, longitude: -122.4324 });
+  const [selectedFilter, setSelectedFilter] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
-  const [filter, setFilter] = useState('');
+  const [loading, setLoading] = useState(true);
+  // Only for web: load Google Maps API
   const { isLoaded } = Platform.OS === 'web'
-    ? useJsApiLoader({
-        googleMapsApiKey: 'AIzaSyCJT87ZYDqm6bVLxRsg4Zde87HyefUfASQ', // Replace with your key
-      })
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    ? useJsApiLoader({ googleMapsApiKey: 'AIzaSyCJT87ZYDqm6bVLxRsg4Zde87HyefUfASQ' })
     : { isLoaded: true };
 
-  const router = useRouter();
-  const { userId, loading, error } = useUserData();
-
+  // Get user location on mount
   useEffect(() => {
-    async function fetchUserLocation() {
+    (async () => {
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          // Permission denied, use default location
+          setLoading(false);
           return;
         }
         let location = await Location.getCurrentPositionAsync({});
@@ -77,114 +55,50 @@ export default function CustomerHomeScreen() {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         });
-      } catch (err) {
-        // Optionally handle error
+      } catch (e) {
+        // Use default location
       }
-    }
-    fetchUserLocation();
+      setLoading(false);
+    })();
   }, []);
 
-  // Remove API fetch, use only mock Hyderabad restaurants
-  useEffect(() => {
-    setRestaurants([
-      { id: 1, name: 'Paradise Biryani', latitude: 17.4375, longitude: 78.4456, cuisine: 'Biryani' },
-      { id: 2, name: 'Bawarchi', latitude: 17.4065, longitude: 78.4891, cuisine: 'Indian' },
-      { id: 3, name: 'Chutneys', latitude: 17.4255, longitude: 78.4500, cuisine: 'South Indian' },
-      { id: 4, name: 'Shah Ghouse', latitude: 17.3840, longitude: 78.4569, cuisine: 'Mughlai' },
-      { id: 5, name: 'Cafe Bahar', latitude: 17.3926, longitude: 78.4738, cuisine: 'Biryani' },
-    ]);
-  }, []);
+  // Filtering logic
+  const filteredRestaurants = RESTAURANTS.filter(r => {
+    let matchesFilter = selectedFilter ? r.cuisine === selectedFilter : true;
+    let matchesSearch = searchQuery ? r.name.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+    return matchesFilter && matchesSearch;
+  });
 
-  const handleFilterPress = () => {
-    setShowFilter(!showFilter);
+  // Handlers
+  const handleFilterPress = () => setShowFilter(true);
+  const handleSearchPress = () => setShowSearch(true);
+  const handleFilterSelect = (filter) => {
+    setSelectedFilter(filter);
+    setShowFilter(false);
   };
-
-  const handleSearchPress = () => {
-    setShowSearch(!showSearch);
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    setShowSearch(false);
   };
+  const handlePersonTabPress = () => router.push('/user-profile');
+  const handleScanPress = () => router.push('/qr-scanner');
 
-  const handleFilterSelect = (option) => {
-    console.log("Filter option selected:", option.name);
-    // You can add your filter logic here
-  };
-
-  const handleSearch = (searchTerm) => {
-    console.log("Search term:", searchTerm);
-    // You can add your search logic here
-  };
-
-  const handlePersonTabPress = () => {
-    router.push("/user-profile");
-  };
-
-  const handleScanPress = () => {
-    router.push("/qr-scanner");
-  };
-
-  const handleRestaurantPress = (restaurant) => {
-    setSelectedRestaurant(restaurant);
-    router.push({ pathname: '/restaurant-reviews', params: { restaurantId: restaurant.id } });
-  };
-
-  // Filter logic
-  const filteredRestaurants = filter
-    ? restaurants.filter(r => r.name.toLowerCase().includes(filter.toLowerCase()))
-    : restaurants;
-
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#6B4EFF" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text>Error loading user data. Please try again.</Text>
-      </View>
-    );
-  }
-
-  if (!MapView) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>
-          Map functionality is not available on this platform or build.
-        </Text>
-        <Text>
-          Please use a custom dev client or EAS Build for full map support.
-        </Text>
-      </View>
-    );
-  }
-
+  // Platform-specific map rendering
+  let mapContent = null;
   if (Platform.OS === 'web') {
     if (!isLoaded) {
-      return <Text>Loading map...</Text>;
-    }
-    return (
-      <View style={{ flex: 1 }}>
-        {/* Filter Bar */}
-        <View style={styles.filterBar}>
-          <TextInput
-            style={styles.filterInput}
-            placeholder="Filter restaurants..."
-            value={filter}
-            onChangeText={setFilter}
-          />
-        </View>
+      mapContent = <Text>Loading map...</Text>;
+    } else {
+      mapContent = (
         <GoogleMap
-          mapContainerStyle={mapContainerStyle}
-          center={HYDERABAD_CENTER}
+          mapContainerStyle={{ width: '100%', height: 300, borderRadius: 10 }}
+          center={{ lat: userLocation.latitude, lng: userLocation.longitude }}
           zoom={13}
         >
           {/* User marker */}
           <Marker
             position={{ lat: userLocation.latitude, lng: userLocation.longitude }}
             label="You"
-            icon={customMarkerIcon}
           />
           {/* Restaurant markers */}
           {filteredRestaurants.map(r => (
@@ -192,7 +106,6 @@ export default function CustomerHomeScreen() {
               key={r.id}
               position={{ lat: r.latitude, lng: r.longitude }}
               label={r.name}
-              icon={customMarkerIcon}
               onClick={() => setSelectedRestaurant(r)}
               opacity={selectedRestaurant && selectedRestaurant.id === r.id ? 1 : 0.7}
             >
@@ -207,23 +120,53 @@ export default function CustomerHomeScreen() {
             </Marker>
           ))}
         </GoogleMap>
-        {/* Bottom Navigation */}
-        <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navBtn}>
-            <Text style={styles.navIcon}>👤</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => {
-            if (selectedRestaurant) {
-              // Navigate to QR scanner for selected restaurant
-              router.push({ pathname: '/qr-scanner', params: { restaurantId: selectedRestaurant.id } });
-            }
-          }}>
-            <Text style={styles.navIcon}>🔳</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn}>
-            <Text style={styles.navIcon}>🧭</Text>
-          </TouchableOpacity>
-        </View>
+      );
+    }
+  } else {
+    let MapView, NativeMarker;
+    try {
+      const maps = require('expo-maps');
+      MapView = maps.MapView;
+      NativeMarker = maps.Marker;
+    } catch (e) {
+      MapView = null;
+      NativeMarker = null;
+    }
+    mapContent = MapView ? (
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        }}
+      >
+        <NativeMarker
+          coordinate={userLocation}
+          title="You"
+          pinColor="#6B4EFF"
+        />
+        {filteredRestaurants.map(r => (
+          <NativeMarker
+            key={r.id}
+            coordinate={{ latitude: r.latitude, longitude: r.longitude }}
+            title={r.name}
+            description={r.cuisine}
+            pinColor={selectedRestaurant && selectedRestaurant.id === r.id ? '#6B4EFF' : '#43a047'}
+            onPress={() => setSelectedRestaurant(r)}
+          />
+        ))}
+      </MapView>
+    ) : (
+      <Text style={styles.mapText}>Map not available</Text>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#6B4EFF" />
       </View>
     );
   }
@@ -249,41 +192,12 @@ export default function CustomerHomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Map Area (placeholder for now) */}
+      {/* Map Area */}
       <View style={styles.mapArea}>
-        <Text style={styles.mapText}>Map will go here</Text>
+        {mapContent}
       </View>
-      <View style={styles.mapArea}>
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: userLocation.latitude,
-            longitude: userLocation.longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}
-        >
-          {/* User marker */}
-          <NativeMarker
-            coordinate={userLocation}
-            title="You"
-            pinColor="#6B4EFF"
-          />
-          {/* Restaurant markers */}
-          {filteredRestaurants.map(r => (
-            <NativeMarker
-              key={r.id}
-              coordinate={{ latitude: r.latitude, longitude: r.longitude }}
-              title={r.name}
-              description={r.cuisine}
-              pinColor={selectedRestaurant && selectedRestaurant.id === r.id ? '#6B4EFF' : '#43a047'}
-              onPress={() => setSelectedRestaurant(r)}
-            />
-          ))}
-        </MapView>
-      </View> 
 
-      {/* Filter Component */}
+      {/* Filter Modal */}
       <FilterModal
         visible={showFilter}
         onClose={() => setShowFilter(false)}
@@ -320,14 +234,9 @@ export default function CustomerHomeScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  centerContent: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
+ const styles = StyleSheet.create({
   container: {
-    flex: 1,
+   flex: 1,
     backgroundColor: "#fff",
   },
   mapArea: {
@@ -455,3 +364,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+export default CustomerHomeScreen;
+   
