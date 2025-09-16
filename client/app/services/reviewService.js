@@ -1,6 +1,9 @@
-import axios from 'axios';
+import axios from "axios";
+import { API_BASE_URL } from "../constants/api.constants";
 
 export async function fetchReviews(restaurantId) {
-  const res = await axios.get(`http://localhost:8080/api/reviews?restaurantId=${restaurantId}`);
+  const res = await axios.get(
+    `${API_BASE_URL}/api/reviews?restaurantId=${restaurantId}`
+  );
   return res.data;
 }

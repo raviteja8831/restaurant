@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
 import {
   StyleSheet,
   Alert,
@@ -13,17 +13,16 @@ import {
 import { Button, Text, Surface } from "react-native-paper";
 import { useAlert } from "../services/alertService";
 import * as ImagePicker from "expo-image-picker";
-import * as Location from 'expo-location';
+import * as Location from "expo-location";
 import { registerManager } from "../api/managerApi";
 import { showApiError } from "../services/messagingService";
 import FormService from "../components/formService";
 import { uploadImage } from "../api/imageApi";
-
-
+import { API_BASE_URL } from "../constants/api.constants";
 
 // Set a default Google address
-const DEFAULT_ADDRESS = "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA";
-
+const DEFAULT_ADDRESS =
+  "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA";
 
 export default function ManagerRegisterScreen() {
   const [address, setAddress] = React.useState(DEFAULT_ADDRESS);
@@ -32,13 +31,18 @@ export default function ManagerRegisterScreen() {
   const handleUseCurrentLocation = async () => {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission to access location was denied');
-        setAddress('Location permission denied');
-        setFormState((prev) => ({ ...prev, restaurantAddress: 'Location permission denied' }));
+      if (status !== "granted") {
+        Alert.alert("Permission to access location was denied");
+        setAddress("Location permission denied");
+        setFormState((prev) => ({
+          ...prev,
+          restaurantAddress: "Location permission denied",
+        }));
         return;
       }
-      let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
       const { latitude, longitude } = location.coords;
       // Use Google Maps Geocoding API
       const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`;
@@ -49,12 +53,18 @@ export default function ManagerRegisterScreen() {
         setAddress(addr);
         setFormState((prev) => ({ ...prev, restaurantAddress: addr }));
       } else {
-        setAddress('Address not found');
-        setFormState((prev) => ({ ...prev, restaurantAddress: 'Address not found' }));
+        setAddress("Address not found");
+        setFormState((prev) => ({
+          ...prev,
+          restaurantAddress: "Address not found",
+        }));
       }
     } catch (error) {
-      setAddress('Error fetching location or address');
-      setFormState((prev) => ({ ...prev, restaurantAddress: 'Error fetching location or address' }));
+      setAddress("Error fetching location or address");
+      setFormState((prev) => ({
+        ...prev,
+        restaurantAddress: "Error fetching location or address",
+      }));
     }
   };
   const router = useRouter();
@@ -112,7 +122,6 @@ export default function ManagerRegisterScreen() {
     restaurantAddress: DEFAULT_ADDRESS,
   });
 
-
   // Custom setForm to keep restaurantAddress equal to restaurantName
   const setForm = (updater) => {
     setFormState((prev) => {
@@ -132,38 +141,6 @@ export default function ManagerRegisterScreen() {
     setStep(2);
   };
 
-// useEffect(() => {
-//     (async () => {
-//       // 1. Request location permission
-//       let { status } = await Location.requestForegroundPermissionsAsync();
-//       if (status !== 'granted') {
-//         Alert.alert('Permission to access location was denied');
-//         setAddress('Location permission denied');
-//         return;
-//       }
-//        // 2. Get current position
-//       try {
-//         let location = await Location.getCurrentPositionAsync({});
-//         const { latitude, longitude } = location.coords;
-
-//         // 3. Perform reverse geocoding
-//         let json = await Geocoder.from(latitude, longitude);
-
-//         if (json.results && json.results.length > 0) {
-//           const formattedAddress = json.results[0].formatted_address;
-//           setAddress(formattedAddress);
-//         } else {
-//           setAddress('Address not found');
-//         }
-
-//       } catch (error) {
-//         console.error(error);
-//         setAddress('Error fetching location or address');
-//       }
-//     })();
-//   }, []);
-
-  // Only pick and preview image, upload on register
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
@@ -182,9 +159,12 @@ export default function ManagerRegisterScreen() {
     try {
       // Service type: send array if both selected, else single value or empt
       let ambianceImageUrl = "";
-      console.log(ambianceImage, 'ambianceImage');
+      console.log(ambianceImage, "ambianceImage");
       if (ambianceImage) {
-        if (ambianceImage.startsWith('file://') || ambianceImage.startsWith('content://')) {
+        if (
+          ambianceImage.startsWith("file://") ||
+          ambianceImage.startsWith("content://")
+        ) {
           // Local file, upload as file object
           const filename = ambianceImage.split("/").pop();
           const match = /\.(\w+)$/.exec(filename ?? "");
@@ -196,31 +176,37 @@ export default function ManagerRegisterScreen() {
           };
           try {
             const data = await uploadImage(fileObj);
-            const SERVER_URL = "http://localhost:8080";
+            const SERVER_URL = API_BASE_URL;
             let imageUrl = data.url;
-            imageUrl = SERVER_URL + (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
+            imageUrl =
+              SERVER_URL +
+              (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
             if (imageUrl && !imageUrl.startsWith("http")) {
-              imageUrl = SERVER_URL + (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
+              imageUrl =
+                SERVER_URL +
+                (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
             }
             ambianceImageUrl = imageUrl;
           } catch (err) {
             showApiError(err);
             ambianceImageUrl = "";
           }
-        } else if (ambianceImage.startsWith('http')) {
+        } else if (ambianceImage.startsWith("http")) {
           // Already a URL, use as is
           ambianceImageUrl = ambianceImage;
-        } else if (ambianceImage.startsWith('data:image/')) {
+        } else if (ambianceImage.startsWith("data:image/")) {
           // Handle base64 data URL
           try {
             // Extract mime and base64 data
-            const matches = ambianceImage.match(/^data:(image\/(png|jpeg|jpg));base64,(.+)$/);
-            if (!matches) throw new Error('Invalid base64 image format');
+            const matches = ambianceImage.match(
+              /^data:(image\/(png|jpeg|jpg));base64,(.+)$/
+            );
+            if (!matches) throw new Error("Invalid base64 image format");
             const mimeType = matches[1];
             const base64Data = matches[3];
             // Create a blob from base64 (browser only)
             let fileObj;
-            if (typeof window !== 'undefined' && window.File) {
+            if (typeof window !== "undefined" && window.File) {
               const byteCharacters = atob(base64Data);
               const byteNumbers = new Array(byteCharacters.length);
               for (let i = 0; i < byteCharacters.length; i++) {
@@ -228,11 +214,15 @@ export default function ManagerRegisterScreen() {
               }
               const byteArray = new Uint8Array(byteNumbers);
               const blob = new Blob([byteArray], { type: mimeType });
-              const filename = `ambiance_${Date.now()}.${mimeType.split('/')[1]}`;
+              const filename = `ambiance_${Date.now()}.${
+                mimeType.split("/")[1]
+              }`;
               fileObj = new File([blob], filename, { type: mimeType });
             } else {
               // React Native: just pass uri, name, type
-              const filename = `ambiance_${Date.now()}.${mimeType.split('/')[1]}`;
+              const filename = `ambiance_${Date.now()}.${
+                mimeType.split("/")[1]
+              }`;
               fileObj = {
                 uri: ambianceImage,
                 name: filename,
@@ -240,11 +230,15 @@ export default function ManagerRegisterScreen() {
               };
             }
             const data = await uploadImage(fileObj);
-            const SERVER_URL = "http://localhost:8080";
+            const SERVER_URL = API_BASE_URL;
             let imageUrl = data.url;
-            imageUrl = SERVER_URL + (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
+            imageUrl =
+              SERVER_URL +
+              (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
             if (imageUrl && !imageUrl.startsWith("http")) {
-              imageUrl = SERVER_URL + (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
+              imageUrl =
+                SERVER_URL +
+                (imageUrl.startsWith("/") ? imageUrl : "/" + imageUrl);
             }
             ambianceImageUrl = imageUrl;
           } catch (err) {
@@ -252,7 +246,7 @@ export default function ManagerRegisterScreen() {
             ambianceImageUrl = "";
           }
         } else {
-          alert.error('Please select a valid image.');
+          alert.error("Please select a valid image.");
           setLoading(false);
           return;
         }
@@ -275,7 +269,7 @@ export default function ManagerRegisterScreen() {
       const data = await registerManager(payload);
       alert.success(data.message || "Registered successfully");
       setTimeout(() => {
-        router.push('/login');
+        router.push("/login");
       }, 1000);
     } catch (err) {
       showApiError(err);
@@ -407,7 +401,10 @@ export default function ManagerRegisterScreen() {
                           onPress={() => setPureVeg(!pureVeg)}
                           activeOpacity={0.8}
                         >
-                          <Image source={require("../../assets/images/veg.png")} style={styles.foodCircleVegStep2} />
+                          <Image
+                            source={require("../../assets/images/veg.png")}
+                            style={styles.foodCircleVegStep2}
+                          />
                           <Text style={styles.foodLabelStep2}>Pure Veg</Text>
                         </TouchableOpacity>
                       </View>
@@ -421,7 +418,10 @@ export default function ManagerRegisterScreen() {
                           onPress={() => setNonVeg(!nonVeg)}
                           activeOpacity={0.8}
                         >
-                          <Image source={require("../../assets/images/non-veg.png")} style={styles.foodCircleNonVegStep2} />
+                          <Image
+                            source={require("../../assets/images/non-veg.png")}
+                            style={styles.foodCircleNonVegStep2}
+                          />
                           <Text style={styles.foodLabelStep2}>Non Veg</Text>
                         </TouchableOpacity>
                       </View>
@@ -453,7 +453,11 @@ export default function ManagerRegisterScreen() {
                         <Image
                           source={{ uri: ambianceImage }}
                           style={styles.photoPreviewStep2}
-                          onError={() => alert.error("Image failed to load. Check the URL or server.")}
+                          onError={() =>
+                            alert.error(
+                              "Image failed to load. Check the URL or server."
+                            )
+                          }
                         />
                       ) : (
                         <Image

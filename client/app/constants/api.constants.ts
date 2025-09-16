@@ -1,4 +1,18 @@
-export const API_BASE_URL = "http://localhost:8080/api";
+import { Platform } from "react-native/Libraries/Utilities/Platform";
+
+export const API_BASE_URL = getBaseURL();
+function getBaseURL(): string {
+  if (Platform.OS === "android") {
+    // For Android emulator use 10.0.2.2
+    return "http://10.0.2.2:8080/api";
+  } else if (Platform.OS === "ios") {
+    // For iOS simulator use localhost
+    return "http://localhost:8080/api";
+  } else {
+    // For web/laptop browser
+    return "http://localhost:8080/api";
+  }
+}
 
 export const API_ENDPOINTS = {
   REVIEWS: {
