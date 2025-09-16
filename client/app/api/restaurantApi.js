@@ -1,5 +1,5 @@
 import axiosService from "./axiosService";
-import { API_BASE_URL } from "../../client/app/constants/api.constants";
+import { API_BASE_URL } from "../../app/constants/api.constants";
 import { RESTAURANT_API } from "../constants/restaurantApi";
 import { showApiError } from "../services/messagingService";
 

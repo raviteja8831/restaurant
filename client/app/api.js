@@ -8,11 +8,12 @@
 // export default api;
 
 import axios from "axios";
+import { API_BASE_URL } from "./constants/api.constants";
 
 // Detect environment dynamically
 
 const api = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
 

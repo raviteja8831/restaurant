@@ -1,4 +1,4 @@
-import { Platform } from "react-native/Libraries/Utilities/Platform";
+import { Platform } from "react-native";
 
 export const API_BASE_URL = getBaseURL();
 function getBaseURL(): string {
