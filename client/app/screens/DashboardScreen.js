@@ -241,6 +241,15 @@ export default function ManagerDashboardScreenNew() {
     setSelectedTable(tableNum);
     setShowTableDetail(true);
   };
+   const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('auth_token');
+      await AsyncStorage.removeItem('user_profile');
+      router.replace('/login');
+    } catch (e) {
+      // Optionally handle error
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -250,24 +259,24 @@ export default function ManagerDashboardScreenNew() {
         >
           <Appbar.Header style={styles.appbar}>
             {/* Food menu icon at top left instead of logout */}
-                  <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => router.replace('/menu')}>
-                    <Image source={require('../../assets/images/menu.png')} style={{ width: 28, height: 28 }} resizeMode="contain" />
-                  </TouchableOpacity>
-                  <Appbar.Content
-                    title={restaurantName}
-                    titleStyle={styles.appbarTitle}
-                  />
-                  <TouchableOpacity style={{ marginRight: 16 }}>
-                    <Text style={styles.payBtnText}>Pay</Text>
-                  </TouchableOpacity>
-                  </Appbar.Header>
+            <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => router.replace('/menu')}>
+              <MaterialCommunityIcons name="food" size={28} color="#6c63b5" />
+            </TouchableOpacity>
+            <Appbar.Content
+              title={restaurantName}
+              titleStyle={styles.appbarTitle}
+            />
+            <TouchableOpacity style={{ marginRight: 16 }}>
+              <Text style={styles.payBtnText}>Pay</Text>
+            </TouchableOpacity>
+          </Appbar.Header>
 
-                  <View style={styles.headerRow}>
-                  <View style={styles.headerLeft}>
-                    <Text style={styles.todayText}>Today</Text>
-                    <Text style={styles.dayText}>{today}</Text>
-                    <Text style={styles.dateText}>{date}</Text>
-                    <Text style={styles.greetText}>Hi</Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.todayText}>Today</Text>
+              <Text style={styles.dayText}>{today}</Text>
+              <Text style={styles.dateText}>{date}</Text>
+              <Text style={styles.greetText}>Hi {managerName}</Text>
             </View>
             <TouchableOpacity
               style={styles.profileImg}
@@ -523,7 +532,7 @@ export default function ManagerDashboardScreenNew() {
                   />
                 </View>
                 <Text style={styles.profileName}>{managerName}</Text>
-                <Text style={styles.profilePhone}>Ph no: 9660435235</Text>
+                <Text style={styles.profilePhone}>Ph no: {profile.phone}</Text>
                 <TouchableOpacity
                   style={styles.profileCloseBtn}
                   onPress={() => setProfileVisible(false)}
@@ -533,7 +542,7 @@ export default function ManagerDashboardScreenNew() {
                     size={28}
                     color="#6c63b5"
                   />
-                  <Text style={styles.logoutText}>Logout</Text>
+                  <Text style={styles.logoutText} onPress={ ()=> handleLogout()}>Logout</Text>
                 </TouchableOpacity>
               </View>
             </View>
