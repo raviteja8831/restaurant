@@ -37,7 +37,9 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
     filteredMenus = normalizedMenus;
   }
 
-  const selectedMenu = filteredMenus.find(m => m.id === selectedMenuId);
+  // Defensive: ensure selectedMenuId is defined before using
+  const safeMenuId = typeof selectedMenuId === 'undefined' ? null : selectedMenuId;
+  const selectedMenu = filteredMenus.find(m => m.id === safeMenuId);
   const menuItems = selectedMenu ? selectedMenu.items : [];
 
   return (
@@ -89,11 +91,11 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
                           }}
                           disabled={action === "remove" ? !isSelected : false}
                         >
-                          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                            <Text>{item.name}</Text>
-                            {isSelected && (
-                              <Ionicons name="checkmark" size={18} color="#4b5cff" style={{ marginLeft: 6 }} />
-                            )}
+                          <View style={{flexDirection: 'row', alignItems: 'center', minWidth: 0}}>
+                            <Text style={{flexShrink: 1}}>{item.name}</Text>
+                            {isSelected ? (
+                              <Ionicons name="checkmark" size={18} color="#4b5cff" style={{ marginLeft: 10, minWidth: 18 }} />
+                            ) : null}
                             {action === "add" && isAllotted ? (
                               <Text style={{ color: '#888', marginLeft: 4 }}>(already allotted)</Text>
                             ) : null}
