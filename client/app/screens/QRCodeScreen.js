@@ -53,8 +53,7 @@ export default function QRCodeScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>QR Code Generator{"\n"}/ Statistics</Text>
         <View style={styles.qrWrapper}>
           <MaterialCommunityIcons name="qrcode" size={180} color="#19171d" style={styles.qrIcon} />
@@ -86,10 +85,9 @@ export default function QRCodeScreen() {
             showsHorizontalScrollIndicator={false}
           />
         )}
-      </ScrollView>
       <QRCodeModal visible={showModal} onClose={() => setShowModal(false)} onSave={handleAddQRCode} loading={saving} />
       <TabBar activeTab="qrcodes" />
-    </View>
+    </ScrollView>
   );
 }
 

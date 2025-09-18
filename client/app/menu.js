@@ -53,7 +53,7 @@ export default function MenuScreen() {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/dashboard')}>
             <MaterialCommunityIcons name="arrow-left" size={28} color="#222" />
           </TouchableOpacity>
           <Text style={styles.title}>Menu</Text>

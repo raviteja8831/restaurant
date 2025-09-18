@@ -41,21 +41,24 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
         {/* Role Dropdown */}
         <View style={{ width: '100%', marginBottom: 15 }}>
           <TouchableOpacity
-            style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+            style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderColor: '#e0e0e0' }]}
             onPress={() => setShowRoleDropdown(v => !v)}
+            activeOpacity={0.8}
           >
-            <Text style={{ color: '#fff' }}>{role || 'Select Role'}</Text>
-            <Text style={{ color: '#fff' }}>{showRoleDropdown ? '\u25B2' : '\u25BC'}</Text>
+            <Text style={{ color: role ? '#222' : '#888', fontSize: 16 }}>
+              {role || 'Select Role'}
+            </Text>
+            <Text style={{ color: '#888', fontSize: 18 }}>{showRoleDropdown ? '\u25B2' : '\u25BC'}</Text>
           </TouchableOpacity>
           {showRoleDropdown && (
-            <View style={{ backgroundColor: '#a18cd1', borderRadius: 8, marginTop: 4 }}>
+            <View style={styles.dropdown}>
               {roleOptions.map(opt => (
                 <TouchableOpacity
                   key={opt.value}
-                  style={{ padding: 10 }}
+                  style={[styles.dropdownItem, role === opt.value && { backgroundColor: '#b7a7e9' }]}
                   onPress={() => { setRole(opt.value); setShowRoleDropdown(false); }}
                 >
-                  <Text style={{ color: '#fff' }}>{opt.label}</Text>
+                  <Text style={[styles.dropdownItemText, role === opt.value && { color: '#fff', fontWeight: 'bold' }]}>{opt.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -78,19 +81,69 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(182,166,231,0.95)',
+    backgroundColor:'#DAD6FE'
+,
     justifyContent: 'center',
     alignItems: 'center',
   },
   form: {
-    backgroundColor: '#e0c3fc',
+    backgroundColor: '#DAD6FE',
     borderRadius: 20,
     padding: 30,
     width: 300,
     alignItems: 'center',
   },
   title: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color: '#333' },
-  input: { width: '100%', height: 40, backgroundColor: '#a18cd1', borderRadius: 8, marginBottom: 15, paddingHorizontal: 10, color: '#fff' },
-  button: { backgroundColor: '#7b6eea', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 40, marginTop: 10 },
+  input: {
+    width: '100%',
+    height: 44,
+    borderRadius: 8,
+    marginBottom: 18,
+    paddingHorizontal: 14,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    fontSize: 16,
+    color: '#222',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  button: {
+    backgroundColor: '#7b6eea',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 40,
+    marginTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  // Dropdown styles for Material look
+  dropdown: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  dropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  dropdownItemText: {
+    color: '#222',
+    fontSize: 16,
+  },
 });

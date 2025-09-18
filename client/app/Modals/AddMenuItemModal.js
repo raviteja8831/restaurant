@@ -44,7 +44,7 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.content}>
-          <Text style={styles.title}>Add Allotted Menu Items</Text>
+          <Text style={styles.title}>Allot Menu Items</Text>
           {filteredMenus.length === 0 ? (
             <Text style={{ color: '#888', marginVertical: 24, textAlign: 'center' }}>No menu items available to assign.</Text>
           ) : (
@@ -70,24 +70,15 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
                     {menuItems.map(item => {
                       const isSelected = selectedMenuItemIds.includes(item.id);
                       const isAllotted = allottedMenuItemIds.includes(item.id);
-                      let canSelect = true;
-                      let canDeselect = true;
-                      if (action === "add") {
-                        // Can select any, but cannot deselect already allotted
-                        canDeselect = !isAllotted;
-                      } else if (action === "remove") {
-                        // Can only deselect allotted
-                        canSelect = false;
-                      }
                       return (
                         <TouchableOpacity
                           key={item.id}
-                          style={[styles.dropdownItem, isSelected && styles.selected, !canSelect && !isSelected ? { opacity: 0.5 } : {}]}
+                          style={[styles.dropdownItem, isSelected && styles.selected]}
                           onPress={() => {
                             if (action === "add") {
                               if (!isSelected) {
                                 setSelectedMenuItemIds(prev => [...prev, item.id]);
-                              } else if (canDeselect) {
+                              } else {
                                 setSelectedMenuItemIds(prev => prev.filter(id => id !== item.id));
                               }
                             } else if (action === "remove") {
@@ -96,12 +87,17 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
                               }
                             }
                           }}
-                          disabled={action === "remove" ? !isSelected : (action === "add" ? (!isSelected && !canSelect) : false)}
+                          disabled={action === "remove" ? !isSelected : false}
                         >
-                          <Text>
-                            {item.name} {isSelected ? '✓' : ''}
-                            {action === "add" && isAllotted ? " (already allotted)" : ""}
-                          </Text>
+                          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                            <Text>{item.name}</Text>
+                            {isSelected && (
+                              <Ionicons name="checkmark" size={18} color="#4b5cff" style={{ marginLeft: 6 }} />
+                            )}
+                            {action === "add" && isAllotted ? (
+                              <Text style={{ color: '#888', marginLeft: 4 }}>(already allotted)</Text>
+                            ) : null}
+                          </View>
                         </TouchableOpacity>
                       );
                     })}

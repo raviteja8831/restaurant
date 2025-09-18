@@ -194,11 +194,15 @@ useEffect(() => {
             </View>
             {/* Add User Modal */}
             <Modal visible={showAddUserModal} animationType="slide" transparent={true} onRequestClose={() => setShowAddUserModal(false)}>
-              <AddUserScreen
-                visible={showAddUserModal}
-                onClose={() => setShowAddUserModal(false)}
-                onSave={handleSaveUser}
-              />
+              <View style={styles.addUserModalOverlay}>
+                <View style={styles.addUserModalBox}>
+                  <AddUserScreen
+                    visible={showAddUserModal}
+                    onClose={() => setShowAddUserModal(false)}
+                    onSave={handleSaveUser}
+                  />
+                </View>
+              </View>
             </Modal>
         </View>
 
@@ -352,7 +356,10 @@ useEffect(() => {
         <AddMenuItemModal
           visible={showAddMenuModal}
           onClose={() => setShowAddMenuModal(false)}
-          menus={menusWithItems}
+          menus={action === 'Add' ? menusWithItems : menusWithItems.map(menu => ({
+            ...menu,
+            items: menu.items.filter(item => allottedMenuItemIds.includes(item.id))
+          })).filter(menu => menu.items.length > 0)}
           allottedMenuItemIds={allottedMenuItemIds}
           action={action}
           onAdd={handleAddMenuItem}
@@ -546,5 +553,24 @@ const styles = StyleSheet.create({
     color: "#222",
     textAlign: "center",
     marginRight: 4,
+  },
+  addUserModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.10)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addUserModalBox: {
+    backgroundColor: '#ded7fa',
+    borderRadius: 36,
+    padding: 32,
+    minWidth: 340,
+    maxWidth: 420,
+    width: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 12,
   },
 });

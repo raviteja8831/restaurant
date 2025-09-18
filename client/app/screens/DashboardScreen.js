@@ -250,24 +250,24 @@ export default function ManagerDashboardScreenNew() {
         >
           <Appbar.Header style={styles.appbar}>
             {/* Food menu icon at top left instead of logout */}
-            <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => router.replace('/menu')}>
-              <MaterialCommunityIcons name="food" size={28} color="#6c63b5" />
-            </TouchableOpacity>
-            <Appbar.Content
-              title={restaurantName}
-              titleStyle={styles.appbarTitle}
-            />
-            <TouchableOpacity style={{ marginRight: 16 }}>
-              <Text style={styles.payBtnText}>Pay</Text>
-            </TouchableOpacity>
-          </Appbar.Header>
+                  <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => router.replace('/menu')}>
+                    <Image source={require('../../assets/images/menu.png')} style={{ width: 28, height: 28 }} resizeMode="contain" />
+                  </TouchableOpacity>
+                  <Appbar.Content
+                    title={restaurantName}
+                    titleStyle={styles.appbarTitle}
+                  />
+                  <TouchableOpacity style={{ marginRight: 16 }}>
+                    <Text style={styles.payBtnText}>Pay</Text>
+                  </TouchableOpacity>
+                  </Appbar.Header>
 
-          <View style={styles.headerRow}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.todayText}>Today</Text>
-              <Text style={styles.dayText}>{today}</Text>
-              <Text style={styles.dateText}>{date}</Text>
-              <Text style={styles.greetText}>Hi {managerName}</Text>
+                  <View style={styles.headerRow}>
+                  <View style={styles.headerLeft}>
+                    <Text style={styles.todayText}>Today</Text>
+                    <Text style={styles.dayText}>{today}</Text>
+                    <Text style={styles.dateText}>{date}</Text>
+                    <Text style={styles.greetText}>Hi</Text>
             </View>
             <TouchableOpacity
               style={styles.profileImg}
@@ -305,12 +305,32 @@ export default function ManagerDashboardScreenNew() {
               </View>
             </Surface>
             <View style={styles.verticalDivider} />
-            <Surface style={[styles.buffetCard, {flex: 1, marginLeft: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'column'}]}>
+            <Surface style={[styles.buffetCard, {flex: 1, marginLeft: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'column', position: 'relative'}]}>
               <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%'}}>
                 <Text style={styles.buffetTitle}>Buffet</Text>
-                <TouchableOpacity onPress={() => setBuffetMenuVisible(true)} style={styles.buffetMenuIcon}>
-                  <MaterialCommunityIcons name="dots-vertical" size={28} color="#222" />
-                </TouchableOpacity>
+                <View style={{position: 'relative'}}>
+                  <TouchableOpacity onPress={() => setBuffetMenuVisible(!buffetMenuVisible)} style={styles.buffetMenuIcon}>
+                    <MaterialCommunityIcons name="dots-vertical" size={28} color="#222" />
+                  </TouchableOpacity>
+                  {buffetMenuVisible && (
+                    <View style={[styles.buffetMenuPopupNew, { position: 'absolute', top: 32, right: 0, zIndex: 100 }]}> 
+                      <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => {
+                        setBuffetMenuVisible(false);
+                        setBuffetModalType('Complimentary');
+                        setBuffetModalVisible(true);
+                      }}>
+                        <Text style={styles.buffetMenuTextNew}>Complimentary</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => {
+                        setBuffetMenuVisible(false);
+                        setBuffetModalType('Pay the Price');
+                        setBuffetModalVisible(true);
+                      }}>
+                        <Text style={styles.buffetMenuTextNew}>Pay the Price</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
               </View>
               <TouchableOpacity style={styles.buffetIcon} onPress={() => setBuffetVisible(true)}>
                 <Image source={require('../../assets/images/buffet.png')} style={styles.buffetImg} resizeMode="contain" />
@@ -330,7 +350,7 @@ export default function ManagerDashboardScreenNew() {
                       const userStr = await AsyncStorage.getItem('user_profile');
                       const user = userStr ? JSON.parse(userStr) : {};
                       const restaurantId = user?.restaurantId || user?.restaurant_id || user?.id;
-                      await axios.post('/api/buffetdetails/all-status', {
+                      await axios.post('http://localhost:8080/api/buffetdetails/all-status', {
                         restaurantId,
                         isActive: val
                       });
@@ -345,27 +365,6 @@ export default function ManagerDashboardScreenNew() {
                 />
               </View>
             </Surface>
-            {/* Buffet Menu Modal */}
-            <Modal visible={buffetMenuVisible} transparent animationType="fade" onRequestClose={() => setBuffetMenuVisible(false)}>
-              <TouchableOpacity style={styles.menuOverlay} activeOpacity={1} onPress={() => setBuffetMenuVisible(false)}>
-                <View style={styles.buffetMenuPopupNew}>
-                  <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => {
-                    setBuffetMenuVisible(false);
-                    setBuffetModalType('Complimentary');
-                    setBuffetModalVisible(true);
-                  }}>
-                    <Text style={styles.buffetMenuTextNew}>Complimentary</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => {
-                    setBuffetMenuVisible(false);
-                    setBuffetModalType('Pay the Price');
-                    setBuffetModalVisible(true);
-                  }}>
-                    <Text style={styles.buffetMenuTextNew}>Pay the Price</Text>
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            </Modal>
 
             {/* Buffet Create/Edit Modal */}
             <BuffetModal

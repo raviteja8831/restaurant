@@ -47,7 +47,7 @@ export default function LoginScreen() {
       return;
     }
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/users/login`, {
+      const response = await axios.post(`${API_BASE_URL}/users/login`, {
         phone: phoneValue,
         otp: otpValue.join(""),
       });
