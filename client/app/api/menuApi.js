@@ -6,7 +6,7 @@ import { showApiError } from "../services/alertService";
 export const getMenusWithItems = async (restaurantId) => {
   // alert(restaurantId);
   try {
-    const res = await api.get(`/api/menus/with-items/${restaurantId}`);
+    const res = await api.get(`/menus/with-items/${restaurantId}`);
     return res.data;
   } catch (error) {
     showApiError(error);
@@ -16,7 +16,7 @@ export const getMenusWithItems = async (restaurantId) => {
 // Get all items based on menu
 export const getitemsbasedonmenu = async (menuId) => {
   try {
-    const res = await api.get(`/api/menus/items/${menuId}`);
+    const res = await api.get(`/menus/items/${menuId}`);
     return res.data;
   } catch (error) {
     showApiError(error);
@@ -28,7 +28,7 @@ export const getitemsbasedonmenu = async (menuId) => {
 export const saveUserMenuItems = async (userId, menuitemIds) => {
   try {
     // Send selectedUserId in the payload as well
-    const res = await api.post(`/api/users/${userId}/allotted-menuitems`, {
+    const res = await api.post(`/users/${userId}/allotted-menuitems`, {
       menuitemIds,
       userId,
     });

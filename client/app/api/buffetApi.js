@@ -12,7 +12,7 @@ export const getBuffetDetails = async (restaurantId, token) => {
 };
 
 export const saveBuffetDetails = async (buffet, token) => {
-  const res = await axios.post(`${BASE_URL}/api/buffetdetails`, buffet, {
+  const res = await axios.post(`${BASE_URL}/buffetdetails`, buffet, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;

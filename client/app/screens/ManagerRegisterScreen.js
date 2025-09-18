@@ -76,6 +76,14 @@ export default function ManagerRegisterScreen() {
   const [nonVeg, setNonVeg] = React.useState(false);
   const [enableBuffet, setEnableBuffet] = React.useState(false);
   const [enableBoth, setEnableBoth] = React.useState(false);
+
+  // When enableBoth changes, update both service states
+  React.useEffect(() => {
+    if (enableBoth) {
+      setTableService(true);
+      setSelfService(true);
+    }
+  }, [enableBoth]);
   const [ambianceImage, setAmbianceImage] = React.useState(null);
   // const [logo, setLogo] = React.useState(null); // Removed unused variable
   // Remove parent error state for form steps
@@ -159,7 +167,6 @@ export default function ManagerRegisterScreen() {
     try {
       // Service type: send array if both selected, else single value or empt
       let ambianceImageUrl = "";
-      console.log(ambianceImage, "ambianceImage");
       if (ambianceImage) {
         if (
           ambianceImage.startsWith("file://") ||
@@ -279,229 +286,482 @@ export default function ManagerRegisterScreen() {
     }
     setLoading(false);
   };
-
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <Surface style={styles.formSurface}>
-        <View style={styles.formWrapper}>
+ return (
+        <KeyboardAvoidingView
+          style={{ flex: 1, backgroundColor: '#8D8BEA' }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <ScrollView
-            style={{ width: "100%" }}
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 32 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {step === 1 && (
-              <View style={styles.stepBox}>
-                <View style={styles.stepFormAreaScroll}>
-                  <FormService
-                    config={formConfig}
-                    values={form}
-                    setValues={setForm}
-                    onSubmit={handleNext}
-                    submitLabel={null}
-                    loading={loading}
-                    hiddenFields={["name", "restaurantAddress"]}
-                    inputStyle={styles.inputStep}
-                    labelStyle={styles.labelStep}
-                  />
-                </View>
-              </View>
-            )}
-            {step === 2 && (
-              <View style={styles.stepBox}>
-                <View style={styles.stepFormAreaScroll}>
-                  {/* Show only restaurant fields, styled like step 1 */}
-                  <FormService
-                    config={formConfig}
-                    values={form}
-                    setValues={setForm}
-                    onSubmit={() => {}}
-                    submitLabel={null}
-                    loading={loading}
-                    hiddenFields={["firstname", "lastname", "phone"]}
-                    inputStyle={styles.inputStep}
-                    labelStyle={styles.labelStep}
-                  />
-                  {/* Extra controls below the form, not inside it */}
-                  <View style={{ marginTop: 24 }}>
+            <Surface style={styles.formSurface}>
+              <View style={styles.formWrapper}>
+                {step === 1 && (
+                  <View style={styles.stepBox}>
+                    <View style={styles.stepFormAreaScroll}>
+                      <FormService
+                        config={formConfig}
+                        values={form}
+                        setValues={setForm}
+                        onSubmit={handleNext}
+                        submitLabel={null}
+                        loading={loading}
+                        hiddenFields={["name", "restaurantAddress"]}
+                        inputStyle={styles.inputStep}
+                        labelStyle={styles.labelStep}
+                      />
+                    </View>
+                  </View>
+                )}
+                {step === 2 && (
+                  <View style={styles.stepBox}>
+                    <View style={styles.stepFormAreaScroll}>
+                      {/* Show only restaurant fields, styled like step 1 */}
+                      <FormService
+                        config={formConfig}
+                        values={form}
+                        setValues={setForm}
+                        onSubmit={() => {}}
+                        submitLabel={null}
+                        loading={loading}
+                        hiddenFields={["firstname", "lastname", "phone"]}
+                        inputStyle={styles.inputStep}
+                        labelStyle={styles.labelStep}
+                      />
+                      {/* Extra controls below the form, not inside it */}
+                      <View style={{ marginTop: 24 }}>
+                        <Button
+                          mode="contained"
+                          style={styles.locationBtnStep2}
+                          icon="crosshairs-gps"
+                          onPress={handleUseCurrentLocation}
+                        >
+                          Use Current Location
+                        </Button>
+                        <Text style={styles.sectionTitleStep2Grid}>
+                          Choose your Restaurant Type
+                        </Text>
+                        <View style={styles.typeFoodGridRow}>
+                          <View style={styles.typeFoodGridCol}>
+                            <TouchableOpacity
+                              style={[
+                                styles.typeBoxStep2,
+                                tableService && styles.typeBoxActiveStep2,
+                              ]}
+                              onPress={() => {
+                                if (enableBoth) return; // Prevent toggling if both enabled
+                                setTableService(!tableService);
+                              }}
+                            >
+                              <Image
+                                source={require("../../assets/images/table_service.jpg")}
+                                style={styles.typeIconStep2}
+                              />
+                              <Text style={styles.typeLabelStep2Small}>
+                                Table Service
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                          <View style={styles.typeFoodGridCol}>
+                            <TouchableOpacity
+                              style={[
+                                styles.typeBoxStep2,
+                                selfService && styles.typeBoxActiveStep2,
+                              ]}
+                              onPress={() => {
+                                if (enableBoth) return; // Prevent toggling if both enabled
+                                setSelfService(!selfService);
+                              }}
+                            >
+                              <Image
+                                source={require("../../assets/images/self_service.jpg")}
+                                style={styles.typeIconStep2}
+                              />
+                              <Text style={styles.typeLabelStep2Small}>
+                                Self Service
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                        <View style={styles.enableBothRowCenter}>
+                          <TouchableOpacity
+                            style={styles.checkboxRowStep2Grid}
+                            onPress={() => {
+                              if (!enableBoth) {
+                                setEnableBoth(true);
+                              } else {
+                                setEnableBoth(false);
+                                setTableService(false);
+                                setSelfService(false);
+                              }
+                            }}
+                          >
+                            <View
+                              style={[
+                                styles.checkboxStep2,
+                                enableBoth && styles.checkboxActiveStep2,
+                              ]}
+                            />
+                            <Text style={styles.enableTextStep2Grid}>
+                              Enable Both
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <View style={styles.typeFoodGridRow}>
+                          <View style={styles.typeFoodGridCol}>
+                            <TouchableOpacity
+                              style={[
+                                styles.foodTypeBoxStep2,
+                                styles.foodTypeBoxVeg,
+                                pureVeg && styles.foodTypeBoxVegActive,
+                              ]}
+                              onPress={() => setPureVeg(!pureVeg)}
+                              activeOpacity={0.8}
+                            >
+                              <Image
+                                source={require("../../assets/images/veg.png")}
+                                style={styles.foodCircleVegStep2}
+                              />
+                              <Text style={styles.foodLabelStep2}>Pure Veg</Text>
+                            </TouchableOpacity>
+                          </View>
+                          <View style={styles.typeFoodGridCol}>
+                            <TouchableOpacity
+                              style={[
+                                styles.foodTypeBoxStep2,
+                                styles.foodTypeBoxNonVeg,
+                                nonVeg && styles.foodTypeBoxNonVegActive,
+                              ]}
+                              onPress={() => setNonVeg(!nonVeg)}
+                              activeOpacity={0.8}
+                            >
+                              <Image
+                                source={require("../../assets/images/non-veg.png")}
+                                style={styles.foodCircleNonVegStep2}
+                              />
+                              <Text style={styles.foodLabelStep2}>Non Veg</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                        <View style={styles.buffetRowGrid}>
+                          <TouchableOpacity
+                            style={styles.checkboxRowStep2Grid}
+                            onPress={() => setEnableBuffet(!enableBuffet)}
+                          >
+                            <View
+                              style={[
+                                styles.checkboxStep2,
+                                enableBuffet && styles.checkboxActiveStep2,
+                              ]}
+                            />
+                            <Text style={styles.checkboxLabelStep2Grid}>
+                              Enable Buffet
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={styles.sectionTitleStep2Grid}>
+                          Upload Ambiance Photo
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.photoUploadBoxStep2}
+                          onPress={pickImage}
+                        >
+                          {ambianceImage ? (
+                            <Image
+                              source={{ uri: ambianceImage }}
+                              style={styles.photoPreviewStep2}
+                              onError={() =>
+                                alert.error(
+                                  "Image failed to load. Check the URL or server."
+                                )
+                              }
+                            />
+                          ) : (
+                            <Image
+                              source={require("../../assets/images/camera-icon.png")}
+                              style={styles.cameraIconStep2}
+                            />
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                )}
+                {/* Fixed bottom bar for Next/Register button */}
+                {step === 1 && (
+                  <View >
                     <Button
                       mode="contained"
-                      style={styles.locationBtnStep2}
-                      icon="crosshairs-gps"
-                      onPress={handleUseCurrentLocation}
+                      style={styles.bottomButtonStep}
+                      labelStyle={styles.buttonTextStep}
+                      onPress={handleNext}
+                      loading={loading}
                     >
-                      Use Current Location
+                      Next
                     </Button>
-                    <Text style={styles.sectionTitleStep2Grid}>
-                      Choose your Restaurant Type
-                    </Text>
-                    <View style={styles.typeFoodGridRow}>
-                      <View style={styles.typeFoodGridCol}>
-                        <TouchableOpacity
-                          style={[
-                            styles.typeBoxStep2,
-                            tableService && styles.typeBoxActiveStep2,
-                          ]}
-                          onPress={() => setTableService(!tableService)}
-                        >
-                          <Image
-                            source={require("../../assets/images/table_service.jpg")}
-                            style={styles.typeIconStep2}
-                          />
-                          <Text style={styles.typeLabelStep2Small}>
-                            Table Service
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.typeFoodGridCol}>
-                        <TouchableOpacity
-                          style={[
-                            styles.typeBoxStep2,
-                            selfService && styles.typeBoxActiveStep2,
-                          ]}
-                          onPress={() => setSelfService(!selfService)}
-                        >
-                          <Image
-                            source={require("../../assets/images/self_service.jpg")}
-                            style={styles.typeIconStep2}
-                          />
-                          <Text style={styles.typeLabelStep2Small}>
-                            Self Service
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                    <View style={styles.enableBothRowCenter}>
-                      <TouchableOpacity
-                        style={styles.checkboxRowStep2Grid}
-                        onPress={() => setEnableBoth(!enableBoth)}
-                      >
-                        <View
-                          style={[
-                            styles.checkboxStep2,
-                            enableBoth && styles.checkboxActiveStep2,
-                          ]}
-                        />
-                        <Text style={styles.enableTextStep2Grid}>
-                          Enable Both
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                    <View style={styles.typeFoodGridRow}>
-                      <View style={styles.typeFoodGridCol}>
-                        <TouchableOpacity
-                          style={[
-                            styles.foodTypeBoxStep2,
-                            styles.foodTypeBoxVeg,
-                            pureVeg && styles.foodTypeBoxVegActive,
-                          ]}
-                          onPress={() => setPureVeg(!pureVeg)}
-                          activeOpacity={0.8}
-                        >
-                          <Image
-                            source={require("../../assets/images/veg.png")}
-                            style={styles.foodCircleVegStep2}
-                          />
-                          <Text style={styles.foodLabelStep2}>Pure Veg</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View style={styles.typeFoodGridCol}>
-                        <TouchableOpacity
-                          style={[
-                            styles.foodTypeBoxStep2,
-                            styles.foodTypeBoxNonVeg,
-                            nonVeg && styles.foodTypeBoxNonVegActive,
-                          ]}
-                          onPress={() => setNonVeg(!nonVeg)}
-                          activeOpacity={0.8}
-                        >
-                          <Image
-                            source={require("../../assets/images/non-veg.png")}
-                            style={styles.foodCircleNonVegStep2}
-                          />
-                          <Text style={styles.foodLabelStep2}>Non Veg</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                    <View style={styles.buffetRowGrid}>
-                      <TouchableOpacity
-                        style={styles.checkboxRowStep2Grid}
-                        onPress={() => setEnableBuffet(!enableBuffet)}
-                      >
-                        <View
-                          style={[
-                            styles.checkboxStep2,
-                            enableBuffet && styles.checkboxActiveStep2,
-                          ]}
-                        />
-                        <Text style={styles.checkboxLabelStep2Grid}>
-                          Enable Buffet
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.sectionTitleStep2Grid}>
-                      Upload Ambiance Photo
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.photoUploadBoxStep2}
-                      onPress={pickImage}
-                    >
-                      {ambianceImage ? (
-                        <Image
-                          source={{ uri: ambianceImage }}
-                          style={styles.photoPreviewStep2}
-                          onError={() =>
-                            alert.error(
-                              "Image failed to load. Check the URL or server."
-                            )
-                          }
-                        />
-                      ) : (
-                        <Image
-                          source={require("../../assets/images/camera-icon.png")}
-                          style={styles.cameraIconStep2}
-                        />
-                      )}
-                    </TouchableOpacity>
                   </View>
-                </View>
+                )}
+                {step === 2 && (
+                  <View >
+                    <Button
+                      mode="contained"
+                      style={styles.bottomButtonStep}
+                      labelStyle={styles.buttonTextStep}
+                      onPress={handleRegister}
+                      loading={loading}
+                    >
+                      Register
+                    </Button>
+                  </View>
+                )}
               </View>
-            )}
+            </Surface>
           </ScrollView>
-          {/* Fixed bottom bar for Next/Register button */}
-          {step === 1 && (
-            <View style={styles.fixedBottomBarStep}>
-              <Button
-                mode="contained"
-                style={styles.bottomButtonStep}
-                labelStyle={styles.buttonTextStep}
-                onPress={handleNext}
-                loading={loading}
-              >
-                Next
-              </Button>
-            </View>
-          )}
-          {step === 2 && (
-            <View style={styles.fixedBottomBarStep}>
-              <Button
-                mode="contained"
-                style={styles.bottomButtonStep}
-                labelStyle={styles.buttonTextStep}
-                onPress={handleRegister}
-                loading={loading}
-              >
-                Register
-              </Button>
-            </View>
-          )}
-        </View>
-      </Surface>
-    </KeyboardAvoidingView>
-  );
+        </KeyboardAvoidingView>
+      );
+  // return (
+  //   <View >
+  //   <ScrollView>
+  //   <KeyboardAvoidingView
+     
+  //     behavior={Platform.OS === "ios" ? "padding" : undefined}
+  //   >
+  //     <Surface style={styles.formSurface}>
+  //       <View style={styles.formWrapper}>
+  //         <View
+            
+  //           contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
+  //           keyboardShouldPersistTaps="handled"
+  //           showsVerticalScrollIndicator={false}
+  //         >
+  //           {step === 1 && (
+  //             <View style={styles.stepBox}>
+  //               <View style={styles.stepFormAreaScroll}>
+  //                 <FormService
+  //                   config={formConfig}
+  //                   values={form}
+  //                   setValues={setForm}
+  //                   onSubmit={handleNext}
+  //                   submitLabel={null}
+  //                   loading={loading}
+  //                   hiddenFields={["name", "restaurantAddress"]}
+  //                   inputStyle={styles.inputStep}
+  //                   labelStyle={styles.labelStep}
+  //                 />
+  //               </View>
+  //             </View>
+  //           )}
+  //           {step === 2 && (
+  //             <View style={styles.stepBox}>
+  //               <View style={styles.stepFormAreaScroll}>
+  //                 {/* Show only restaurant fields, styled like step 1 */}
+  //                 <FormService
+  //                   config={formConfig}
+  //                   values={form}
+  //                   setValues={setForm}
+  //                   onSubmit={() => {}}
+  //                   submitLabel={null}
+  //                   loading={loading}
+  //                   hiddenFields={["firstname", "lastname", "phone"]}
+  //                   inputStyle={styles.inputStep}
+  //                   labelStyle={styles.labelStep}
+  //                 />
+  //                 {/* Extra controls below the form, not inside it */}
+  //                 <View style={{ marginTop: 24 }}>
+  //                   <Button
+  //                     mode="contained"
+  //                     style={styles.locationBtnStep2}
+  //                     icon="crosshairs-gps"
+  //                     onPress={handleUseCurrentLocation}
+  //                   >
+  //                     Use Current Location
+  //                   </Button>
+  //                   <Text style={styles.sectionTitleStep2Grid}>
+  //                     Choose your Restaurant Type
+  //                   </Text>
+  //                   <View style={styles.typeFoodGridRow}>
+  //                     <View style={styles.typeFoodGridCol}>
+  //                       <TouchableOpacity
+  //                         style={[
+  //                           styles.typeBoxStep2,
+  //                           tableService && styles.typeBoxActiveStep2,
+  //                         ]}
+  //                         onPress={() => {
+  //                           if (enableBoth) return; // Prevent toggling if both enabled
+  //                           setTableService(!tableService);
+  //                         }}
+  //                       >
+  //                         <Image
+  //                           source={require("../../assets/images/table_service.jpg")}
+  //                           style={styles.typeIconStep2}
+  //                         />
+  //                         <Text style={styles.typeLabelStep2Small}>
+  //                           Table Service
+  //                         </Text>
+  //                       </TouchableOpacity>
+  //                     </View>
+  //                     <View style={styles.typeFoodGridCol}>
+  //                       <TouchableOpacity
+  //                         style={[
+  //                           styles.typeBoxStep2,
+  //                           selfService && styles.typeBoxActiveStep2,
+  //                         ]}
+  //                         onPress={() => {
+  //                           if (enableBoth) return; // Prevent toggling if both enabled
+  //                           setSelfService(!selfService);
+  //                         }}
+  //                       >
+  //                         <Image
+  //                           source={require("../../assets/images/self_service.jpg")}
+  //                           style={styles.typeIconStep2}
+  //                         />
+  //                         <Text style={styles.typeLabelStep2Small}>
+  //                           Self Service
+  //                         </Text>
+  //                       </TouchableOpacity>
+  //                     </View>
+  //                   </View>
+  //                   <View style={styles.enableBothRowCenter}>
+  //                     <TouchableOpacity
+  //                       style={styles.checkboxRowStep2Grid}
+  //                       onPress={() => {
+  //                         if (!enableBoth) {
+  //                           setEnableBoth(true);
+  //                         } else {
+  //                           setEnableBoth(false);
+  //                           setTableService(false);
+  //                           setSelfService(false);
+  //                         }
+  //                       }}
+  //                     >
+  //                       <View
+  //                         style={[
+  //                           styles.checkboxStep2,
+  //                           enableBoth && styles.checkboxActiveStep2,
+  //                         ]}
+  //                       />
+  //                       <Text style={styles.enableTextStep2Grid}>
+  //                         Enable Both
+  //                       </Text>
+  //                     </TouchableOpacity>
+  //                   </View>
+  //                   <View style={styles.typeFoodGridRow}>
+  //                     <View style={styles.typeFoodGridCol}>
+  //                       <TouchableOpacity
+  //                         style={[
+  //                           styles.foodTypeBoxStep2,
+  //                           styles.foodTypeBoxVeg,
+  //                           pureVeg && styles.foodTypeBoxVegActive,
+  //                         ]}
+  //                         onPress={() => setPureVeg(!pureVeg)}
+  //                         activeOpacity={0.8}
+  //                       >
+  //                         <Image
+  //                           source={require("../../assets/images/veg.png")}
+  //                           style={styles.foodCircleVegStep2}
+  //                         />
+  //                         <Text style={styles.foodLabelStep2}>Pure Veg</Text>
+  //                       </TouchableOpacity>
+  //                     </View>
+  //                     <View style={styles.typeFoodGridCol}>
+  //                       <TouchableOpacity
+  //                         style={[
+  //                           styles.foodTypeBoxStep2,
+  //                           styles.foodTypeBoxNonVeg,
+  //                           nonVeg && styles.foodTypeBoxNonVegActive,
+  //                         ]}
+  //                         onPress={() => setNonVeg(!nonVeg)}
+  //                         activeOpacity={0.8}
+  //                       >
+  //                         <Image
+  //                           source={require("../../assets/images/non-veg.png")}
+  //                           style={styles.foodCircleNonVegStep2}
+  //                         />
+  //                         <Text style={styles.foodLabelStep2}>Non Veg</Text>
+  //                       </TouchableOpacity>
+  //                     </View>
+  //                   </View>
+  //                   <View style={styles.buffetRowGrid}>
+  //                     <TouchableOpacity
+  //                       style={styles.checkboxRowStep2Grid}
+  //                       onPress={() => setEnableBuffet(!enableBuffet)}
+  //                     >
+  //                       <View
+  //                         style={[
+  //                           styles.checkboxStep2,
+  //                           enableBuffet && styles.checkboxActiveStep2,
+  //                         ]}
+  //                       />
+  //                       <Text style={styles.checkboxLabelStep2Grid}>
+  //                         Enable Buffet
+  //                       </Text>
+  //                     </TouchableOpacity>
+  //                   </View>
+  //                   <Text style={styles.sectionTitleStep2Grid}>
+  //                     Upload Ambiance Photo
+  //                   </Text>
+  //                   <TouchableOpacity
+  //                     style={styles.photoUploadBoxStep2}
+  //                     onPress={pickImage}
+  //                   >
+  //                     {ambianceImage ? (
+  //                       <Image
+  //                         source={{ uri: ambianceImage }}
+  //                         style={styles.photoPreviewStep2}
+  //                         onError={() =>
+  //                           alert.error(
+  //                             "Image failed to load. Check the URL or server."
+  //                           )
+  //                         }
+  //                       />
+  //                     ) : (
+  //                       <Image
+  //                         source={require("../../assets/images/camera-icon.png")}
+  //                         style={styles.cameraIconStep2}
+  //                       />
+  //                     )}
+  //                   </TouchableOpacity>
+  //                 </View>
+  //               </View>
+  //             </View>
+  //           )}
+  //         </View>
+  //         {/* Fixed bottom bar for Next/Register button */}
+  //         {step === 1 && (
+  //           <View style={styles.fixedBottomBarStep}>
+  //             <Button
+  //               mode="contained"
+  //               style={styles.bottomButtonStep}
+  //               labelStyle={styles.buttonTextStep}
+  //               onPress={handleNext}
+  //               loading={loading}
+  //             >
+  //               Next
+  //             </Button>
+  //           </View>
+  //         )}
+  //         {step === 2 && (
+  //           <View style={styles.fixedBottomBarStep}>
+  //             <Button
+  //               mode="contained"
+  //               style={styles.bottomButtonStep}
+  //               labelStyle={styles.buttonTextStep}
+  //               onPress={handleRegister}
+  //               loading={loading}
+  //             >
+  //               Register
+  //             </Button>
+  //           </View>
+  //         )}
+  //       </View>
+  //     </Surface>
+  //   </KeyboardAvoidingView>
+  //   </ScrollView>
+  //   </View>
+  // );
 }
 
 const styles = StyleSheet.create({
@@ -822,7 +1082,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 8,
     borderRadius: 10,
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     marginHorizontal: 10,
     borderWidth: 2,
     borderColor: "#eae6ff",
@@ -831,7 +1091,7 @@ const styles = StyleSheet.create({
   },
   typeBoxActiveStep2: {
     borderColor: "#7b6eea",
-    backgroundColor: "#d1c4e9",
+    // backgroundColor: "#d1c4e9",
   },
   typeIconStep2: { width: 48, height: 48, marginBottom: 2 },
   typeLabelStep2: {
@@ -863,7 +1123,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 8,
     borderRadius: 10,
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     marginHorizontal: 10,
     borderWidth: 2,
     borderColor: "#eae6ff",

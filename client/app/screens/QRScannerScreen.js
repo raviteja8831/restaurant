@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CameraView as Camera, Camera as CameraModule } from 'expo-camera';
 import {
   View,
   Text,
@@ -6,36 +7,89 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
+  Platform
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function QRScannerScreen() {
   const router = useRouter();
   const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  const [scannedData, setScannedData] = useState(null);
+  // const [scannerAvailable, setScannerAvailable] = useState(null); // removed duplicate
+
+  if (Platform.OS === 'web') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>
+            QR scanning is only supported on mobile devices (Android/iOS). Please use the Expo Go app or a native build to scan QR codes.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  const [scannerAvailable, setScannerAvailable] = useState(null);
 
 
   useEffect(() => {
-    // Simulate camera permission check
-    setHasPermission(true);
+    (async () => {
+      const { status } = await CameraModule.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+      // Check if modern barcode scanner is available
+      setScannerAvailable(Camera.isModernBarcodeScannerAvailable);
+    })();
   }, []);
 
+
+  const handleQRCodeScanned = (data) => {
+    setScanned(true);
+    setScannedData(data);
+    // Optionally, navigate after a delay or on user action
+    // router.push('/menu-list');
+  };
+
+
+  // Handler for QR code scanned event
   const handleBarCodeScanned = ({ type, data }) => {
-    // Navigate to menu list after successful scan
-    router.push('/menu-list');
+    if (!scanned && type === 'org.iso.QRCode') {
+      handleQRCodeScanned(data);
+    }
   };
 
   const handleBackPress = () => {
     router.push('/customer-home');
   };
 
-  const simulateScan = () => {
-    // Simulate a successful scan for demo purposes
-    handleBarCodeScanned({ type: 'QR_CODE', data: 'restaurant_menu_123' });
-  };
 
+
+  // Render loading or error states after hooks
+
+  // Launch modal scanner if available and not already scanned
+  useEffect(() => {
+    const handleOpenScanner = async () => {
+      if (scannerAvailable && !scanned) {
+        try {
+          await Camera.launchScanner({ barcodeTypes: ['qr'] });
+          // Listen for scan event
+          Camera.onModernBarcodeScanned((event) => {
+            if (event && event.data) {
+              handleQRCodeScanned(event.data);
+            }
+          });
+        } catch (_e) {
+          // fallback or error
+        }
+      }
+    };
+    if (scannerAvailable) {
+      handleOpenScanner();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scannerAvailable]);
   if (hasPermission === null) {
     return (
       <SafeAreaView style={styles.container}>
@@ -68,10 +122,42 @@ export default function QRScannerScreen() {
         </TouchableOpacity>
       </View>
 
+
       {/* Scanner Area */}
       <View style={styles.scannerContainer}>
-        {/* QR Code Scanner Placeholder */}
         <View style={styles.scannerFrame}>
+          {hasPermission === null ? (
+            <Text>Requesting camera permission...</Text>
+          ) : hasPermission === false ? (
+            <Text>No access to camera</Text>
+          ) : (
+            <>
+              <Camera
+                style={StyleSheet.absoluteFillObject}
+                onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+                barCodeScannerSettings={{ barCodeTypes: ['qr'] }}
+                ratio="16:9"
+                facing="back"
+                onMountError={console.warn}
+              />
+              {/* Fallback message if scanning is not supported */}
+              {typeof Camera === 'undefined' && (
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>
+                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, backgroundColor: 'rgba(0,0,0,0.7)', padding: 16, borderRadius: 8 }}>
+                    QR scanning is not supported on this device.
+                  </Text>
+                </View>
+              )}
+              {/* Overlay message for scanning */}
+              {!scanned && (
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: 2 }} pointerEvents="none">
+                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, backgroundColor: 'rgba(0,0,0,0.5)', padding: 12, borderRadius: 8 }}>
+                    Show a QR code to the camera
+                  </Text>
+                </View>
+              )}
+            </>
+          )}
           <View style={styles.scannerOverlay}>
             {/* Corner indicators */}
             <View style={[styles.corner, styles.topLeft]} />
@@ -79,70 +165,44 @@ export default function QRScannerScreen() {
             <View style={[styles.corner, styles.bottomLeft]} />
             <View style={[styles.corner, styles.bottomRight]} />
           </View>
-          
-          {/* Demo scan button for testing */}
-          <TouchableOpacity style={styles.demoScanButton} onPress={simulateScan}>
-            <Text style={styles.demoScanText}>Tap to Simulate Scan</Text>
-          </TouchableOpacity>
         </View>
+
+        {/* Show scanned QR code info */}
+        {scanned && scannedData && (
+          <View style={{ marginTop: 20, backgroundColor: '#fff', padding: 16, borderRadius: 8, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>QR Code Scanned!</Text>
+            <Text style={{ color: '#333', marginBottom: 8 }}>{scannedData}</Text>
+            <TouchableOpacity onPress={() => router.push('/menu-list')} style={{ backgroundColor: '#4A90E2', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}>
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Instructions */}
         <View style={styles.instructionsContainer}>
           <Text style={styles.instructionText}>Host Should Scan First</Text>
-          
-          <View style={styles.friendsFamilyContainer}>
-            <MaterialCommunityIcons name="account-group" size={20} color="#4A90E2" />
-            <Text style={styles.friendsFamilyText}>Friends & Family</Text>
-          </View>
-          
-          <Text style={styles.chooseText}>Choose Before Scanning</Text>
         </View>
-      </View>
-
-      {/* Bottom Navigation Indicator */}
-      <View style={styles.bottomIndicator}>
-        <View style={styles.homeIndicator} />
-      </View>
-    </SafeAreaView>
-  );
+          </View>
+      </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#F5F5F5',
-  },
-  backButton: {
-    padding: 8,
-  },
-  scannerContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  scannerFrame: {
-    width: width * 0.8,
-    height: width * 0.8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    marginBottom: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    position: 'relative',
-  },
+      scannerFrame: {
+        width: width * 0.8,
+        height: width * 0.8,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        marginBottom: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 5,
+        position: 'relative',
+      },
   scannerOverlay: {
     position: 'absolute',
     top: 0,
@@ -254,4 +314,4 @@ const styles = StyleSheet.create({
     color: '#4A90E2',
     fontWeight: 'bold',
   },
-});
+})
