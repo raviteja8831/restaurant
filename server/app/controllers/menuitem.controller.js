@@ -53,13 +53,19 @@ exports.delete = async (req, res) => {
 // Bulk status update for menu items (supports both /status-bulk and /updateStatus route)
 exports.updateStatusBulk = async (req, res) => {
   try {
-    // Accept both menuitemIds and menuItemIds for compatibility
-    let { menuitemIds, menuItemIds, status } = req.body;
-    menuitemIds = menuitemIds || menuItemIds;
+    let menuitemIds, status;
+    if (Array.isArray(req.body)) {
+      // If payload is just an array, default status to true
+      menuitemIds = req.body;
+      status = true;
+    } else {
+      let { menuitemIds: ids1, menuItemIds: ids2, status: s } = req.body;
+      menuitemIds = ids1 || ids2;
+      status = s;
+    }
     if (!Array.isArray(menuitemIds) || typeof status === 'undefined') {
       return res.status(400).json({ error: 'menuitemIds (array) and status (boolean) are required' });
     }
-    // Ensure all IDs are numbers (MySQL strict mode fix)
     menuitemIds = menuitemIds.map(id => Number(id)).filter(id => !isNaN(id));
     if (!menuitemIds.length) {
       return res.status(400).json({ error: 'No valid menuitemIds provided' });
