@@ -3,18 +3,19 @@ import { View, Modal, Text, TouchableOpacity, StyleSheet, ScrollView } from "rea
 import { Ionicons } from '@expo/vector-icons';
 
 // menus: [{ id, name, items: [{id, name}] }], allottedMenuItemIds: [id]
-export default function AddMenuItemModal({ visible, onClose, menus = [], allottedMenuItemIds = [],action="", onAdd }) {
+export default function AddMenuItemModal({
+  visible,
+  onClose,
+  menus = [],
+  allottedMenuItemIds = [],
+  action = "",
+  onAdd
+}) {
+  // Always store as strings
   const [selectedMenuId, setSelectedMenuId] = useState(null);
   const [selectedMenuItemIds, setSelectedMenuItemIds] = useState([]);
 
-  useEffect(() => {
-    if (visible) {
-      setSelectedMenuId(null);
-      setSelectedMenuItemIds(allottedMenuItemIds || []);
-    }
-  }, [visible, allottedMenuItemIds]);
-
-  // Normalize API response: support menuItems or items, and handle undefined
+  // Normalize menus/items
   const normalizedMenus = (menus || []).map(menu => ({
     ...menu,
     items: Array.isArray(menu.items)
@@ -24,22 +25,42 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
         : [],
   }));
 
-  // Action-based filtering
-  let filteredMenus;
-  if (action === "remove") {
-    // Only show allotted items for removal
-    filteredMenus = normalizedMenus.map(menu => ({
-      ...menu,
-      items: (menu.items || []).filter(item => allottedMenuItemIds.includes(item.id)),
-    })).filter(menu => menu.items.length > 0);
-  } else {
-    // Show all items for add, auto-select allotted
-    filteredMenus = normalizedMenus;
-  }
+  // Filter menus/items for remove action
+  const allottedIdsStr = (allottedMenuItemIds || []).map(String);
+  const filteredMenus = action === "remove"
+    ? normalizedMenus
+        .map(menu => ({
+          ...menu,
+          items: (menu.items || []).filter(item => allottedIdsStr.includes(String(item.id))),
+        }))
+        .filter(menu => menu.items.length > 0)
+    : normalizedMenus;
 
-  // Defensive: ensure selectedMenuId is defined before using
-  const safeMenuId = typeof selectedMenuId === 'undefined' ? null : selectedMenuId;
-  const selectedMenu = filteredMenus.find(m => m.id === safeMenuId);
+  // On open, auto-select first menu and preselect items
+  useEffect(() => {
+    if (visible) {
+      if (filteredMenus.length > 0) {
+        setSelectedMenuId(filteredMenus[0].id);
+        // For add: preselect already allotted in this menu; for remove: preselect all in this menu
+        const menuItemIds = (filteredMenus[0].items || []).map(item => String(item.id));
+        if (action === "add") {
+          setSelectedMenuItemIds(allottedIdsStr.filter(id => menuItemIds.includes(id)));
+        } else if (action === "remove") {
+          setSelectedMenuItemIds(menuItemIds);
+        } else {
+          setSelectedMenuItemIds([]);
+        }
+      } else {
+        setSelectedMenuId(null);
+        setSelectedMenuItemIds([]);
+      }
+    }
+    // Only run on open or allottedMenuItemIds change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, allottedMenuItemIds]);
+
+  // Get selected menu and items
+  const selectedMenu = filteredMenus.find(m => m.id === selectedMenuId);
   const menuItems = selectedMenu ? selectedMenu.items : [];
 
   return (
@@ -48,7 +69,9 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
         <View style={styles.content}>
           <Text style={styles.title}>Allot Menu Items</Text>
           {filteredMenus.length === 0 ? (
-            <Text style={{ color: '#888', marginVertical: 24, textAlign: 'center' }}>No menu items available to assign.</Text>
+            <Text style={{ color: '#888', marginVertical: 24, textAlign: 'center' }}>
+              No menu items available to assign.
+            </Text>
           ) : (
             <>
               {/* Menu Dropdown */}
@@ -58,7 +81,18 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
                   <TouchableOpacity
                     key={menu.id}
                     style={[styles.dropdownItem, selectedMenuId === menu.id && styles.selected]}
-                    onPress={() => setSelectedMenuId(menu.id)}
+                    onPress={() => {
+                      setSelectedMenuId(menu.id);
+                      // When menu changes, update selection for this menu
+                      const menuItemIds = (menu.items || []).map(item => String(item.id));
+                      if (action === "add") {
+                        setSelectedMenuItemIds(allottedIdsStr.filter(id => menuItemIds.includes(id)));
+                      } else if (action === "remove") {
+                        setSelectedMenuItemIds(menuItemIds);
+                      } else {
+                        setSelectedMenuItemIds([]);
+                      }
+                    }}
                   >
                     <Text>{menu.name}</Text>
                   </TouchableOpacity>
@@ -70,29 +104,30 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
                   <Text style={styles.label}>Menu Items</Text>
                   <ScrollView style={styles.dropdown}>
                     {menuItems.map(item => {
-                      const isSelected = selectedMenuItemIds.includes(item.id);
-                      const isAllotted = allottedMenuItemIds.includes(item.id);
+                      const itemIdStr = String(item.id);
+                      const isSelected = selectedMenuItemIds.includes(itemIdStr);
+                      const isAllotted = allottedIdsStr.includes(itemIdStr);
                       return (
                         <TouchableOpacity
                           key={item.id}
                           style={[styles.dropdownItem, isSelected && styles.selected]}
                           onPress={() => {
-                            if (action === "add") {
+                            // if (action === "add") {
                               if (!isSelected) {
-                                setSelectedMenuItemIds(prev => [...prev, item.id]);
+                                setSelectedMenuItemIds(prev => [...prev, itemIdStr]);
                               } else {
-                                setSelectedMenuItemIds(prev => prev.filter(id => id !== item.id));
+                                setSelectedMenuItemIds(prev => prev.filter(id => id !== itemIdStr));
                               }
-                            } else if (action === "remove") {
-                              if (isSelected) {
-                                setSelectedMenuItemIds(prev => prev.filter(id => id !== item.id));
-                              }
-                            }
+                            // } else if (action === "remove") {
+                            //   if (isSelected) {
+                            //     setSelectedMenuItemIds(prev => prev.filter(id => id !== itemIdStr));
+                            //   }
+                            // }
                           }}
                           disabled={action === "remove" ? !isSelected : false}
                         >
-                          <View style={{flexDirection: 'row', alignItems: 'center', minWidth: 0}}>
-                            <Text style={{flexShrink: 1}}>{item.name}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', minWidth: 0 }}>
+                            <Text style={{ flexShrink: 1 }}>{item.name}</Text>
                             {isSelected ? (
                               <Ionicons name="checkmark" size={18} color="#4b5cff" style={{ marginLeft: 10, minWidth: 18 }} />
                             ) : null}
@@ -114,7 +149,10 @@ export default function AddMenuItemModal({ visible, onClose, menus = [], allotte
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => selectedMenuItemIds.length > 0 && onAdd(selectedMenuItemIds)}
-              style={[styles.addBtn, (selectedMenuItemIds.length === 0 || filteredMenus.length === 0) && { opacity: 0.5 }]}
+              style={[
+                styles.addBtn,
+                (selectedMenuItemIds.length === 0 || filteredMenus.length === 0) && { opacity: 0.5 }
+              ]}
               disabled={selectedMenuItemIds.length === 0 || filteredMenus.length === 0}
             >
               <Ionicons name="checkmark" size={24} color="#fff" />

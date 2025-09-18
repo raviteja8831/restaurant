@@ -33,6 +33,8 @@ const [action, setAction] = useState("Add");
   // Replace with actual restaurantId from context/auth if available
   const chefRoleId = 2;
 const [restaurantId, setRestaurantId] = useState("");
+  const [allottedUserMenuItemIds, setAllottedUserMenuItemIds] = useState([]);
+
 useEffect(() => {
   const loadUserAndFetchList = async () => {
     try {
@@ -80,8 +82,10 @@ useEffect(() => {
   const fetchAllottedMenuItems = async (userId) => {
     try {
       const items = await getUserAllottedMenuItems(userId);
-      setAllottedMenuItemIds(items.map(i => i.id));
-    } catch (err) {
+      setAllottedUserMenuItemIds(items);
+      // Fix: backend returns { menuItems: [...] }
+      setAllottedMenuItemIds((items.menuItems || []).map(i => i.id));
+    } catch (_err) {
       setAllottedMenuItemIds([]);
     }
   };
@@ -90,7 +94,7 @@ useEffect(() => {
     try {
       const data = await getMenusWithItems(restaurantId);
       setMenusWithItems(data);
-    } catch (err) {
+    } catch (_err) {
       // Optionally show error
     }
   };
@@ -125,11 +129,12 @@ useEffect(() => {
     setLoading(false);
   };
 
-  const handleAddMenuItem = async (menuitemId) => {
+  const handleAddMenuItem = async (menuItemIds) => {
     try {
-      await saveUserMenuItems(selectedUser.id, [menuitemId]);
+      await saveUserMenuItems(selectedUser.id, menuItemIds); // Accepts array
       setShowAddMenuModal(false);
-      fetchDashboard(selectedUser.id, period);
+      await fetchAllottedMenuItems(selectedUser.id); // Refresh allotted items first
+      await fetchDashboard(selectedUser.id, period); // Then refresh dashboard
     } catch (err) {
       Alert.alert("Error", err.message || "Failed to add menu item");
     }
@@ -251,7 +256,7 @@ useEffect(() => {
               </TouchableOpacity>
             </View>
             <ScrollView>
-              {dashboard?.user?.allottedMenuItems?.map((dish, idx) => (
+              {allottedUserMenuItemIds?.map((dish, idx) => (
                 <Text key={dish.id} style={styles.usersAllottedDish}>{dish.name}</Text>
               ))}
             </ScrollView>
@@ -356,14 +361,12 @@ useEffect(() => {
         <AddMenuItemModal
           visible={showAddMenuModal}
           onClose={() => setShowAddMenuModal(false)}
-          menus={action === 'Add' ? menusWithItems : menusWithItems.map(menu => ({
-            ...menu,
-            items: menu.items.filter(item => allottedMenuItemIds.includes(item.id))
-          })).filter(menu => menu.items.length > 0)}
+          menus={menusWithItems}
           allottedMenuItemIds={allottedMenuItemIds}
           action={action}
           onAdd={handleAddMenuItem}
         />
+        {console.log('AddMenuItemModal rendered', { showAddMenuModal, menusWithItems, allottedMenuItemIds, action })}
         <TabBar />
       </ScrollView>
     </>

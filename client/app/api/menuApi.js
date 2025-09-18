@@ -1,6 +1,6 @@
 import api from "../api/api";
 import { MENU_API } from "../constants/menuApi";
-import { showApiError } from "../services/alertService";
+import { showApiError } from "../services/messagingService";
 
 // Get all menus with their items
 export const getMenusWithItems = async (restaurantId) => {
