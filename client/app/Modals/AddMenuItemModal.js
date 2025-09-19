@@ -40,11 +40,12 @@ export default function AddMenuItemModal({
   useEffect(() => {
     if (visible) {
       if (filteredMenus.length > 0) {
-        setSelectedMenuId(filteredMenus[0].id);
-        // For add: preselect already allotted in this menu; for remove: preselect all in this menu
-        const menuItemIds = (filteredMenus[0].items || []).map(item => String(item.id));
+        const firstMenu = filteredMenus[0];
+        setSelectedMenuId(firstMenu.id);
+        const menuItemIds = (firstMenu.items || []).map(item => String(item.id));
         if (action === "add") {
-          setSelectedMenuItemIds(allottedIdsStr.filter(id => menuItemIds.includes(id)));
+          // Auto-select all menu items in this menu that are allotted
+          setSelectedMenuItemIds(menuItemIds.filter(id => allottedIdsStr.includes(id)));
         } else if (action === "remove") {
           setSelectedMenuItemIds(menuItemIds);
         } else {
@@ -83,10 +84,10 @@ export default function AddMenuItemModal({
                     style={[styles.dropdownItem, selectedMenuId === menu.id && styles.selected]}
                     onPress={() => {
                       setSelectedMenuId(menu.id);
-                      // When menu changes, update selection for this menu
+                      // When menu changes, auto-select allotted items for 'add' action
                       const menuItemIds = (menu.items || []).map(item => String(item.id));
                       if (action === "add") {
-                        setSelectedMenuItemIds(allottedIdsStr.filter(id => menuItemIds.includes(id)));
+                        setSelectedMenuItemIds(menuItemIds.filter(id => allottedIdsStr.includes(id)));
                       } else if (action === "remove") {
                         setSelectedMenuItemIds(menuItemIds);
                       } else {
