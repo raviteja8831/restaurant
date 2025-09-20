@@ -16,7 +16,7 @@ export default function ChefLoginScreen({ navigation }) {
       if (res && res.token) {
         await AsyncStorage.setItem('chef_token', res.token);
         // Optionally store chef profile as well
-        await AsyncStorage.setItem('chef_profile', JSON.stringify(res.chef));
+        await AsyncStorage.setItem('chef_profile', JSON.stringify(res.user));
         Alert.alert('Success', 'Login successful');
         router.replace('/chef-home');
       } else {
@@ -35,6 +35,7 @@ export default function ChefLoginScreen({ navigation }) {
       </TouchableOpacity>
 
       {/* Phone input */}
+      <View style={styles.formContainer}>
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Phone Number  :</Text>
         <TextInput
@@ -59,7 +60,7 @@ export default function ChefLoginScreen({ navigation }) {
           secureTextEntry
         />
       </View>
-
+</View>
       {/* Fingerprint icon at bottom center */}
       <View style={styles.fingerprintWrap}>
         <TouchableOpacity style={styles.fingerprint} onPress={handleLogin}>
@@ -71,24 +72,30 @@ export default function ChefLoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  formContainer: {
+    marginTop: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#a59be7',
-    borderTopLeftRadius: 48,
-    borderTopRightRadius: 48,
-    borderBottomLeftRadius: 48,
-    borderBottomRightRadius: 48,
+    backgroundColor: '#8D8BEA',
+
     overflow: 'hidden',
     position: 'relative',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingTop: 80,
+    paddingTop: 120,
   },
   languageIcon: {
     position: 'absolute',
-    top: 32,
-    right: 32,
+    top: 36,
+    right: 28,
     zIndex: 10,
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   thumbContainer: {
     marginBottom: 40,
@@ -106,55 +113,58 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   inputGroup: {
-    width: '85%',
-    marginBottom: 32,
+    width: '88%',
+    marginBottom: 20,
   },
   label: {
     color: '#fff',
-    fontSize: 22,
-    marginBottom: 8,
+    fontSize: 24,
+    marginBottom: 10,
     marginLeft: 4,
     fontWeight: '400',
+    letterSpacing: 0.5,
   },
   input: {
     width: '100%',
     height: 54,
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 0,
     paddingHorizontal: 18,
     color: '#222',
-    fontSize: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 6,
+    fontSize: 21,
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 10,
+    borderWidth: 0,
+    borderColor: 'transparent',
+    outlineWidth: 0,
+    outline: 'none',
   },
   fingerprintWrap: {
     position: 'absolute',
-    bottom: 60,
+    bottom: 48,
     left: 0,
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
   fingerprint: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 10,
   },
   fingerprintIcon: {
-    width: 64,
-    height: 64,
+    width: 72,
+    height: 72,
     resizeMode: 'contain',
     tintColor: '#222',
   },

@@ -15,9 +15,9 @@ const roles = db.roles;
 const chefController = {};
 
 chefController.chefLogin = async (req, res) => {
-  const { phone, password } = req.body;
-  console.log('Login attempt for phone:', phone, password);
   try {
+    const { phone, password } = req.body;
+    console.log('Login attempt for phone:', phone, password);
     const chef = await restaurantUser.findOne({ where: { phone }, include: [{ model: roles, as: 'role' }] });
     console.log('Chef found:', chef);
     if (!chef || !chef.role || chef.role.name !== 'Chef') {
@@ -33,10 +33,10 @@ chefController.chefLogin = async (req, res) => {
       console.error('JWT_SECRET not set in environment');
       return res.status(500).json({ message: 'JWT secret not configured' });
     }
-  const token = jwt.sign({ id: chef.id, role: chef.role.name }, process.env.JWT_SECRET, { expiresIn: '1d' });
-  // Only send public fields as 'user' for frontend compatibility
-  const { id, phone, firstname, lastname, role, restaurantId } = chef;
-  res.json({ token, user: { id, phone, firstname, lastname, role, restaurantId } });
+    const token = jwt.sign({ id: chef.id, role: chef.role.name }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    // Only send public fields as 'user' for frontend compatibility
+    const { id, phone: chefPhone, firstname, lastname, role, restaurantId } = chef;
+    res.json({ token, user: { id, phone: chefPhone, firstname, lastname, role, restaurantId } });
   } catch (e) {
     console.error('Chef login error:', e);
     res.status(500).json({ message: 'Server error', error: e.message });
@@ -64,16 +64,29 @@ chefController.chefDashboard = async (req, res) => {
     const menuItemIds = chef.allottedMenuItems.map(item => item.id);
     console.log('Menu Item IDs allotted to chef:', menuItemIds);
     // Get orders containing these menuitems
-    const orders = await Order.findAll({
-      include: [{
-        model: db.orderProducts,
-        as: 'orderProducts',
-        where: { menuitemId: { [Op.in]: menuItemIds } },
-        required: true
-      }],
-      order: [['createdAt', 'DESC']],
-      limit: 10
-    });
+    let orders = [];
+    if (menuItemIds.length > 0) {
+      try {
+        orders = await Order.findAll({
+          include: [{
+            model: db.orderProducts,
+            as: 'orderProducts',
+            where: { menuitemId: { [Op.in]: menuItemIds } },
+            required: true,
+            include: [{
+              model: MenuItem,
+              as: 'menuitem' // Use the correct alias as defined in your association
+            }]
+          }],
+          order: [['createdAt', 'DESC']],
+          limit: 10
+        });
+      } catch (err) {
+        console.error('Order query failed:', err);
+        return res.status(500).json({ message: 'Order query failed', error: err.message });
+      }
+    }
+    console.log('Recent orders fetched:', orders);
     const totalOrders = await Order.count({
       include: [{
         model: db.orderProducts,
@@ -83,7 +96,6 @@ chefController.chefDashboard = async (req, res) => {
       }]
     });
     console.log(totalOrders, 'total')
-    // Working days: count distinct days chef had orders
     // const workingDays = await Order.count({
     //   include: [{
     //     model: db.orderProducts,
@@ -94,15 +106,19 @@ chefController.chefDashboard = async (req, res) => {
     //   distinct: true,
     //   col: Sequelize.fn('DATE', Sequelize.col('Order.createdAt'))
     // });
-    const workingDays = 10;
+     const workingDays = 10;
     console.log('Orders fetched:', workingDays);
     // Most ordered dish
     const mostOrdered = await db.orderProducts.findAll({
       where: { menuitemId: { [Op.in]: menuItemIds } },
       attributes: ['menuitemId', [Sequelize.fn('COUNT', Sequelize.col('menuitemId')), 'count']],
-      group: ['menuitemId'],
+      group: ['menuitemId', 'menuitem.id'],
       order: [[Sequelize.literal('count'), 'DESC']],
-      limit: 1
+      limit: 5,
+      include: [{
+        model: MenuItem,
+        as: 'menuitem'
+      }]
     });
     console.log('Most ordered item:', mostOrdered);
     res.json({ orders, totalOrders, workingDays, menuItems: chef.allottedMenuItems, mostOrdered });
@@ -113,8 +129,9 @@ chefController.chefDashboard = async (req, res) => {
 
 chefController.chefMessages = async (req, res) => {
   try {
-    // Get all messages where chef is sender or receiver
-    const chefId = req.user.id;
+    // Get userId from route param, fallback to req.user.id
+    const chefId = req.params.userId ? parseInt(req.params.userId, 10) : req.user?.id;
+    if (!chefId) return res.status(400).json({ message: 'Missing userId' });
     const chefRole = await roles.findOne({ where: { name: 'Chef' } });
     const managerRole = await roles.findOne({ where: { name: 'Manager' } });
     const messagesList = await message.findAll({

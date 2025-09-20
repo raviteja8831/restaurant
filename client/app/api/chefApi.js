@@ -32,9 +32,9 @@ export const fetchChefStats = async (chefId) => {
   }
 };
 
-export const fetchChefMessages = async () => {
+export const fetchChefMessages = async (userId) => {
   try {
-    const res = await api.get(CHEF_API.MESSAGES);
+    const res = await api.get(`${CHEF_API.MESSAGES}?userId=${userId}`);
     return res.data;
   } catch (error) {
     showApiError(error);

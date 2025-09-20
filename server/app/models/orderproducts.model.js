@@ -18,14 +18,10 @@ module.exports = (sequelize, Sequelize) => {
           model: "menuitem",
           key: "id",
         },
-      },
-      comments: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
+      }
     },
     {
-      tableName: "OrdersProduct",
+      tableName: "ordersproduct",
     }
   );
 
