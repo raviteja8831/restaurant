@@ -25,6 +25,8 @@ db.roles = require("./role.model.js")(sequelize, Sequelize);
 db.restaurant = require("./restaurant.model.js")(sequelize, Sequelize);
 db.restaurantUser = require("./restaurantuser.model.js")(sequelize, Sequelize);
 db.buffetOrder = require("./buffetOrder.model.js")(sequelize, Sequelize);
+db.tableBooking = require("./tablebooking.model.js")(sequelize, Sequelize);
+
 db.restaurantReview = require("./restaurantreview.model.js")(
   sequelize,
   Sequelize
@@ -214,5 +216,35 @@ db.users.hasOne(db.customer, {
   as: "customerProfile",
 });
 db.buffet = require("./buffet.model.js")(sequelize, Sequelize);
-db.buffet.belongsTo(db.restaurant, { foreignKey: "restaurantId", as: "restaurant" });
+db.buffet.belongsTo(db.restaurant, {
+  foreignKey: "restaurantId",
+  as: "restaurant",
+});
 // A
+// Table Booking associations
+db.tableBooking.belongsTo(db.restaurant, {
+  foreignKey: "restaurantId",
+  as: "restaurant",
+});
+db.restaurant.hasMany(db.tableBooking, {
+  foreignKey: "restaurantId",
+  as: "tableBookings",
+});
+
+db.tableBooking.belongsTo(db.users, {
+  foreignKey: "userId",
+  as: "user",
+});
+db.users.hasMany(db.tableBooking, {
+  foreignKey: "userId",
+  as: "tableBookings",
+});
+
+db.tableBooking.belongsTo(db.restaurantTable, {
+  foreignKey: "tableId",
+  as: "table",
+});
+db.restaurantTable.hasMany(db.tableBooking, {
+  foreignKey: "tableId",
+  as: "bookings",
+});
