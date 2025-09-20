@@ -1,37 +1,43 @@
-
-
-import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import QRCode from 'react-native-qrcode-svg';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
-export default function QRCodeModal({ visible, onClose, onSave, loading, imageUrl, onDownload }) {
+export default function QRCodeModal({ visible, onClose, onSave, loading }) {
   const [name, setName] = useState('');
+  const qrRef = useRef();
 
   const handleSave = () => {
     if (!name) return;
     onSave({ name });
-    setName('');
+    // Do not close modal or clear name
   };
 
-  // Download handler removed since imageUrl is not available at creation
+  const handleDownload = async () => {
+    if (!qrRef.current) return;
+    try {
+      const uri = await qrRef.current.capture();
+      if (Platform.OS === 'web') {
+        // For web, open in new tab
+        window.open(uri, '_blank');
+      } else {
+        await Sharing.shareAsync(uri);
+      }
+    } catch (e) {
+      alert('Failed to download QR code');
+    }
+  };
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-            <MaterialCommunityIcons name="close" size={24} color="#444" />
-          </TouchableOpacity>
           <View style={styles.qrRow}>
-            <View style={styles.qrImgBox}>
-              {imageUrl ? (
-                <Image source={{ uri: imageUrl }} style={styles.qrImg} />
-              ) : (
-                <MaterialCommunityIcons name="qrcode" size={48} color="#444" />
-              )}
-            </View>
-            <TouchableOpacity style={styles.downloadIconBtn} onPress={onDownload} disabled={!imageUrl}>
-              <MaterialCommunityIcons name="download" size={28} color="#444" />
+       
+            <TouchableOpacity style={styles.downloadIconBtn} onPress={handleDownload}>
+              <MaterialCommunityIcons name="download" size={38} color="#19171d" />
             </TouchableOpacity>
           </View>
           <View style={styles.inputRow}>
@@ -39,9 +45,10 @@ export default function QRCodeModal({ visible, onClose, onSave, loading, imageUr
             <TextInput
               style={styles.input}
               placeholder="Table No/ Room No"
+              placeholderTextColor="#bbb"
               value={name}
               onChangeText={setName}
-              placeholderTextColor="#bbb"
+              autoCapitalize="words"
             />
           </View>
           <View style={styles.btnRow}>
@@ -56,72 +63,88 @@ export default function QRCodeModal({ visible, onClose, onSave, loading, imageUr
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.2)', justifyContent: 'center', alignItems: 'center' },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   card: {
-    backgroundColor: '#f3eaff',
-    padding: 18,
-    width: 260,
+    backgroundColor: '#E6E1FA',
+    borderRadius: 18,
+    padding: 24,
+    width: 360,
+    minHeight: 240,
     alignItems: 'flex-start',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: '#bdb6e6',
   },
   qrRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 10,
+    marginBottom: 18,
   },
   qrImgBox: {
-    backgroundColor: '#ece9fa',
-    borderRadius: 10,
-    padding: 10,
+    backgroundColor: 'transparent',
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    width: 120,
+    height: 120,
     marginRight: 8,
-    width: 54,
-    height: 54,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  qrImg: { width: 40, height: 40 },
   downloadIconBtn: {
-    padding: 6,
-    borderRadius: 8,
+    position: 'relative',
+    right: 0,
+    left:250,
+    top: 8,
+    zIndex: 2,
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 16,
-    marginTop: 6,
+    marginBottom: 18,
+    marginTop: 8,
   },
   inputLabel: {
-    color: '#444',
+    color: '#19171d',
     fontWeight: 'bold',
-    fontSize: 15,
+    fontSize: 20,
     marginRight: 8,
     marginLeft: 2,
   },
   input: {
     flex: 1,
     backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    fontSize: 15,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    fontSize: 20,
     borderWidth: 0,
-    color: '#222',
-    height: 36,
+    color: '#888',
+    height: 48,
+    fontStyle: 'italic',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 4,
+    elevation: 2,
   },
   btnRow: {
     flexDirection: 'row',
@@ -130,20 +153,17 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   plusBtn: {
-    backgroundColor: '#ece9fa',
-    borderRadius: 8,
+    backgroundColor: '#A09CF7',
+    borderRadius: 14,
     padding: 8,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  plusBtnText: { color: '#444', fontWeight: 'bold', fontSize: 24 },
-  closeBtn: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    zIndex: 10,
-    padding: 4,
-    backgroundColor: 'transparent',
-  },
+  plusBtnText: { color: '#19171d', fontWeight: 'bold', fontSize: 38 },
 });

@@ -106,8 +106,6 @@ export default function NotificationsTabScreen() {
         container: {
           flex: 1,
           backgroundColor: '#8D8BEA',
-          borderTopLeftRadius: 48,
-          borderTopRightRadius: 48,
           paddingTop: 0,
           paddingBottom: 0,
         },
