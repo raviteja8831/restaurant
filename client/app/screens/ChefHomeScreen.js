@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import OrderMostImg from '../../assets/images/order_most.png';
 import { router } from 'expo-router';
 import { fetchChefMessages, fetchChefOrders } from '../api/chefApi';
 import { setApiAuthToken } from '../api/api';
@@ -11,13 +12,14 @@ export default function ChefHomeScreen() {
   const [orders, setOrders] = useState([]);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [chefName, setChefName] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
         // Use common user profile and token keys
-        const userStr = await AsyncStorage.getItem('user_profile');
+        const userStr = await AsyncStorage.getItem('chef_profile');
         const token = await AsyncStorage.getItem('auth_token');
         let user = null;
         if (token) {
@@ -25,11 +27,12 @@ export default function ChefHomeScreen() {
         }
         if (userStr) {
           user = JSON.parse(userStr);
+          setChefName(user.firstname || user.name || '');
         }
         const ordersRes = await fetchChefOrders(user ? user.id : null);
         setOrders(ordersRes.orders || []);
-        const msgRes = await fetchChefMessages();
-        setMessages(msgRes.messages || []);
+  const msgRes = await fetchChefMessages(user ? user.id : null);
+  setMessages(msgRes.messages || []);
       } catch (e) {}
       setLoading(false);
     };
@@ -77,7 +80,7 @@ export default function ChefHomeScreen() {
       <View style={styles.nameRow}>
         <View>
           <Text style={styles.greetText}>Hi</Text>
-          <Text style={styles.greetText}>Kiran</Text>
+          <Text style={styles.greetText}>{chefName || 'Chef'}</Text>
           <Text style={styles.loginText}>Login at 8:00 AM</Text>
         </View>
         <TouchableOpacity style={styles.filterIcon}>
@@ -89,15 +92,21 @@ export default function ChefHomeScreen() {
       {/* Orders List */}
       <View style={{ marginHorizontal: 16, marginTop: 8 }}>
         {loading ? <ActivityIndicator color="#7b6eea" size="large" /> :
-          orders.map((order, i) => (
-            <View key={i} style={styles.orderCard}>
-              <View>
-                <Text style={styles.orderName}>{order.name || order.menuItemName || 'Order'}</Text>
-                <Text style={styles.orderTable}>{order.table || order.tableName || ''}</Text>
+          orders.map((order, i) => {
+            // Get first orderProduct and its menuitem for display
+            const firstProduct = order.orderProducts && order.orderProducts[0];
+            const menuItemName = firstProduct && firstProduct.menuitem ? firstProduct.menuitem.name : 'Order';
+            const tableNumber = order.tableId ? `Table ${order.tableId}` : '';
+            return (
+              <View key={i} style={styles.orderCard}>
+                <View>
+                  <Text style={styles.orderName}>{menuItemName}</Text>
+                  <Text style={styles.orderTable}>{tableNumber}</Text>
+                </View>
+                <Image source={OrderMostImg} style={[styles.orderIcon, { width: 32, height: 32 }]} resizeMode="contain" />
               </View>
-              <MaterialCommunityIcons name="cog-outline" size={28} color="#222" style={styles.orderIcon} />
-            </View>
-          ))}
+            );
+          })}
       </View>
     </View>
   );

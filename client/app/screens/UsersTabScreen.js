@@ -82,7 +82,7 @@ useEffect(() => {
   const fetchAllottedMenuItems = async (userId) => {
     try {
       const items = await getUserAllottedMenuItems(userId);
-      setAllottedUserMenuItemIds(items);
+      //setAllottedUserMenuItemIds(items);
       // Fix: backend returns { menuItems: [...] }
       setAllottedMenuItemIds((items.menuItems || []).map(i => i.id));
     } catch (_err) {
@@ -247,11 +247,11 @@ useEffect(() => {
           {/* Allotted Dishes Column */}
           <View style={[styles.usersAllottedCard, { flex: 1.2, marginRight: 12, minHeight: 220 }]}> 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <TouchableOpacity onPress={() => { setShowAddMenuModal(true); setAction("Remove"); }}>
+                  <TouchableOpacity onPress={() => { setShowAddMenuModal(true); setAction("remove"); }}>
                 <MaterialCommunityIcons name="minus" size={22} color="#6c63b5" />
               </TouchableOpacity>
               <Text style={styles.usersAllottedTitle}>Allotted Dishes</Text>
-              <TouchableOpacity onPress={() => {setShowAddMenuModal(true);setAction("Add");}}>
+                  <TouchableOpacity onPress={() => {setShowAddMenuModal(true);setAction("add");}}>
                 <MaterialCommunityIcons name="plus" size={22} color="#6c63b5" />
               </TouchableOpacity>
             </View>
@@ -362,6 +362,7 @@ useEffect(() => {
           visible={showAddMenuModal}
           onClose={() => setShowAddMenuModal(false)}
           menus={menusWithItems}
+          menuItemIds={menusWithItems.flatMap(menu => (menu.items || menu.menuItems || []).map(i => i.id))}
           allottedMenuItemIds={allottedMenuItemIds}
           action={action}
           onAdd={handleAddMenuItem}
