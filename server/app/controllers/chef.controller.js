@@ -57,11 +57,11 @@ chefController.chefLogin = async (req, res) => {
       return res.status(404).json({ message: "Chef not found" });
     }
 
-    /*  const valid = await bcrypt.compare(password, chef.password);
+    const valid = await bcrypt.compare(password, chef.password);
     if (!valid) {
       console.error("Invalid password for chef:", chef.phone);
       return res.status(401).json({ message: "Invalid credentials" });
-    } */
+    }
     if (!process.env.JWT_SECRET) {
       console.error("JWT_SECRET not set in environment");
       return res.status(500).json({ message: "JWT secret not configured" });
