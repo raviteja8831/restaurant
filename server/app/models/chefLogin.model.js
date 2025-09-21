@@ -1,53 +1,49 @@
 module.exports = (sequelize, Sequelize) => {
-  const BuffetOrder = sequelize.define(
-    "BuffetOrder",
+  const ChefLogin = sequelize.define(
+    "cheflogin",
     {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
-      userId: {
+      chefId: {
         type: Sequelize.INTEGER,
-        allowNull: true,
+        allowNull: false,
         references: {
-          model: "user",
+          model: "restaurantusers",
           key: "id",
         },
       },
       restaurantId: {
         type: Sequelize.INTEGER,
-        allowNull: true,
+        allowNull: false,
         references: {
-          model: "restaurant",
+          model: "restaurants",
           key: "id",
         },
       },
-      buffetId: {
-        type: Sequelize.INTEGER,
+      loginTime: {
+        type: Sequelize.STRING, // Using STRING to store formatted date
         allowNull: true,
-        references: {
-          model: "buffet",
-          key: "id",
-        },
       },
-      persons: {
-        type: Sequelize.INTEGER,
+      logOutTime: {
+        type: Sequelize.STRING, // Using STRING to store formatted date
         allowNull: true,
       },
       createdAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        defaultValue: Sequelize.NOW,
       },
       updatedAt: {
         type: Sequelize.DATE,
-        allowNull: true,
+        defaultValue: Sequelize.NOW,
       },
     },
     {
-      tableName: "buffetorders",
-      timestamps: true,
+      tableName: "cheflogin",
     }
   );
-  return BuffetOrder;
+
+  return ChefLogin;
 };

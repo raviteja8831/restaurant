@@ -123,7 +123,14 @@ export default function MenuListScreen() {
       try {
         params.hotelId = params.hotelId || 1;
         const response = await getRestaurantById(params.hotelId);
-        setIsBuffet(response.enableBuffet);
+        if (response.buffets) {
+          const hasActiveBuffet = response.buffets.some(
+            (buffet) => buffet?.isActive === true
+          );
+          setIsBuffet(hasActiveBuffet);
+        } else {
+          setIsBuffet(false);
+        }
         setRestaurant(response);
         console.log("Fetched bff data:", response);
       } catch (error) {

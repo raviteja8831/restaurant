@@ -16,6 +16,7 @@ exports.create = async (req, res) => {
     const buffetOrder = await BuffetOrder.create({
       userId: req.body.userId,
       restaurantId: req.body.restaurantId,
+      buffetId: req.body.buffetId || null,
       persons: req.body.persons || 1,
       createdAt: new Date(),
       updatedAt: new Date(),

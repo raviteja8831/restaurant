@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { fetchManagerDashboard, addUserByManager } from "../api/managerApi";
 import { fetchChefStats } from "../api/chefApi";
-import axios from 'axios';
+import axios from "axios";
 
-import { HEADINGS } from '../constants/headings';
-import ProfileModal from '../components/ProfileModal';
-import BuffetModal from './BuffetModal';
-import { LineChart } from 'react-native-chart-kit';
+import { HEADINGS } from "../constants/headings";
+import ProfileModal from "../components/ProfileModal";
+import BuffetModal from "./BuffetModal";
+import { LineChart } from "react-native-chart-kit";
 import {
   StyleSheet,
   View,
@@ -51,20 +51,23 @@ export default function ManagerDashboardScreenNew() {
 
   // State for API data
   const [dashboard, setDashboard] = useState(null);
-  const [managerName, setManagerName] = useState('');
-  const [restaurantName, setRestaurantName] = useState(HEADINGS.ManagerDashboardScreen);
-  const [today, setToday] = useState('');
-  const [date, setDate] = useState('');
+  const [managerName, setManagerName] = useState("");
+  const [restaurantName, setRestaurantName] = useState(
+    HEADINGS.ManagerDashboardScreen
+  );
+  const [today, setToday] = useState("");
+  const [date, setDate] = useState("");
   const [orders, setOrders] = useState(0);
   const [tablesServed, setTablesServed] = useState(0);
   const [customers, setCustomers] = useState(0);
-  const [transactionAmt, setTransactionAmt] = useState('');
+  const [transactionAmt, setTransactionAmt] = useState("");
   const [reservedTables, setReservedTables] = useState(0);
   const [nonReservedTables, setNonReservedTables] = useState(0);
   const [chefLogins, setChefLogins] = useState(0);
   const [chefLogouts, setChefLogouts] = useState(0);
-  const [buffet, setBuffet] = useState({ name: '', items: '', price: '' });
-  const [profile, setProfile] = useState({ name: '', phone: '' });
+  const [totalChefLogins, setTotalChefLogins] = useState(0);
+  const [buffet, setBuffet] = useState({ name: "", items: "", price: "" });
+  const [profile, setProfile] = useState({ name: "", phone: "" });
   const [salesData, setSalesData] = useState([]);
   const [incomeData, setIncomeData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,46 +78,55 @@ export default function ManagerDashboardScreenNew() {
   const [profileVisible, setProfileVisible] = useState(false);
   // BuffetModal state for create/edit
   const [buffetModalVisible, setBuffetModalVisible] = useState(false);
-  const [buffetModalType, setBuffetModalType] = useState('');
+  const [buffetModalType, setBuffetModalType] = useState("");
   // Fetch dashboard data on mount
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       try {
         // Get user data from AsyncStorage
-        const userStr = await AsyncStorage.getItem('user_profile');
-        const token = await AsyncStorage.getItem('auth_token');
+        const userStr = await AsyncStorage.getItem("user_profile");
+        const token = await AsyncStorage.getItem("auth_token");
         let user = null;
         if (userStr) {
           user = JSON.parse(userStr);
-          setManagerName(user.firstname || user.name || '');
-          setProfile({ name: user.firstname || user.name || '', phone: user.phone || '' });
+          setManagerName(user.firstname || user.name || "");
+          setProfile({
+            name: user.firstname || user.name || "",
+            phone: user.phone || "",
+          });
         }
-  // Pass restaurantId to dashboard API
-  const restaurantId = user?.restaurantId || user?.restaurant_id || user?.id;
-  const dash = await fetchManagerDashboard(restaurantId, token);
+        // Pass restaurantId to dashboard API
+        const restaurantId =
+          user?.restaurantId || user?.restaurant_id || user?.id;
+        const dash = await fetchManagerDashboard(restaurantId, token);
         setDashboard(dash);
-        setRestaurantName(dash.restaurantName || HEADINGS.ManagerDashboardScreen);
-        setToday(dash.today || '');
-        setDate(dash.date || '');
+        setRestaurantName(
+          dash.restaurantName || HEADINGS.ManagerDashboardScreen
+        );
+        setToday(dash.today || "");
+        setDate(dash.date || "");
         setOrders(dash.orders || 0);
         setTablesServed(dash.tablesServed || 0);
         setCustomers(dash.customers || 0);
-        setTransactionAmt(dash.transactionAmt || '');
+        setTransactionAmt(dash.transactionAmt || "");
         setReservedTables(dash.reservedTables || 0);
         setNonReservedTables(dash.nonReservedTables || 0);
         setBuffet({
-          name: dash.buffetName || 'Breakfast Buffet',
-          items: dash.buffetItems || 'Poori, All types of Dosa, Chow Chow Bath, Rice Bath',
-          price: dash.buffetPrice || '800 Rs',
+          name: dash.buffetName || "Breakfast Buffet",
+          items:
+            dash.buffetItems ||
+            "Poori, All types of Dosa, Chow Chow Bath, Rice Bath",
+          price: dash.buffetPrice || "800 Rs",
         });
         setSalesData(dash.salesData || []);
         setIncomeData(dash.incomeData || []);
         // Chef stats
         //const chefStats = await fetchChefStats();
         const chefStats = "";
-        setChefLogins(chefStats.logins || 0);
-        setChefLogouts(chefStats.logouts || 0);
+        setChefLogins(dash.currentlyLoggedIn || 0);
+        setChefLogouts(dash.chefLogouts || 0);
+        setTotalChefLogins(dash.chefLogins || 0);
       } catch (e) {
         // fallback to static if needed
       }
@@ -241,11 +253,11 @@ export default function ManagerDashboardScreenNew() {
     setSelectedTable(tableNum);
     setShowTableDetail(true);
   };
-   const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('auth_token');
-      await AsyncStorage.removeItem('user_profile');
-      router.replace('/login');
+      await AsyncStorage.removeItem("auth_token");
+      await AsyncStorage.removeItem("user_profile");
+      router.replace("/login");
     } catch (e) {
       // Optionally handle error
     }
@@ -253,310 +265,418 @@ export default function ManagerDashboardScreenNew() {
 
   return (
     <View style={styles.container}>
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 100 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <Appbar.Header style={styles.appbar}>
-            {/* Food menu icon at top left instead of logout */}
-            <TouchableOpacity style={{ marginLeft: 8 }} onPress={() => router.replace('/menu')}>
-              <MaterialCommunityIcons name="food" size={28} color="#6c63b5" />
-            </TouchableOpacity>
-            <Appbar.Content
-              title={restaurantName}
-              titleStyle={styles.appbarTitle}
-            />
-            <TouchableOpacity style={{ marginRight: 16 }}>
-              <Text style={styles.payBtnText}>Pay</Text>
-            </TouchableOpacity>
-          </Appbar.Header>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Appbar.Header style={styles.appbar}>
+          {/* Food menu icon at top left instead of logout */}
+          <TouchableOpacity
+            style={{ marginLeft: 8 }}
+            onPress={() => router.replace("/menu")}
+          >
+            <MaterialCommunityIcons name="food" size={28} color="#6c63b5" />
+          </TouchableOpacity>
+          <Appbar.Content
+            title={restaurantName}
+            titleStyle={styles.appbarTitle}
+          />
+          <TouchableOpacity style={{ marginRight: 16 }}>
+            <Text style={styles.payBtnText}>Pay</Text>
+          </TouchableOpacity>
+        </Appbar.Header>
 
-          <View style={styles.headerRow}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.todayText}>Today</Text>
-              <Text style={styles.dayText}>{today}</Text>
-              <Text style={styles.dateText}>{date}</Text>
-              <Text style={styles.greetText}>Hi {managerName}</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.todayText}>Today</Text>
+            <Text style={styles.dayText}>{today}</Text>
+            <Text style={styles.dateText}>{date}</Text>
+            <Text style={styles.greetText}>Hi {managerName}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.profileImg}
+            onPress={() => setProfileVisible(true)}
+          >
+            <MaterialCommunityIcons
+              name="account-circle"
+              size={60}
+              color="#7b6eea"
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Custom Info Card and Buffet Row */}
+        <View style={styles.infoBuffetRow}>
+          <Surface style={[styles.infoCard, { flex: 2, marginRight: 8 }]}>
+            <Text style={styles.infoTitle}>Current Info</Text>
+            <View style={{ width: "100%" }}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>No of Orders:</Text>
+                <Text style={styles.infoValue}>{orders}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>No of Tables Served:</Text>
+                <Text style={styles.infoValue}>{tablesServed}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>No of Customer:</Text>
+                <Text style={styles.infoValue}>{customers}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Transaction of Amt:</Text>
+                <Text style={styles.infoValue}>{transactionAmt}</Text>
+              </View>
+            </View>
+          </Surface>
+          <View style={styles.verticalDivider} />
+          <Surface
+            style={[
+              styles.buffetCard,
+              {
+                flex: 1,
+                marginLeft: 8,
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "column",
+                position: "relative",
+              },
+            ]}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <Text style={styles.buffetTitle}>Buffet</Text>
+              <View style={{ position: "relative" }}>
+                <TouchableOpacity
+                  onPress={() => setBuffetMenuVisible(!buffetMenuVisible)}
+                  style={styles.buffetMenuIcon}
+                >
+                  <MaterialCommunityIcons
+                    name="dots-vertical"
+                    size={28}
+                    color="#222"
+                  />
+                </TouchableOpacity>
+                {buffetMenuVisible && (
+                  <View
+                    style={[
+                      styles.buffetMenuPopupNew,
+                      { position: "absolute", top: 32, right: 0, zIndex: 100 },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.buffetMenuItemNew}
+                      onPress={() => {
+                        setBuffetMenuVisible(false);
+                        setBuffetModalType("Complimentary");
+                        setBuffetModalVisible(true);
+                      }}
+                    >
+                      <Text style={styles.buffetMenuTextNew}>
+                        Complimentary
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.buffetMenuItemNew}
+                      onPress={() => {
+                        setBuffetMenuVisible(false);
+                        setBuffetModalType("Pay the Price");
+                        setBuffetModalVisible(true);
+                      }}
+                    >
+                      <Text style={styles.buffetMenuTextNew}>
+                        Pay the Price
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
             </View>
             <TouchableOpacity
-              style={styles.profileImg}
-              onPress={() => setProfileVisible(true)}
+              style={styles.buffetIcon}
+              onPress={() => setBuffetVisible(true)}
             >
-              <MaterialCommunityIcons
-                name="account-circle"
-                size={60}
-                color="#7b6eea"
+              <Image
+                source={require("../../assets/images/buffet.png")}
+                style={styles.buffetImg}
+                resizeMode="contain"
               />
             </TouchableOpacity>
-          </View>
-
-          {/* Custom Info Card and Buffet Row */}
-          <View style={styles.infoBuffetRow}>
-            <Surface style={[styles.infoCard, {flex: 2, marginRight: 8}]}> 
-              <Text style={styles.infoTitle}>Current Info</Text>
-              <View style={{ width: "100%" }}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>No of Orders:</Text>
-                  <Text style={styles.infoValue}>{orders}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>No of Tables Served:</Text>
-                  <Text style={styles.infoValue}>{tablesServed}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>No of Customer:</Text>
-                  <Text style={styles.infoValue}>{customers}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Transaction of Amt:</Text>
-                  <Text style={styles.infoValue}>{transactionAmt}</Text>
-                </View>
-              </View>
-            </Surface>
-            <View style={styles.verticalDivider} />
-            <Surface style={[styles.buffetCard, {flex: 1, marginLeft: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'column', position: 'relative'}]}>
-              <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%'}}>
-                <Text style={styles.buffetTitle}>Buffet</Text>
-                <View style={{position: 'relative'}}>
-                  <TouchableOpacity onPress={() => setBuffetMenuVisible(!buffetMenuVisible)} style={styles.buffetMenuIcon}>
-                    <MaterialCommunityIcons name="dots-vertical" size={28} color="#222" />
-                  </TouchableOpacity>
-                  {buffetMenuVisible && (
-                    <View style={[styles.buffetMenuPopupNew, { position: 'absolute', top: 32, right: 0, zIndex: 100 }]}> 
-                      <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => {
-                        setBuffetMenuVisible(false);
-                        setBuffetModalType('Complimentary');
-                        setBuffetModalVisible(true);
-                      }}>
-                        <Text style={styles.buffetMenuTextNew}>Complimentary</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.buffetMenuItemNew} onPress={() => {
-                        setBuffetMenuVisible(false);
-                        setBuffetModalType('Pay the Price');
-                        setBuffetModalVisible(true);
-                      }}>
-                        <Text style={styles.buffetMenuTextNew}>Pay the Price</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-              </View>
-              <TouchableOpacity style={styles.buffetIcon} onPress={() => setBuffetVisible(true)}>
-                <Image source={require('../../assets/images/buffet.png')} style={styles.buffetImg} resizeMode="contain" />
-              </TouchableOpacity>
-              {/* Make buffet type clickable to open modal */}
-              <TouchableOpacity onPress={() => setBuffetVisible(true)} style={{marginTop: 8, alignItems: 'center', width: '100%'}}>
-                <Text style={{color: '#6c63b5', fontWeight: 'bold', fontSize: 15}}>
-                  {buffet.type || 'Buffet Type'}
-                </Text>
-              </TouchableOpacity>
-              <View style={{marginTop: 8, alignItems: 'center', width: '100%'}}>
-                <Switch
-                  value={buffetEnabled}
-                  onValueChange={async (val) => {
-                    setBuffetEnabled(val);
-                    try {
-                      const userStr = await AsyncStorage.getItem('user_profile');
-                      const user = userStr ? JSON.parse(userStr) : {};
-                      const restaurantId = user?.restaurantId || user?.restaurant_id || user?.id;
-                      await axios.post('http://localhost:8080/api/buffetdetails/all-status', {
+            {/* Make buffet type clickable to open modal */}
+            <TouchableOpacity
+              onPress={() => setBuffetVisible(true)}
+              style={{ marginTop: 8, alignItems: "center", width: "100%" }}
+            >
+              <Text
+                style={{ color: "#6c63b5", fontWeight: "bold", fontSize: 15 }}
+              >
+                {buffet.type || "Buffet Type"}
+              </Text>
+            </TouchableOpacity>
+            <View style={{ marginTop: 8, alignItems: "center", width: "100%" }}>
+              <Switch
+                value={buffetEnabled}
+                onValueChange={async (val) => {
+                  setBuffetEnabled(val);
+                  try {
+                    const userStr = await AsyncStorage.getItem("user_profile");
+                    const user = userStr ? JSON.parse(userStr) : {};
+                    const restaurantId =
+                      user?.restaurantId || user?.restaurant_id || user?.id;
+                    await axios.post(
+                      "http://localhost:8080/api/buffetdetails/all-status",
+                      {
                         restaurantId,
-                        isActive: val
-                      });
-                      // Optionally, refresh dashboard/buffet info here
-                    } catch (err) {
-                      // Optionally show error
-                    }
-                  }}
-                  trackColor={{ false: '#ccc', true: '#6c63b5' }}
-                  thumbColor={buffetEnabled ? '#fff' : '#888'}
-                  style={{ transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }] }}
+                        isActive: val,
+                      }
+                    );
+                    // Optionally, refresh dashboard/buffet info here
+                  } catch (err) {
+                    // Optionally show error
+                  }
+                }}
+                trackColor={{ false: "#ccc", true: "#6c63b5" }}
+                thumbColor={buffetEnabled ? "#fff" : "#888"}
+                style={{ transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }] }}
+              />
+            </View>
+          </Surface>
+
+          {/* Buffet Create/Edit Modal */}
+          <BuffetModal
+            visible={buffetModalVisible}
+            onClose={() => setBuffetModalVisible(false)}
+            initialType={buffetModalType}
+            buffet={buffet}
+            setBuffet={setBuffet}
+          />
+        </View>
+        {/* Buffet Modal */}
+        <Modal
+          visible={buffetVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setBuffetVisible(false)}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.2)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#ece9fa",
+                borderRadius: 20,
+                padding: 20,
+                width: 320,
+                alignItems: "flex-start",
+                shadowColor: "#000",
+                shadowOpacity: 0.2,
+                shadowRadius: 10,
+              }}
+            >
+              <TouchableOpacity
+                style={{ position: "absolute", top: 10, right: 10, zIndex: 20 }}
+                onPress={() => setBuffetVisible(false)}
+              >
+                <MaterialCommunityIcons name="close" size={28} color="#222" />
+              </TouchableOpacity>
+              <Text
+                style={{
+                  fontWeight: "bold",
+                  fontSize: 16,
+                  marginBottom: 8,
+                  color: "#222",
+                }}
+              >
+                Buffet Name :{" "}
+                <Text style={{ color: "#6c63b5" }}>{buffet.name}</Text>
+              </Text>
+              <Text style={{ fontSize: 14, color: "#222", marginBottom: 8 }}>
+                Items : <Text style={{ color: "#6c63b5" }}>{buffet.items}</Text>
+              </Text>
+              <Text style={{ fontSize: 14, color: "#222", marginBottom: 8 }}>
+                Buffet Price:{" "}
+                <Text style={{ color: "#6c63b5" }}>{buffet.price}</Text>
+              </Text>
+            </View>
+          </View>
+        </Modal>
+        {/* Profile Modal */}
+        <ProfileModal
+          visible={profileVisible}
+          onClose={() => setProfileVisible(false)}
+          managerName={profile.name}
+          phone={profile.phone}
+        />
+
+        {/* Table Status Card */}
+        <Surface style={styles.statusCard}>
+          <Text style={styles.statusTitle}>Table status</Text>
+          <View style={styles.statusRow}>
+            <View style={styles.statusBox}>
+              <Text style={styles.statusLabel}>Reserved Tables</Text>
+              <Text style={styles.statusValue}>{reservedTables}</Text>
+            </View>
+            <View style={styles.statusBox}>
+              <Text style={styles.statusLabel}>Non Reserved Tables</Text>
+              <Text style={styles.statusValue}>{nonReservedTables}</Text>
+            </View>
+          </View>
+        </Surface>
+
+        {/* Chef Status Card */}
+        <Surface style={styles.chefCard}>
+          <Text style={styles.chefTitle}>Chef Status</Text>
+          <View style={styles.chefRow}>
+            <View style={styles.chefBox}>
+              <Text style={styles.chefLabel}>Login</Text>
+              <Text style={styles.chefValue}>{chefLogins}</Text>
+            </View>
+            <View style={styles.chefBox}>
+              <Text style={styles.chefLabel}>No of Logins :</Text>
+              <Text style={styles.chefValue}>{totalChefLogins}</Text>
+            </View>
+            <View style={styles.chefBox}>
+              <Text style={styles.chefLabel}>Logout</Text>
+              <Text style={styles.chefValue}>{chefLogouts}</Text>
+            </View>
+          </View>
+        </Surface>
+
+        {/* Orders Chart */}
+        <Surface style={styles.chartCard}>
+          <View style={styles.chartHeader}>
+            <Text style={styles.chartTitle}>Produce Sales</Text>
+          </View>
+          <LineChart
+            data={{
+              labels: salesData.map((d) => d.label),
+              datasets: [
+                {
+                  data: salesData.map((d) => d.value),
+                },
+              ],
+            }}
+            width={Dimensions.get("window").width - 40}
+            height={180}
+            chartConfig={{
+              backgroundColor: "#ece9fa",
+              backgroundGradientFrom: "#ece9fa",
+              backgroundGradientTo: "#ece9fa",
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(108, 99, 181, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(108, 99, 181, ${opacity})`,
+              style: { borderRadius: 16 },
+              propsForDots: {
+                r: "5",
+                strokeWidth: "2",
+                stroke: "#6c63b5",
+              },
+            }}
+            bezier
+            style={{ borderRadius: 16 }}
+          />
+        </Surface>
+        {/* Income Graph */}
+        <Surface style={styles.chartCard}>
+          <View style={styles.chartHeader}>
+            <Text style={styles.chartTitle}>Income Graph</Text>
+          </View>
+          <LineChart
+            data={{
+              labels: incomeData.map((d) => d.label),
+              datasets: [
+                {
+                  data: incomeData.map((d) => d.value),
+                },
+              ],
+            }}
+            width={Dimensions.get("window").width - 40}
+            height={180}
+            chartConfig={{
+              backgroundColor: "#ece9fa",
+              backgroundGradientFrom: "#ece9fa",
+              backgroundGradientTo: "#ece9fa",
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(108, 99, 181, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(108, 99, 181, ${opacity})`,
+              style: { borderRadius: 16 },
+              propsForDots: {
+                r: "5",
+                strokeWidth: "2",
+                stroke: "#6c63b5",
+              },
+            }}
+            bezier
+            style={{ borderRadius: 16 }}
+          />
+        </Surface>
+
+        {/* Profile Modal */}
+        <Modal
+          visible={profileVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setProfileVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.profileCard}>
+              {/* Close cross icon */}
+              <TouchableOpacity
+                style={{
+                  position: "absolute",
+                  top: 10,
+                  right: 10,
+                  zIndex: 20,
+                }}
+                onPress={() => setProfileVisible(false)}
+              >
+                <MaterialCommunityIcons name="close" size={28} color="#222" />
+              </TouchableOpacity>
+              <View style={styles.profileCircle}>
+                <MaterialCommunityIcons
+                  name="account-circle"
+                  size={80}
+                  color="#7b6eea"
                 />
               </View>
-            </Surface>
-
-            {/* Buffet Create/Edit Modal */}
-            <BuffetModal
-              visible={buffetModalVisible}
-              onClose={() => setBuffetModalVisible(false)}
-              initialType={buffetModalType}
-              buffet={buffet}
-              setBuffet={setBuffet}
-            />
+              <Text style={styles.profileName}>{managerName}</Text>
+              <Text style={styles.profilePhone}>Ph no: {profile.phone}</Text>
+              <TouchableOpacity
+                style={styles.profileCloseBtn}
+                onPress={() => setProfileVisible(false)}
+              >
+                <MaterialCommunityIcons
+                  name="power"
+                  size={28}
+                  color="#6c63b5"
+                />
+                <Text style={styles.logoutText} onPress={() => handleLogout()}>
+                  Logout
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          {/* Buffet Modal */}
-          <Modal visible={buffetVisible} transparent animationType="fade" onRequestClose={() => setBuffetVisible(false)}>
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)', justifyContent: 'center', alignItems: 'center' }}>
-              <View style={{ backgroundColor: '#ece9fa', borderRadius: 20, padding: 20, width: 320, alignItems: 'flex-start', shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10 }}>
-                <TouchableOpacity style={{ position: 'absolute', top: 10, right: 10, zIndex: 20 }} onPress={() => setBuffetVisible(false)}>
-                  <MaterialCommunityIcons name="close" size={28} color="#222" />
-                </TouchableOpacity>
-                <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 8, color: '#222' }}>Buffet Name : <Text style={{ color: '#6c63b5' }}>{buffet.name}</Text></Text>
-                <Text style={{ fontSize: 14, color: '#222', marginBottom: 8 }}>Items : <Text style={{ color: '#6c63b5' }}>{buffet.items}</Text></Text>
-                <Text style={{ fontSize: 14, color: '#222', marginBottom: 8 }}>Buffet Price: <Text style={{ color: '#6c63b5' }}>{buffet.price}</Text></Text>
-              </View>
-            </View>
-          </Modal>
-          {/* Profile Modal */}
-          <ProfileModal visible={profileVisible} onClose={() => setProfileVisible(false)} managerName={profile.name} phone={profile.phone} />
-
-          {/* Table Status Card */}
-          <Surface style={styles.statusCard}>
-            <Text style={styles.statusTitle}>Table status</Text>
-            <View style={styles.statusRow}>
-              <View style={styles.statusBox}>
-                <Text style={styles.statusLabel}>Reserved Tables</Text>
-                <Text style={styles.statusValue}>{reservedTables}</Text>
-              </View>
-              <View style={styles.statusBox}>
-                <Text style={styles.statusLabel}>Non Reserved Tables</Text>
-                <Text style={styles.statusValue}>{nonReservedTables}</Text>
-              </View>
-            </View>
-          </Surface>
-
-          {/* Chef Status Card */}
-          <Surface style={styles.chefCard}>
-            <Text style={styles.chefTitle}>Chef Status</Text>
-            <View style={styles.chefRow}>
-              <View style={styles.chefBox}>
-                <Text style={styles.chefLabel}>Login</Text>
-                <Text style={styles.chefValue}>{chefLogins.toString().padStart(2, '0')}</Text>
-              </View>
-              <View style={styles.chefBox}>
-                <Text style={styles.chefLabel}>No of Logins :</Text>
-                <Text style={styles.chefValue}>{chefLogins.toString().padStart(2, '0')}</Text>
-              </View>
-              <View style={styles.chefBox}>
-                <Text style={styles.chefLabel}>Logout</Text>
-                <Text style={styles.chefValue}>{chefLogouts.toString().padStart(2, '0')}</Text>
-              </View>
-            </View>
-          </Surface>
-
-          {/* Orders Chart */}
-          <Surface style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>Produce Sales</Text>
-            </View>
-            <LineChart
-              data={{
-                labels: salesData.map(d => d.label),
-                datasets: [
-                  {
-                    data: salesData.map(d => d.value),
-                  },
-                ],
-              }} 
-              width={Dimensions.get("window").width - 40}
-              height={180}
-              chartConfig={{
-                backgroundColor: "#ece9fa",
-                backgroundGradientFrom: "#ece9fa",
-                backgroundGradientTo: "#ece9fa",
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(108, 99, 181, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(108, 99, 181, ${opacity})`,
-                style: { borderRadius: 16 },
-                propsForDots: {
-                  r: "5",
-                  strokeWidth: "2",
-                  stroke: "#6c63b5",
-                },
-              }}
-              bezier
-              style={{ borderRadius: 16 }}
-            />
-          </Surface>
-          {/* Income Graph */}
-          <Surface style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>Income Graph</Text>
-            </View>
-            <LineChart
-              data={{
-                labels: incomeData.map(d => d.label),
-                datasets: [
-                  {
-                    data: incomeData.map(d => d.value),
-                  },
-                ],
-              }}
-              width={Dimensions.get("window").width - 40}
-              height={180}
-              chartConfig={{
-                backgroundColor: "#ece9fa",
-                backgroundGradientFrom: "#ece9fa",
-                backgroundGradientTo: "#ece9fa",
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(108, 99, 181, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(108, 99, 181, ${opacity})`,
-                style: { borderRadius: 16 },
-                propsForDots: {
-                  r: "5",
-                  strokeWidth: "2",
-                  stroke: "#6c63b5",
-                },
-              }}
-              bezier
-              style={{ borderRadius: 16 }}
-            />
-          </Surface>
-
-          {/* Profile Modal */}
-          <Modal
-            visible={profileVisible}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setProfileVisible(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.profileCard}>
-                {/* Close cross icon */}
-                <TouchableOpacity
-                  style={{
-                    position: "absolute",
-                    top: 10,
-                    right: 10,
-                    zIndex: 20,
-                  }}
-                  onPress={() => setProfileVisible(false)}
-                >
-                  <MaterialCommunityIcons name="close" size={28} color="#222" />
-                </TouchableOpacity>
-                <View style={styles.profileCircle}>
-                  <MaterialCommunityIcons
-                    name="account-circle"
-                    size={80}
-                    color="#7b6eea"
-                  />
-                </View>
-                <Text style={styles.profileName}>{managerName}</Text>
-                <Text style={styles.profilePhone}>Ph no: {profile.phone}</Text>
-                <TouchableOpacity
-                  style={styles.profileCloseBtn}
-                  onPress={() => setProfileVisible(false)}
-                >
-                  <MaterialCommunityIcons
-                    name="power"
-                    size={28}
-                    color="#6c63b5"
-                  />
-                  <Text style={styles.logoutText} onPress={ ()=> handleLogout()}>Logout</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-        </ScrollView>
-    <TabBar />
-  </View>
+        </Modal>
+      </ScrollView>
+      <TabBar />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   infoBuffetRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
+    flexDirection: "row",
+    alignItems: "stretch",
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 8,
@@ -564,13 +684,13 @@ const styles = StyleSheet.create({
   infoBuffetCard: {
     minHeight: 180,
     borderRadius: 24,
-    backgroundColor: '#e3dbfa',
-    shadowColor: '#000',
+    backgroundColor: "#e3dbfa",
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 18,
   },
   buffetImg: {
@@ -580,46 +700,46 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   buffetMenuPopupNew: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingVertical: 4,
     paddingHorizontal: 0,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
     marginTop: 40,
     minWidth: 160,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   buffetMenuItemNew: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    width: '100%',
+    width: "100%",
   },
   buffetMenuTextNew: {
     fontSize: 16,
-    color: '#222',
-    fontWeight: 'bold',
+    color: "#222",
+    fontWeight: "bold",
   },
 
   verticalDivider: {
     width: 8,
   },
   buffetCard: {
-    backgroundColor: '#e3dbfa',
+    backgroundColor: "#e3dbfa",
     borderRadius: 20,
     padding: 16,
     minWidth: 120,
     minHeight: 120,
     elevation: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   buffetTitle: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
-    color: '#222',
+    color: "#222",
     marginBottom: 8,
   },
   buffetMenuIcon: {
@@ -627,16 +747,16 @@ const styles = StyleSheet.create({
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   buffetMenuPopup: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
@@ -648,11 +768,11 @@ const styles = StyleSheet.create({
   },
   buffetMenuText: {
     fontSize: 16,
-    color: '#222',
-    fontWeight: 'bold',
+    color: "#222",
+    fontWeight: "bold",
   },
   chefCard: {
-    backgroundColor: '#ece9fa',
+    backgroundColor: "#ece9fa",
     borderRadius: 16,
     padding: 18,
     marginHorizontal: 16,
@@ -661,29 +781,29 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   chefTitle: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
-    color: '#6c63b5',
+    color: "#6c63b5",
     marginBottom: 8,
   },
   chefRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   chefBox: {
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
   },
   chefLabel: {
     fontSize: 14,
-    color: '#222',
+    color: "#222",
     marginBottom: 4,
   },
   chefValue: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 18,
-    color: '#6c63b5',
+    color: "#6c63b5",
   },
   // QR Code Tab Styles
   qrContainer: {

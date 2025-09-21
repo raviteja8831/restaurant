@@ -1,21 +1,37 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, ActivityIndicator, Alert, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Modal,
+  ActivityIndicator,
+  Alert,
+  TextInput,
+} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TabBar from "./TabBarScreen";
 import AddMenuItemModal from "../Modals/AddMenuItemModal";
-import { getUserDashboard, sendMessageToUser, getMessagesForUser, getUserAllottedMenuItems, getRestaurantUsers, registerRestaurantUser } from "../api/userApi";
+import {
+  getUserDashboard,
+  sendMessageToUser,
+  getMessagesForUser,
+  getUserAllottedMenuItems,
+  getRestaurantUsers,
+  registerRestaurantUser,
+} from "../api/userApi";
 import { getMenusWithItems, saveUserMenuItems } from "../api/menuApi";
-import AddUserScreen from './AddUserScreen';
-import EditUserScreen from './EditUserScreen';
+import AddUserScreen from "./AddUserScreen";
+import EditUserScreen from "./EditUserScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function UsersTabScreen() {
-
-const periodOptions = [
-  { label: "Week", value: "week" },
-  { label: "Month", value: "month" },
-  { label: "Year", value: "year" },
-];
+  const periodOptions = [
+    { label: "Week", value: "week" },
+    { label: "Month", value: "month" },
+    { label: "Year", value: "year" },
+  ];
 
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
   const [dashboard, setDashboard] = useState(null);
@@ -27,48 +43,48 @@ const periodOptions = [
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [messages, setMessages] = useState([]);
-const [userList, setUserList] = useState([]);
-const [action, setAction] = useState("Add");
+  const [userList, setUserList] = useState([]);
+  const [action, setAction] = useState("Add");
   const [selectedUser, setSelectedUser] = useState(null);
   // Replace with actual restaurantId from context/auth if available
   const chefRoleId = 2;
-const [restaurantId, setRestaurantId] = useState("");
+  const [restaurantId, setRestaurantId] = useState("");
   const [allottedUserMenuItemIds, setAllottedUserMenuItemIds] = useState([]);
 
-useEffect(() => {
-  const loadUserAndFetchList = async () => {
-    try {
-      const userStr = await AsyncStorage.getItem('user_profile');
-      let user = null;
-      if (userStr) {
-        user = JSON.parse(userStr);
-        // Fix: set restaurantId using useState
-        setRestaurantId(user?.restaurant?.id || "");
+  useEffect(() => {
+    const loadUserAndFetchList = async () => {
+      try {
+        const userStr = await AsyncStorage.getItem("user_profile");
+        let user = null;
+        if (userStr) {
+          user = JSON.parse(userStr);
+          // Fix: set restaurantId using useState
+          setRestaurantId(user?.restaurant?.id || "");
+        }
+      } catch (err) {
+        // Optionally handle error
       }
+    };
+    loadUserAndFetchList();
+  }, []);
+
+  const fetchUserList = async () => {
+    try {
+      if (!restaurantId) return;
+      const users = await getRestaurantUsers(restaurantId, chefRoleId);
+      setUserList(users);
+      if (users.length > 0) setSelectedUser(users[0]);
     } catch (err) {
-      // Optionally handle error
+      setUserList([]);
+      setSelectedUser(null);
     }
   };
-  loadUserAndFetchList();
-}, []);
 
-const fetchUserList = async () => {
-  try {
-    if (!restaurantId) return;
-    const users = await getRestaurantUsers(restaurantId, chefRoleId);
-    setUserList(users);
-    if (users.length > 0) setSelectedUser(users[0]);
-  } catch (err) {
-    setUserList([]);
-    setSelectedUser(null);
-  }
-};
-
-useEffect(() => {
-  if (restaurantId) {
-    fetchUserList();
-  }
-}, [restaurantId]);
+  useEffect(() => {
+    if (restaurantId) {
+      fetchUserList();
+    }
+  }, [restaurantId]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -84,7 +100,7 @@ useEffect(() => {
       const items = await getUserAllottedMenuItems(userId);
       //setAllottedUserMenuItemIds(items);
       // Fix: backend returns { menuItems: [...] }
-      setAllottedMenuItemIds((items.menuItems || []).map(i => i.id));
+      setAllottedMenuItemIds((items.menuItems || []).map((i) => i.id));
     } catch (_err) {
       setAllottedMenuItemIds([]);
     }
@@ -145,24 +161,28 @@ useEffect(() => {
   const handleUpdateUser = async (userData) => {
     try {
       // Call backend update API (assume updateUser is available in userApi)
-      await require('../api/userApi').updateUser(userData.id, userData);
+      await require("../api/userApi").updateUser(userData.id, userData);
       setShowEditUserModal(false);
       fetchUserList();
       if (selectedUser && selectedUser.id === userData.id) {
         setSelectedUser({ ...selectedUser, ...userData });
       }
     } catch (err) {
-      Alert.alert('Error', err.message || 'Failed to update user');
+      Alert.alert("Error", err.message || "Failed to update user");
     }
   };
 
   const handleSaveUser = async (userData) => {
     try {
-      await registerRestaurantUser({ ...userData, restaurantId, role_id: chefRoleId });
+      await registerRestaurantUser({
+        ...userData,
+        restaurantId,
+        role_id: chefRoleId,
+      });
       setShowAddUserModal(false);
       fetchUserList();
     } catch (err) {
-      Alert.alert('Error', err.message || 'Failed to add user');
+      Alert.alert("Error", err.message || "Failed to add user");
     }
   };
 
@@ -172,68 +192,116 @@ useEffect(() => {
         {/* Users Avatars Row (Horizontally scrollable) */}
         <View style={styles.usersHeader}>
           <Text style={styles.usersTitle}>Users</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 4 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ alignItems: "center", paddingBottom: 4 }}
+          >
             {userList.map((user, idx) => (
               <TouchableOpacity
                 key={user.id}
-                style={[styles.userAvatarCol, selectedUser && selectedUser.id === user.id && { borderColor: '#6c63b5', borderWidth: 2 }]}
+                style={[
+                  styles.userAvatarCol,
+                  selectedUser &&
+                    selectedUser.id === user.id && {
+                      borderColor: "#6c63b5",
+                      borderWidth: 2,
+                    },
+                ]}
                 onPress={() => setSelectedUser(user)}
               >
                 <Text style={styles.userAvatarName}>{user?.name}</Text>
                 <View style={styles.userAvatarCircle}>
-                  <MaterialCommunityIcons name="account" size={32} color="#6c63b5" />
+                  <MaterialCommunityIcons
+                    name="account"
+                    size={32}
+                    color="#6c63b5"
+                  />
                 </View>
                 <Text style={styles.userAvatarRole}>{user?.role}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
-            {/* Add User Plus Icon */}
-            <View style={{ alignItems: 'left', marginTop: 8 }}>
-              <TouchableOpacity
-                style={{ backgroundColor: '#ece9fa', borderRadius: 28, width: 56, height: 56, alignItems: 'center', justifyContent: 'center', elevation: 2 }}
-                onPress={() => setShowAddUserModal(true)}
-              >
-                <MaterialCommunityIcons name="plus" size={32} color="#6c63b5" />
-              </TouchableOpacity>
-              <Text style={{ fontSize: 13, color: '#222', fontWeight: 'bold', marginTop: 4, marginLeft:15 }}>Add</Text>
-            </View>
-            {/* Add User Modal */}
-            <Modal visible={showAddUserModal} animationType="slide" transparent={true} onRequestClose={() => setShowAddUserModal(false)}>
-              <View style={styles.addUserModalOverlay}>
-                <View style={styles.addUserModalBox}>
-                  <AddUserScreen
-                    visible={showAddUserModal}
-                    onClose={() => setShowAddUserModal(false)}
-                    onSave={handleSaveUser}
-                  />
-                </View>
+          {/* Add User Plus Icon */}
+          <View style={{ alignItems: "left", marginTop: 8 }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#ece9fa",
+                borderRadius: 28,
+                width: 56,
+                height: 56,
+                alignItems: "center",
+                justifyContent: "center",
+                elevation: 2,
+              }}
+              onPress={() => setShowAddUserModal(true)}
+            >
+              <MaterialCommunityIcons name="plus" size={32} color="#6c63b5" />
+            </TouchableOpacity>
+            <Text
+              style={{
+                fontSize: 13,
+                color: "#222",
+                fontWeight: "bold",
+                marginTop: 4,
+                marginLeft: 15,
+              }}
+            >
+              Add
+            </Text>
+          </View>
+          {/* Add User Modal */}
+          <Modal
+            visible={showAddUserModal}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => setShowAddUserModal(false)}
+          >
+            <View style={styles.addUserModalOverlay}>
+              <View style={styles.addUserModalBox}>
+                <AddUserScreen
+                  visible={showAddUserModal}
+                  onClose={() => setShowAddUserModal(false)}
+                  onSave={handleSaveUser}
+                />
               </View>
-            </Modal>
+            </View>
+          </Modal>
         </View>
-
-
-
-
 
         {/* Profile Row (with settings icon) */}
         <View style={styles.usersProfileRow}>
           <View style={styles.usersProfileColLeft}>
             <View style={styles.usersProfileAvatarCircle}>
-              <MaterialCommunityIcons name="account" size={48} color="#6c63b5" />
+              <MaterialCommunityIcons
+                name="account"
+                size={48}
+                color="#6c63b5"
+              />
             </View>
             <View>
               <Text style={styles.usersProfileName}>{selectedUser?.name}</Text>
               <Text style={styles.usersProfileRole}>{selectedUser?.role}</Text>
-              <Text style={styles.usersLoginTime}>Today Login Time : 8:00 AM</Text>
+              <Text style={styles.usersLoginTime}>
+                Today Login Time : {dashboard.todayLoginTime}
+              </Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.usersProfileSettingsBtn} onPress={() => setShowEditUserModal(true)}>
+          <TouchableOpacity
+            style={styles.usersProfileSettingsBtn}
+            onPress={() => setShowEditUserModal(true)}
+          >
             <MaterialCommunityIcons name="cog" size={28} color="#6c63b5" />
           </TouchableOpacity>
         </View>
 
         {/* Edit User Modal */}
-        <Modal visible={showEditUserModal} animationType="slide" transparent={true} onRequestClose={() => setShowEditUserModal(false)}>
+        <Modal
+          visible={showEditUserModal}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowEditUserModal(false)}
+        >
           <EditUserScreen
             visible={showEditUserModal}
             onClose={() => setShowEditUserModal(false)}
@@ -243,59 +311,176 @@ useEffect(() => {
         </Modal>
 
         {/* Dashboard Layout: Menu List in one column, other three sections in one column (2 rows) */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginHorizontal: 12, marginTop: 8, marginBottom: 8 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginHorizontal: 12,
+            marginTop: 8,
+            marginBottom: 8,
+          }}
+        >
           {/* Allotted Dishes Column */}
-          <View style={[styles.usersAllottedCard, { flex: 1.2, marginRight: 12, minHeight: 220 }]}> 
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <TouchableOpacity onPress={() => { setShowAddMenuModal(true); setAction("remove"); }}>
-                <MaterialCommunityIcons name="minus" size={22} color="#6c63b5" />
+          <View
+            style={[
+              styles.usersAllottedCard,
+              { flex: 1.2, marginRight: 12, minHeight: 220 },
+            ]}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setShowAddMenuModal(true);
+                  setAction("remove");
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="minus"
+                  size={22}
+                  color="#6c63b5"
+                />
               </TouchableOpacity>
               <Text style={styles.usersAllottedTitle}>Allotted Dishes</Text>
-                  <TouchableOpacity onPress={() => {setShowAddMenuModal(true);setAction("add");}}>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowAddMenuModal(true);
+                  setAction("add");
+                }}
+              >
                 <MaterialCommunityIcons name="plus" size={22} color="#6c63b5" />
               </TouchableOpacity>
             </View>
             <ScrollView>
               {allottedUserMenuItemIds?.map((dish, idx) => (
-                <Text key={dish.id} style={styles.usersAllottedDish}>{dish.name}</Text>
+                <Text key={dish.id} style={styles.usersAllottedDish}>
+                  {dish.name}
+                </Text>
               ))}
             </ScrollView>
           </View>
 
           {/* Right Column: Orders stacked vertically, then Top 3 Orders */}
-          <View style={{ flex: 2, flexDirection: 'column', justifyContent: 'flex-start' }}>
+          <View
+            style={{
+              flex: 2,
+              flexDirection: "column",
+              justifyContent: "flex-start",
+            }}
+          >
             {/* Total Orders Completed (All Time) */}
-            <View style={{ backgroundColor: '#ece9fa', borderRadius: 16, padding: 18, alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 13, marginBottom: 2 }}>Total Orders Completed</Text>
-              <Text style={{ fontSize: 48, fontWeight: 'bold', color: '#222' }}>{dashboard?.totalOrdersAll ?? '--'}</Text>
+            <View
+              style={{
+                backgroundColor: "#ece9fa",
+                borderRadius: 16,
+                padding: 18,
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <Text
+                style={{
+                  color: "#6c63b5",
+                  fontWeight: "bold",
+                  fontSize: 13,
+                  marginBottom: 2,
+                }}
+              >
+                Total Orders Completed
+              </Text>
+              <Text style={{ fontSize: 48, fontWeight: "bold", color: "#222" }}>
+                {dashboard?.totalOrdersAll ?? "--"}
+              </Text>
             </View>
             {/* Period Wise Orders */}
-            <View style={{ backgroundColor: '#ece9fa', borderRadius: 16, padding: 18, alignItems: 'center', marginBottom: 12, position: 'relative' }}>
-              <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 13, marginBottom: 2 }}>Total Orders Completed</Text>
-              <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#222' }}>{dashboard?.totalOrders ?? '--'}</Text>
-              <Text style={{ color: '#888', fontWeight: 'bold', fontSize: 16, marginTop: 2 }}>{dashboard?.totalOrders}/{dashboard?.totalOrdersAll}</Text>
+            <View
+              style={{
+                backgroundColor: "#ece9fa",
+                borderRadius: 16,
+                padding: 18,
+                alignItems: "center",
+                marginBottom: 12,
+                position: "relative",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#6c63b5",
+                  fontWeight: "bold",
+                  fontSize: 13,
+                  marginBottom: 2,
+                }}
+              >
+                Total Orders Completed
+              </Text>
+              <Text style={{ fontSize: 36, fontWeight: "bold", color: "#222" }}>
+                {dashboard?.totalOrders ?? "--"}
+              </Text>
+              <Text
+                style={{
+                  color: "#888",
+                  fontWeight: "bold",
+                  fontSize: 16,
+                  marginTop: 2,
+                }}
+              >
+                {dashboard?.totalOrders}/{dashboard?.totalOrdersAll}
+              </Text>
               {/* Floating Period Dropdown */}
-              <View style={{ position: 'absolute', top: 12, right: 12 }}>
+              <View style={{ position: "absolute", top: 12, right: 12 }}>
                 <TouchableOpacity
-                  style={{ backgroundColor: '#d1c4e9', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 4 }}
-                  onPress={() => setShowPeriodDropdown(v => !v)}
+                  style={{
+                    backgroundColor: "#d1c4e9",
+                    borderRadius: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 4,
+                  }}
+                  onPress={() => setShowPeriodDropdown((v) => !v)}
                 >
-                  <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 15 }}>
-                    {periodOptions.find(p => p.value === period)?.label}
+                  <Text
+                    style={{
+                      color: "#6c63b5",
+                      fontWeight: "bold",
+                      fontSize: 15,
+                    }}
+                  >
+                    {periodOptions.find((p) => p.value === period)?.label}
                   </Text>
                 </TouchableOpacity>
                 {showPeriodDropdown && (
-                  <View style={{ position: 'absolute', top: 36, right: 0, backgroundColor: '#ece9fa', borderRadius: 8, zIndex: 10, minWidth: 80 }}>
-                    {periodOptions.map(opt => (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 36,
+                      right: 0,
+                      backgroundColor: "#ece9fa",
+                      borderRadius: 8,
+                      zIndex: 10,
+                      minWidth: 80,
+                    }}
+                  >
+                    {periodOptions.map((opt) => (
                       <TouchableOpacity
                         key={opt.value}
-                        style={{ padding: 10, backgroundColor: period === opt.value ? '#d1c4e9' : 'transparent' }}
+                        style={{
+                          padding: 10,
+                          backgroundColor:
+                            period === opt.value ? "#d1c4e9" : "transparent",
+                        }}
                         onPress={() => {
                           setPeriod(opt.value);
                           setShowPeriodDropdown(false);
                         }}
                       >
-                        <Text style={{ color: '#6c63b5', fontWeight: 'bold' }}>{opt.label}</Text>
+                        <Text style={{ color: "#6c63b5", fontWeight: "bold" }}>
+                          {opt.label}
+                        </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -303,71 +488,190 @@ useEffect(() => {
               </View>
             </View>
             {/* Top Three Orders */}
-            <View style={{ backgroundColor: '#ece9fa', borderRadius: 16, padding: 18, alignItems: 'center' }}>
-              <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 13, marginBottom: 2 }}>Top three Orders of the Day</Text>
+            <View
+              style={{
+                backgroundColor: "#ece9fa",
+                borderRadius: 16,
+                padding: 18,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#6c63b5",
+                  fontWeight: "bold",
+                  fontSize: 13,
+                  marginBottom: 2,
+                }}
+              >
+                Top three Orders of the Day
+              </Text>
               {dashboard?.topOrders && dashboard.topOrders.length > 0 ? (
                 dashboard.topOrders.map((order, idx) => (
-                  <Text key={idx} style={{ color: '#222', fontWeight: 'bold', fontSize: 15, marginTop: 2 }}>{order.name}: {order.count}</Text>
+                  <Text
+                    key={idx}
+                    style={{
+                      color: "#222",
+                      fontWeight: "bold",
+                      fontSize: 15,
+                      marginTop: 2,
+                    }}
+                  >
+                    {order.name}: {order.count}
+                  </Text>
                 ))
               ) : (
-                <Text style={{ color: '#888', fontSize: 14, marginTop: 4 }}>No data</Text>
+                <Text style={{ color: "#888", fontSize: 14, marginTop: 4 }}>
+                  No data
+                </Text>
               )}
             </View>
           </View>
         </View>
 
-
-      {/* Message Section */}
-      <View style={{ marginHorizontal: 18, marginBottom: 12 }}>
-        <Text style={{ color: '#6c63b5', fontWeight: 'bold', fontSize: 16, marginBottom: 4 }}>Message</Text>
-        <View style={{ backgroundColor: '#ece9fa', borderRadius: 12, padding: 10, marginBottom: 6 }}>
-          {messages.length ? (
-            <Text style={{ color: '#333', fontSize: 14 }}>{messages[messages.length - 1].message}</Text>
-          ) : (
-            <Text style={{ color: '#888', fontSize: 14 }}>No messages yet</Text>
-          )}
+        {/* Message Section */}
+        <View style={{ marginHorizontal: 18, marginBottom: 12 }}>
+          <Text
+            style={{
+              color: "#6c63b5",
+              fontWeight: "bold",
+              fontSize: 16,
+              marginBottom: 4,
+            }}
+          >
+            Message
+          </Text>
+          <View
+            style={{
+              backgroundColor: "#ece9fa",
+              borderRadius: 12,
+              padding: 10,
+              marginBottom: 6,
+            }}
+          >
+            {messages.length ? (
+              <Text style={{ color: "#333", fontSize: 14 }}>
+                {messages[messages.length - 1].message}
+              </Text>
+            ) : (
+              <Text style={{ color: "#888", fontSize: 14 }}>
+                No messages yet
+              </Text>
+            )}
+          </View>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#fff",
+              borderRadius: 8,
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+            }}
+          >
+            <TextInput
+              style={{ flex: 1, fontSize: 15, color: "#222", padding: 6 }}
+              placeholder="Message..."
+              value={message}
+              onChangeText={setMessage}
+              editable={!sending}
+            />
+            <TouchableOpacity
+              onPress={handleSendMessage}
+              disabled={sending || !message.trim()}
+              style={{ marginLeft: 8 }}
+            >
+              <MaterialCommunityIcons
+                name="send"
+                size={24}
+                color={sending || !message.trim() ? "#ccc" : "#6c63b5"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
-          <TextInput
-            style={{ flex: 1, fontSize: 15, color: '#222', padding: 6 }}
-            placeholder="Message..."
-            value={message}
-            onChangeText={setMessage}
-            editable={!sending}
-          />
-          <TouchableOpacity onPress={handleSendMessage} disabled={sending || !message.trim()} style={{ marginLeft: 8 }}>
-            <MaterialCommunityIcons name="send" size={24} color={sending || !message.trim() ? '#ccc' : '#6c63b5'} />
-          </TouchableOpacity>
-        </View>
-  </View>
 
         {/* Today's Orders List */}
         <View style={{ marginHorizontal: 18, marginTop: 12 }}>
-          <Text style={{ fontWeight: 'bold', color: '#6c63b5', fontSize: 16, marginBottom: 6 }}>Today</Text>
-          {dashboard?.todaysOrders?.length ? dashboard.todaysOrders.map((order, idx) => {
-            // Combine all items into a single string, e.g. "Masala Dosa 4 Nos to Table No 5"
-            // If you have table info, append it; else, just show items
-            const orderText = order.items.map(item => `${item.name} ${item.qty} Nos`).join(', ');
-            // If you have table info, add here: + ' to Table No X'
-            return (
-              <View key={order.id} style={{ backgroundColor: '#e6e6fa', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ color: '#222', fontSize: 15 }}>{orderText}</Text>
-                <Text style={{ color: '#555', fontSize: 13, marginLeft: 12, minWidth: 54, textAlign: 'right' }}>{new Date(order.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-              </View>
-            );
-          }) : <Text style={{ color: '#fff' }}>No orders today</Text>}
+          <Text
+            style={{
+              fontWeight: "bold",
+              color: "#6c63b5",
+              fontSize: 16,
+              marginBottom: 6,
+            }}
+          >
+            Today
+          </Text>
+          {dashboard?.todaysOrders?.length ? (
+            dashboard.todaysOrders.map((order, idx) => {
+              // Combine all items into a single string, e.g. "Masala Dosa 4 Nos to Table No 5"
+              // If you have table info, append it; else, just show items
+              const orderText = order.items
+                .map((item) => `${item.name} ${item.qty} Nos`)
+                .join(", ");
+              // If you have table info, add here: + ' to Table No X'
+              return (
+                <View
+                  key={order.id}
+                  style={{
+                    backgroundColor: "#e6e6fa",
+                    borderRadius: 8,
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    marginBottom: 6,
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "#222", fontSize: 15 }}>
+                    {orderText}
+                  </Text>
+                  <Text
+                    style={{
+                      color: "#555",
+                      fontSize: 13,
+                      marginLeft: 12,
+                      minWidth: 54,
+                      textAlign: "right",
+                    }}
+                  >
+                    {new Date(order.time).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
+              );
+            })
+          ) : (
+            <Text style={{ color: "#fff" }}>No orders today</Text>
+          )}
         </View>
-        {loading && <ActivityIndicator size="large" color="#6c63b5" style={{ marginTop: 24 }} />}
+        {loading && (
+          <ActivityIndicator
+            size="large"
+            color="#6c63b5"
+            style={{ marginTop: 24 }}
+          />
+        )}
         <AddMenuItemModal
           visible={showAddMenuModal}
           onClose={() => setShowAddMenuModal(false)}
           menus={menusWithItems}
-          menuItemIds={menusWithItems.flatMap(menu => (menu.items || menu.menuItems || []).map(i => i.id))}
+          menuItemIds={menusWithItems.flatMap((menu) =>
+            (menu.items || menu.menuItems || []).map((i) => i.id)
+          )}
           allottedMenuItemIds={allottedMenuItemIds}
           action={action}
           onAdd={handleAddMenuItem}
         />
-        {console.log('AddMenuItemModal rendered', { showAddMenuModal, menusWithItems, allottedMenuItemIds, action })}
+        {console.log("AddMenuItemModal rendered", {
+          showAddMenuModal,
+          menusWithItems,
+          allottedMenuItemIds,
+          action,
+        })}
         <TabBar />
       </ScrollView>
     </>
@@ -560,18 +864,18 @@ const styles = StyleSheet.create({
   },
   addUserModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.10)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.10)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   addUserModalBox: {
-    backgroundColor: '#ded7fa',
+    backgroundColor: "#ded7fa",
     borderRadius: 36,
     padding: 32,
     minWidth: 340,
     maxWidth: 420,
-    width: '90%',
-    shadowColor: '#000',
+    width: "90%",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.18,
     shadowRadius: 16,

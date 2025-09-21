@@ -3,6 +3,7 @@ const Restaurant = db.restaurant;
 const RestaurantType = db.restaurantType;
 const RestaurantReview = db.restaurantReview;
 const RestaurantRating = db.restaurantRating;
+const Buffet = db.buffet; // Add Buffet model
 
 // Create a new restaurant
 exports.create = async (req, res) => {
@@ -24,7 +25,7 @@ exports.findAll = async (req, res) => {
   }
 };
 
-// Get a single restaurant by id with reviews
+// Get a single restaurant by id with reviews and buffet details
 exports.findOne = async (req, res) => {
   try {
     const restaurant = await Restaurant.findByPk(req.params.id, {
@@ -34,11 +35,68 @@ exports.findOne = async (req, res) => {
           as: "restaurantReviews",
           attributes: ["id", "rating", "review", "createdAt", "userId"],
         },
+        {
+          model: Buffet,
+          as: "buffets",
+          attributes: [
+            "id",
+            "restaurantId",
+            "name",
+            "menu",
+            "type",
+            "price",
+            "isActive",
+          ],
+          /*  where: {
+            isAcrestaurantIdtive: true,
+          }, */
+          required: false, // Use left join to get restaurant even if no buffet exists
+        },
       ],
+      attributes: {
+        include: [
+          "id",
+          "name",
+          "address",
+          // "enableBuffet",
+          "enableVeg",
+          "enableNonveg",
+          "enableTableService",
+          "enableSelfService",
+          "ambianceImage",
+          "logoImage",
+          "createdAt",
+          "updatedAt",
+        ],
+      },
     });
-    if (!restaurant) return res.status(404).json({ error: "Not found" });
+
+    if (!restaurant)
+      return res.status(404).json({ error: "Restaurant not found" });
+
+    // Format buffet times in Indian format
+    /*  const formattedRestaurant = {
+      ...restaurant.toJSON(),
+      buffets: restaurant.buffets?.map((buffet) => ({
+        ...buffet,
+        startTime: new Date(buffet.startTime).toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",  
+          hour12: true,
+          timeZone: "Asia/Kolkata",
+        }),
+        endTime: new Date(buffet.endTime).toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+          timeZone: "Asia/Kolkata",
+        }),
+      })),
+    };
+ */
     res.status(200).json(restaurant);
   } catch (err) {
+    console.error("Error in findOne:", err);
     res.status(500).json({ error: err.message });
   }
 };

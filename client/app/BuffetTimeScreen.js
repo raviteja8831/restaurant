@@ -12,15 +12,86 @@ import {
   TextInput,
 } from "react-native";
 import { buffetsimescreenstyles } from "./styles/responsive";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+
+// Extend the existing styles
+Object.assign(buffetsimescreenstyles, {
+  buffetCard: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 12,
+    marginHorizontal: 10,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    width: "95%",
+    alignSelf: "center",
+  },
+  selectedCard: {
+    backgroundColor: "#f0f0ff",
+    borderColor: "#6c63ff",
+    borderWidth: 1,
+  },
+  cardContent: {
+    width: "100%",
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  cardBody: {
+    flexDirection: "column",
+  },
+  checkboxContainer: {
+    padding: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: "#6c63ff",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  checkboxSelected: {
+    backgroundColor: "#fff",
+  },
+  buffetName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    flex: 1,
+  },
+  buffetMenu: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  buffetCardPrice: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#6c63ff",
+    alignSelf: "flex-end",
+  },
+});
 // import { buffetData } from "./Mock/CustomerHome";
 import { useEffect } from "react";
 import { createBuffetOrder } from "./api/buffetOrder";
 import { getRestaurantById } from "./api/restaurantApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getBuffetDetails } from "./api/buffetApi";
 const BuffetTimeScreen = () => {
   const [persons, setPersons] = React.useState(0);
-  const [currentBuffet, setcurrentBuffet] = React.useState(0);
+  const [currentBuffet, setcurrentBuffet] = React.useState([]);
+  const [selectedBuffet, setSelectedBuffet] = React.useState(null);
   const [userId, setUserId] = React.useState(null);
   const params = useLocalSearchParams();
   // const currentBuffet = buffetData[0];
@@ -58,34 +129,57 @@ const BuffetTimeScreen = () => {
       },
     });
   };
-  useEffect(() => {
-    const fetchRestaurantData = async () => {
-      try {
-        if (params.hotelId) {
-          const data = await getRestaurantById(params.hotelId);
-          console.log("Fetched restaurant data:", data);
-          setcurrentBuffet(data);
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchRestaurantData = async () => {
+        try {
+          if (params.hotelId) {
+            const data = await getBuffetDetails(params.hotelId);
+            console.log("Fetched restaurant data:", data);
+            // Filter only active buffets
+            const activeBuffets = Array.isArray(data)
+              ? data.filter((buffet) => buffet.isActive === true)
+              : [];
+            setcurrentBuffet(activeBuffets);
+          }
+        } catch (error) {
+          console.error("Error fetching restaurant details:", error);
+          // Alert.alert("Error", "Failed to load restaurant details");
         }
-      } catch (error) {
-        console.error("Error fetching restaurant details:", error);
-        // Alert.alert("Error", "Failed to load restaurant details");
-      }
-    };
+      };
 
-    fetchRestaurantData();
-  }, [params.hotelId]);
+      fetchRestaurantData();
+    }, [params.hotelId])
+  );
   const handleCreateBuffetOrder = async () => {
+    if (!selectedBuffet) {
+      alert("Please select a buffet option");
+      return;
+    }
     // Logic to create buffet order and navigate to payment
     try {
       var obj = {
-        userId: userId, //params.
+        userId: userId,
         restaurantId: params.hotelId || 1,
         persons: persons,
+        buffetId: selectedBuffet.id,
+        price: selectedBuffet.price,
+        totalAmount: selectedBuffet.price * persons,
       };
-      const data = await createBuffetOrder(obj);
+      const response = await createBuffetOrder(obj);
+      if (response) {
+        router.push({
+          pathname: "/buffetConfirm",
+          params: {
+            hotelName: params.hotelName,
+            hotelId: params.hotelId,
+            ishotel: params.ishotel,
+          },
+        });
+      }
     } catch (error) {
       console.error("Error creating buffet order:", error);
-      // Alert.alert("Error", "Failed to create buffet order");
+      alert("Failed to create buffet order");
     }
   };
 
@@ -123,9 +217,62 @@ const BuffetTimeScreen = () => {
         {/* Buffet Info */}
         <View style={buffetsimescreenstyles.buffetInfo}>
           <Text style={buffetsimescreenstyles.buffetTitle}>
-            {/* {currentBuffet.type} */}
             Available Buffet Items
           </Text>
+
+          {/* Buffet Cards */}
+          {currentBuffet.map((buffet, index) => (
+            <TouchableOpacity
+              key={buffet.id}
+              style={[
+                buffetsimescreenstyles.buffetCard,
+                selectedBuffet?.id === buffet.id &&
+                  buffetsimescreenstyles.selectedCard,
+              ]}
+              onPress={() => {
+                setSelectedBuffet(
+                  selectedBuffet?.id === buffet.id ? null : buffet
+                );
+              }}
+            >
+              <View style={buffetsimescreenstyles.cardContent}>
+                <View style={buffetsimescreenstyles.cardHeader}>
+                  <Text style={buffetsimescreenstyles.buffetName}>
+                    {buffet.name}
+                  </Text>
+                  <View style={buffetsimescreenstyles.checkboxContainer}>
+                    <View
+                      style={[
+                        buffetsimescreenstyles.checkbox,
+                        selectedBuffet?.id === buffet.id &&
+                          buffetsimescreenstyles.checkboxSelected,
+                      ]}
+                    >
+                      {selectedBuffet?.id === buffet.id && (
+                        <MaterialCommunityIcons
+                          name="check"
+                          size={16}
+                          color="#6c63ff"
+                        />
+                      )}
+                    </View>
+                  </View>
+                </View>
+                <View style={buffetsimescreenstyles.cardBody}>
+                  <Text
+                    style={buffetsimescreenstyles.buffetMenu}
+                    numberOfLines={2}
+                  >
+                    {JSON.parse(buffet.menu || "[]").join(" • ")}
+                  </Text>
+                  <Text style={buffetsimescreenstyles.buffetCardPrice}>
+                    ₹{buffet.price}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+
           <Text style={buffetsimescreenstyles.personsLabel}>
             No. of Persons
           </Text>
@@ -159,7 +306,7 @@ const BuffetTimeScreen = () => {
 
         {/* Price */}
         <Text style={buffetsimescreenstyles.price}>
-          Buffet Price Per Person {currentBuffet.buffetPrice} Rs
+          Buffet Price Per Person Rs {selectedBuffet?.price}
         </Text>
 
         {/* Total Amount and Pay Button */}
@@ -167,7 +314,7 @@ const BuffetTimeScreen = () => {
           <View style={buffetsimescreenstyles.totalContainer}>
             <Text style={buffetsimescreenstyles.totalLabel}>Total Amount:</Text>
             <Text style={buffetsimescreenstyles.totalAmount}>
-              Rs {(currentBuffet.buffetPrice || 0) * persons}
+              Rs {(selectedBuffet?.price || 0) * persons}
             </Text>
           </View>
 

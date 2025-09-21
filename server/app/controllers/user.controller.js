@@ -1,9 +1,35 @@
 const db = require("../models");
 const { Op } = require("sequelize");
+// Use Op directly instead of db.Sequelize.Op
 // Secret key for JWT
 const SECRET_KEY = "your_secret_key";
 
 const jwt = require("jsonwebtoken");
+
+// Time formatting helpers
+const formatIndianDateTime = (date) => {
+  const options = {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  };
+  return new Date(date).toLocaleString("en-IN", options).replace(",", "");
+};
+
+const formatShortTime = (date) => {
+  const options = {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  };
+  return new Date(date).toLocaleString("en-IN", options);
+};
 const bcrypt = require("bcryptjs");
 const path = require("path");
 const fs = require("fs");
@@ -287,8 +313,50 @@ exports.getDashboardData = async (req, res) => {
         : [];
     const allottedMenuItemIds = allottedMenuItems.map((mi) => mi.id);
 
-    // Get login time (mocked for now)
-    const todayLoginTime = "8:00 AM";
+    // Get today's login time for the chef from ChefLogin model
+    let todayLoginTime = null;
+    let chefLogin = null;
+
+    // First check if the user is a chef (role_id === 2 for chefs)
+    const userRole = await db.restaurantUser.findOne({
+      where: { id: userId, role_id: 2 }, // 2 is the role_id for chefs
+      attributes: ["id"],
+    });
+
+    if (userRole) {
+      const now = new Date();
+      const todayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+      const todayFormatted = formatIndianDateTime(todayStart).split(" ")[0]; // Get only the date part
+
+      console.log("Searching for chef login with:", {
+        userId,
+        todayFormatted,
+      });
+
+      chefLogin = await db.chefLogin.findOne({
+        where: {
+          chefId: userId,
+          loginTime: {
+            [Op.like]: `${todayFormatted}%`, // Match any login time from today
+          },
+          logoutTime: null, // Only get active login sessions
+        },
+        order: [["loginTime", "DESC"]],
+      });
+
+      console.log("Found chef login:", chefLogin);
+    }
+
+    if (chefLogin) {
+      console.log("Raw loginTime value:", chefLogin.loginTime);
+      // Format the login time in Indian format
+      todayLoginTime = chefLogin.loginTime.split(" ").slice(1).join(" ");
+      console.log("Formatted login time:", todayLoginTime);
+    }
 
     // Get order stats (total, week/month/year) for this restaurant
     const now = new Date();

@@ -1,13 +1,14 @@
 // API endpoint constants for chef
 export const CHEF_API = {
-  LOGIN: '/chef/login',
-  PROFILE: '/chef/profile',
-  MENU: '/chef/menu',
-  TRANSACTIONS: '/chef/transactions',
-  QRCODES: '/chef/qrcodes',
-  ORDERS: '/chef/dashboard',
-  STATS: '/chef/stats',
-  MESSAGES: '/chef/messages',
+  LOGIN: "/chef/login",
+  LOGOUT: "/chef/logout",
+  PROFILE: "/chef/profile",
+  MENU: "/chef/menu",
+  TRANSACTIONS: "/chef/transactions",
+  QRCODES: "/chef/qrcodes",
+  ORDERS: "/chef/dashboard",
+  STATS: "/chef/stats",
+  MESSAGES: "/chef/messages",
 };
 export interface ChefOrdersResponse {
   orders: any[];
