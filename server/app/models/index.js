@@ -216,9 +216,38 @@ db.users.hasOne(db.customer, {
   as: "customerProfile",
 });
 db.buffet = require("./buffet.model.js")(sequelize, Sequelize);
+db.chefLogin = require("./chefLogin.model.js")(sequelize, Sequelize);
+
 db.buffet.belongsTo(db.restaurant, {
   foreignKey: "restaurantId",
   as: "restaurant",
+});
+
+// Add the reciprocal hasMany association from Restaurant to Buffet
+db.restaurant.hasMany(db.buffet, {
+  foreignKey: "restaurantId",
+  as: "buffets",
+});
+
+// ChefLogin associations
+db.chefLogin.belongsTo(db.restaurantUser, {
+  foreignKey: "chefId",
+  as: "chef",
+});
+
+db.chefLogin.belongsTo(db.restaurant, {
+  foreignKey: "restaurantId",
+  as: "restaurant",
+});
+
+db.restaurantUser.hasMany(db.chefLogin, {
+  foreignKey: "chefId",
+  as: "chefLogins",
+});
+
+db.restaurant.hasMany(db.chefLogin, {
+  foreignKey: "restaurantId",
+  as: "chefLogins",
 });
 // A
 // Table Booking associations

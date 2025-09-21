@@ -1,10 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { router, useLocalSearchParams } from "expo-router";
 
 const BuffetConfirm = () => {
   const navigation = useNavigation();
 
+  const params = useLocalSearchParams();
   return (
     <View style={styles.container}>
       <Text style={styles.message}>
@@ -12,7 +14,16 @@ const BuffetConfirm = () => {
       </Text>
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => navigation.navigate("BuffetTimeScreen")}
+        onPress={() =>
+          router.push({
+            pathname: "/BuffetTimeScreen",
+            params: {
+              hotelName: params.hotelName,
+              hotelId: params.hotelId,
+              ishotel: params.ishotel,
+            },
+          })
+        }
       >
         <Text style={styles.buttonText}>Back</Text>
       </TouchableOpacity>

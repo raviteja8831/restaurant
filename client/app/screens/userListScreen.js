@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Alert ,
+import {
+  Alert,
   StyleSheet,
   View,
   Text,
@@ -12,13 +13,12 @@ import { addUserByManager } from "../api/managerApi";
 
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-   
-   export default function UserListScreen() {
-     // Tab state management const [showOrdersDropdown, setShowOrdersDropdown] = useState(false);
-     const [ordersPeriodLabel, setOrdersPeriodLabel] = useState("Year");
+export default function UserListScreen() {
+  // Tab state management const [showOrdersDropdown, setShowOrdersDropdown] = useState(false);
+  const [ordersPeriodLabel, setOrdersPeriodLabel] = useState("Year");
   const [showOrdersDropdown, setShowOrdersDropdown] = useState(false);
 
-       const users = [
+  const users = [
     { name: "Mohan", role: "Manager" },
     { name: "Kiran", role: "Chef" },
     { name: "Anil", role: "Chef" },
@@ -62,454 +62,436 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
     { msg: "Oats Dosa 1 Nos to Table No 1", time: "9:08AM" },
     { msg: "Onion Dosa 6 Nos to Parcel Table", time: "9:00AM" },
   ];
-// Demo values for each period (replace with real data as needed)
+  // Demo values for each period (replace with real data as needed)
 
   const yearOrders = "365/345";
   const monthOrders = "34/12";
   const weekOrders = "7/2";
-  const ordersPeriodValue = 
+  const ordersPeriodValue =
     ordersPeriodLabel === "Year"
       ? yearOrders
       : ordersPeriodLabel === "Month"
       ? monthOrders
       : weekOrders;
 
-       const [addUserModal, setAddUserModal] = useState(false);
-      const [addUserLoading, setAddUserLoading] = useState(false);
-     
-    const [addUserForm, setAddUserForm] = useState({
-      name: "",
-      password: "",
-      role: "Chef",
-      phone: "",
-      showRoleDropdown: false,
-    });
-    
-   return (
-   <ScrollView
-          contentContainerStyle={{ paddingBottom: 100 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.usersHeader}>
-            <Text style={styles.usersTitle}>Users</Text>
-            <View style={styles.usersListRow}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {users.map((user, idx) => (
-                  <View key={user.name} style={styles.userAvatarCol}>
-                    <View style={styles.userAvatarCircle}>
-                      <MaterialCommunityIcons
-                        name="account-circle"
-                        size={48}
-                        color="#7b6eea"
-                      />
-                    </View>
-                    <Text style={styles.userAvatarName}>{user.name}</Text>
-                    <Text style={styles.userAvatarRole}>{user.role}</Text>
-                  </View>
-                ))}
-                <View style={styles.userAddCol}>
+  const [addUserModal, setAddUserModal] = useState(false);
+  const [addUserLoading, setAddUserLoading] = useState(false);
+
+  const [addUserForm, setAddUserForm] = useState({
+    name: "",
+    password: "",
+    role: "Chef",
+    phone: "",
+    showRoleDropdown: false,
+  });
+
+  return (
+    <ScrollView
+      contentContainerStyle={{ paddingBottom: 100 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.usersHeader}>
+        <Text style={styles.usersTitle}>Users</Text>
+        <View style={styles.usersListRow}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {users.map((user, idx) => (
+              <View key={user.name} style={styles.userAvatarCol}>
+                <View style={styles.userAvatarCircle}>
+                  <MaterialCommunityIcons
+                    name="account-circle"
+                    size={48}
+                    color="#7b6eea"
+                  />
+                </View>
+                <Text style={styles.userAvatarName}>{user.name}</Text>
+                <Text style={styles.userAvatarRole}>{user.role}</Text>
+              </View>
+            ))}
+            <View style={styles.userAddCol}>
+              <TouchableOpacity
+                style={styles.userAddBtn}
+                onPress={() => setAddUserModal(true)}
+              >
+                <MaterialCommunityIcons name="plus" size={32} color="#222" />
+              </TouchableOpacity>
+              <Text style={styles.userAddText}>Add</Text>
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+
+      {/* Add User Modal */}
+      <Modal
+        visible={addUserModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAddUserModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[styles.addUserModalCard, { backgroundColor: "#bcb3f7" }]}
+          >
+            {" "}
+            {/* purple background */}
+            {/* Close cross icon */}
+            <TouchableOpacity
+              style={{
+                position: "absolute",
+                top: 10,
+                right: 10,
+                zIndex: 20,
+              }}
+              onPress={() => setAddUserModal(false)}
+            >
+              <MaterialCommunityIcons name="close" size={28} color="#222" />
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.addUserModalTitle,
+                {
+                  color: "#222",
+                  fontWeight: "bold",
+                  fontSize: 18,
+                  marginBottom: 10,
+                },
+              ]}
+            >
+              New Profile
+            </Text>
+            {/* Name Row */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 10,
+              }}
+            >
+              <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                Name:
+              </Text>
+              <TextInput
+                style={[
+                  styles.addUserInput,
+                  { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
+                ]}
+                value={addUserForm.name}
+                onChangeText={(text) =>
+                  setAddUserForm({ ...addUserForm, name: text })
+                }
+                placeholder="Enter name"
+                placeholderTextColor="#888"
+              />
+            </View>
+            {/* Password Row */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 10,
+              }}
+            >
+              <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                Password:
+              </Text>
+              <TextInput
+                style={[
+                  styles.addUserInput,
+                  { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
+                ]}
+                value={addUserForm.password}
+                onChangeText={(text) =>
+                  setAddUserForm({ ...addUserForm, password: text })
+                }
+                placeholder="Enter password"
+                placeholderTextColor="#888"
+                secureTextEntry
+              />
+            </View>
+            {/* Role Row */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 10,
+              }}
+            >
+              <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                Role:
+              </Text>
+              <View style={{ flex: 1, justifyContent: "center" }}>
+                <View
+                  style={{
+                    backgroundColor: "#fff",
+                    borderRadius: 6,
+                    height: 40,
+                    justifyContent: "center",
+                  }}
+                >
                   <TouchableOpacity
-                    style={styles.userAddBtn}
-                    onPress={() => setAddUserModal(true)}
+                    style={{
+                      paddingHorizontal: 10,
+                      height: 40,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                    onPress={() =>
+                      setAddUserForm({
+                        ...addUserForm,
+                        showRoleDropdown: !addUserForm.showRoleDropdown,
+                      })
+                    }
                   >
+                    <Text style={{ color: "#222", fontSize: 15 }}>
+                      {addUserForm.role}
+                    </Text>
                     <MaterialCommunityIcons
-                      name="plus"
-                      size={32}
+                      name="chevron-down"
+                      size={20}
                       color="#222"
                     />
                   </TouchableOpacity>
-                  <Text style={styles.userAddText}>Add</Text>
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-
-          {/* Add User Modal */}
-          <Modal
-            visible={addUserModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setAddUserModal(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View
-                style={[
-                  styles.addUserModalCard,
-                  { backgroundColor: "#bcb3f7" },
-                ]}
-              >
-                {" "}
-                {/* purple background */}
-                {/* Close cross icon */}
-                <TouchableOpacity
-                  style={{
-                    position: "absolute",
-                    top: 10,
-                    right: 10,
-                    zIndex: 20,
-                  }}
-                  onPress={() => setAddUserModal(false)}
-                >
-                  <MaterialCommunityIcons name="close" size={28} color="#222" />
-                </TouchableOpacity>
-                <Text
-                  style={[
-                    styles.addUserModalTitle,
-                    {
-                      color: "#222",
-                      fontWeight: "bold",
-                      fontSize: 18,
-                      marginBottom: 10,
-                    },
-                  ]}
-                >
-                  New Profile
-                </Text>
-                {/* Name Row */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
-                    Name:
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.addUserInput,
-                      { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
-                    ]}
-                    value={addUserForm.name}
-                    onChangeText={(text) =>
-                      setAddUserForm({ ...addUserForm, name: text })
-                    }
-                    placeholder="Enter name"
-                    placeholderTextColor="#888"
-                  />
-                </View>
-                {/* Password Row */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
-                    Password:
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.addUserInput,
-                      { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
-                    ]}
-                    value={addUserForm.password}
-                    onChangeText={(text) =>
-                      setAddUserForm({ ...addUserForm, password: text })
-                    }
-                    placeholder="Enter password"
-                    placeholderTextColor="#888"
-                    secureTextEntry
-                  />
-                </View>
-                {/* Role Row */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
-                    Role:
-                  </Text>
-                  <View style={{ flex: 1, justifyContent: "center" }}>
+                  {addUserForm.showRoleDropdown && (
                     <View
                       style={{
                         backgroundColor: "#fff",
                         borderRadius: 6,
-                        height: 40,
-                        justifyContent: "center",
+                        position: "absolute",
+                        top: 40,
+                        left: 0,
+                        right: 0,
+                        zIndex: 10,
+                        elevation: 10,
                       }}
                     >
-                      <TouchableOpacity
-                        style={{
-                          paddingHorizontal: 10,
-                          height: 40,
-                          flexDirection: "row",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                        onPress={() =>
-                          setAddUserForm({
-                            ...addUserForm,
-                            showRoleDropdown: !addUserForm.showRoleDropdown,
-                          })
-                        }
-                      >
-                        <Text style={{ color: "#222", fontSize: 15 }}>
-                          {addUserForm.role}
-                        </Text>
-                        <MaterialCommunityIcons
-                          name="chevron-down"
-                          size={20}
-                          color="#222"
-                        />
-                      </TouchableOpacity>
-                      {addUserForm.showRoleDropdown && (
-                        <View
-                          style={{
-                            backgroundColor: "#fff",
-                            borderRadius: 6,
-                            position: "absolute",
-                            top: 40,
-                            left: 0,
-                            right: 0,
-                            zIndex: 10,
-                            elevation: 10,
-                          }}
+                      {["Chef", "Manager"].map((role) => (
+                        <TouchableOpacity
+                          key={role}
+                          style={{ padding: 10 }}
+                          onPress={() =>
+                            setAddUserForm({
+                              ...addUserForm,
+                              role,
+                              showRoleDropdown: false,
+                            })
+                          }
                         >
-                          {["Chef", "Manager"].map((role) => (
-                            <TouchableOpacity
-                              key={role}
-                              style={{ padding: 10 }}
-                              onPress={() =>
-                                setAddUserForm({
-                                  ...addUserForm,
-                                  role,
-                                  showRoleDropdown: false,
-                                })
-                              }
-                            >
-                              <Text style={{ color: "#222", fontSize: 15 }}>
-                                {role}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
+                          <Text style={{ color: "#222", fontSize: 15 }}>
+                            {role}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
                     </View>
-                  </View>
+                  )}
                 </View>
-                {/* Phone Row */}
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 18,
-                  }}
-                >
-                  <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
-                    Phone No:
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.addUserInput,
-                      { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
-                    ]}
-                    value={addUserForm.phone}
-                    onChangeText={(text) =>
-                      setAddUserForm({ ...addUserForm, phone: text })
-                    }
-                    placeholder="Enter phone number"
-                    placeholderTextColor="#888"
-                    keyboardType="phone-pad"
-                  />
-                </View>
-                {/* Save Button */}
-                <TouchableOpacity
-                  style={[
-                    styles.addUserSaveBtn,
-                    {
-                      backgroundColor: "#a9a1e2",
-                      width: 80,
-                      alignSelf: "flex-start",
-                    },
-                  ]}
-                  onPress={async () => {
-                    setAddUserLoading(true);
-                    try {
-                      const payload = {
-                        firstname: addUserForm.name,
-                        lastname: "",
-                        password: addUserForm.password,
-                        role_id: addUserForm.role === "Chef" ? 2 : 1,
-                        phone: addUserForm.phone,
-                        restaurant_id: "33", // Assuming restaurant_id is 1 for demo
-                      };
-                      await addUserByManager(payload);
-                      setAddUserModal(false);
-                      setAddUserForm({
-                        name: "",
-                        password: "",
-                        role: "Chef",
-                        phone: "",
-                        showRoleDropdown: false,
-                      });
-                      Alert.alert("Success", "User added successfully");
-                    } catch (err) {
-                      Alert.alert(
-                        "Error",
-                        err?.response?.data?.message ||
-                          err?.message ||
-                          "Failed to add user"
-                      );
-                    }
-                    setAddUserLoading(false);
-                  }}
-                  disabled={addUserLoading}
-                >
-                  <Text
-                    style={{ color: "#fff", fontWeight: "bold", fontSize: 15 }}
-                  >
-                    {addUserLoading ? "Saving..." : "Save"}
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
-          </Modal>
-
-          <View style={styles.usersProfileRow}>
-            <View style={styles.usersProfileColLeft}>
-              <View style={styles.usersProfileAvatarCircle}>
-                <MaterialCommunityIcons
-                  name="account-circle"
-                  size={64}
-                  color="#7b6eea"
-                />
-              </View>
-              <View style={{ alignItems: "center" }}>
-                <Text style={styles.usersProfileName}>{selectedUser.name}</Text>
-                <Text style={styles.usersProfileRole}>{selectedUser.role}</Text>
-              </View>
+            {/* Phone Row */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 18,
+              }}
+            >
+              <Text style={{ color: "#222", fontSize: 15, width: 80 }}>
+                Phone No:
+              </Text>
+              <TextInput
+                style={[
+                  styles.addUserInput,
+                  { backgroundColor: "#fff", flex: 1, marginBottom: 0 },
+                ]}
+                value={addUserForm.phone}
+                onChangeText={(text) =>
+                  setAddUserForm({ ...addUserForm, phone: text })
+                }
+                placeholder="Enter phone number"
+                placeholderTextColor="#888"
+                keyboardType="phone-pad"
+              />
             </View>
-            <TouchableOpacity style={styles.usersProfileSettingsBtn}>
-              <MaterialCommunityIcons name="cog" size={28} color="#222" />
+            {/* Save Button */}
+            <TouchableOpacity
+              style={[
+                styles.addUserSaveBtn,
+                {
+                  backgroundColor: "#a9a1e2",
+                  width: 80,
+                  alignSelf: "flex-start",
+                },
+              ]}
+              onPress={async () => {
+                setAddUserLoading(true);
+                try {
+                  const payload = {
+                    firstname: addUserForm.name,
+                    lastname: "",
+                    password: addUserForm.password,
+                    role_id: addUserForm.role === "Chef" ? 2 : 1,
+                    phone: addUserForm.phone,
+                    restaurant_id: "33", // Assuming restaurant_id is 1 for demo
+                  };
+                  await addUserByManager(payload);
+                  setAddUserModal(false);
+                  setAddUserForm({
+                    name: "",
+                    password: "",
+                    role: "Chef",
+                    phone: "",
+                    showRoleDropdown: false,
+                  });
+                  Alert.alert("Success", "User added successfully");
+                } catch (err) {
+                  Alert.alert(
+                    "Error",
+                    err?.response?.data?.message ||
+                      err?.message ||
+                      "Failed to add user"
+                  );
+                }
+                setAddUserLoading(false);
+              }}
+              disabled={addUserLoading}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 15 }}>
+                {addUserLoading ? "Saving..." : "Save"}
+              </Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
 
-          <Text style={styles.usersLoginTime}>
-            Today Login Time: {todayLoginTime}
-          </Text>
+      <View style={styles.usersProfileRow}>
+        <View style={styles.usersProfileColLeft}>
+          <View style={styles.usersProfileAvatarCircle}>
+            <MaterialCommunityIcons
+              name="account-circle"
+              size={64}
+              color="#7b6eea"
+            />
+          </View>
+          <View style={{ alignItems: "center" }}>
+            <Text style={styles.usersProfileName}>{selectedUser.name}</Text>
+            <Text style={styles.usersProfileRole}>{selectedUser.role}</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.usersProfileSettingsBtn}>
+          <MaterialCommunityIcons name="cog" size={28} color="#222" />
+        </TouchableOpacity>
+      </View>
 
-          <View style={styles.usersStatsRow}>
-            <View style={styles.usersStatsColLeft}>
-              <View style={styles.usersAllottedCard}>
-                <Text style={styles.usersAllottedTitle}>Allotted Dishes</Text>
-                <ScrollView
-                  style={{ flex: 1 }}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {allottedDishes.map((dish, i) => (
-                    <Text key={dish} style={styles.usersAllottedDish}>
-                      • {dish}
-                    </Text>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-            <View style={styles.usersStatsColRightImage2}>
-              <View style={styles.usersOrdersCardImage2}>
-                <Text style={styles.usersOrdersTitle}>
-                  Total Orders Completed
+      <Text style={styles.usersLoginTime}>
+        Today Login Time: {todayLoginTime}
+      </Text>
+
+      <View style={styles.usersStatsRow}>
+        <View style={styles.usersStatsColLeft}>
+          <View style={styles.usersAllottedCard}>
+            <Text style={styles.usersAllottedTitle}>Allotted Dishes</Text>
+            <ScrollView
+              style={{ flex: 1 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {allottedDishes.map((dish, i) => (
+                <Text key={dish} style={styles.usersAllottedDish}>
+                  • {dish}
                 </Text>
-                <Text style={styles.usersOrdersBig}>{totalOrders}</Text>
-              </View>
-              <View style={styles.usersOrdersCardImage2}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "100%",
-                    position: "relative",
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 8,
-                    }}
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+        <View style={styles.usersStatsColRightImage2}>
+          <View style={styles.usersOrdersCardImage2}>
+            <Text style={styles.usersOrdersTitle}>Total Orders Completed</Text>
+            <Text style={styles.usersOrdersBig}>{totalOrders}</Text>
+          </View>
+          <View style={styles.usersOrdersCardImage2}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                position: "relative",
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 8,
+                }}
+              >
+                <Text style={[styles.usersOrdersSmallValue, { fontSize: 20 }]}>
+                  {ordersPeriodValue}
+                </Text>
+                <View style={{ position: "relative", marginLeft: 8 }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.usersOrdersDropdownBtn,
+                      { backgroundColor: "#e8e8e8", minWidth: 70 },
+                    ]}
+                    onPress={() => setShowOrdersDropdown(!showOrdersDropdown)}
+                    activeOpacity={0.7}
                   >
                     <Text
-                      style={[styles.usersOrdersSmallValue, { fontSize: 20 }]}
+                      style={[styles.usersOrdersSmallLabel, { color: "#666" }]}
                     >
-                      {ordersPeriodValue}
+                      {ordersPeriodLabel}
                     </Text>
-                    <View style={{ position: "relative", marginLeft: 8 }}>
-                      <TouchableOpacity
-                        style={[
-                          styles.usersOrdersDropdownBtn,
-                          { backgroundColor: "#e8e8e8", minWidth: 70 },
-                        ]}
-                        onPress={() =>
-                          setShowOrdersDropdown(!showOrdersDropdown)
-                        }
-                        activeOpacity={0.7}
-                      >
-                        <Text
-                          style={[
-                            styles.usersOrdersSmallLabel,
-                            { color: "#666" },
-                          ]}
+                  </TouchableOpacity>
+                  {showOrdersDropdown && (
+                    <View style={styles.usersOrdersDropdownMenuPopupFixed}>
+                      {["Year", "Month", "Week"].map((label) => (
+                        <TouchableOpacity
+                          key={label}
+                          style={styles.usersOrdersDropdownItem}
+                          onPress={() => {
+                            setOrdersPeriodLabel(label);
+                            setShowOrdersDropdown(false);
+                          }}
                         >
-                          {ordersPeriodLabel}
-                        </Text>
-                      </TouchableOpacity>
-                      {showOrdersDropdown && (
-                        <View style={styles.usersOrdersDropdownMenuPopupFixed}>
-                          {["Year", "Month", "Week"].map((label) => (
-                            <TouchableOpacity
-                              key={label}
-                              style={styles.usersOrdersDropdownItem}
-                              onPress={() => {
-                                setOrdersPeriodLabel(label);
-                                setShowOrdersDropdown(false);
-                              }}
-                            >
-                              <Text style={styles.usersOrdersDropdownItemText}>
-                                {label}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
+                          <Text style={styles.usersOrdersDropdownItemText}>
+                            {label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
                     </View>
-                  </View>
+                  )}
                 </View>
               </View>
-              <View style={styles.usersOrdersCardSmallImage2}>
-                <Text style={styles.usersOrdersSmallLabel}>
-                  Top three Orders of the Day
-                </Text>
-                {topOrders.map((o) => (
-                  <Text key={o.name} style={styles.usersOrdersSmallValue}>
-                    {o.name} : {o.count}
-                  </Text>
-                ))}
-              </View>
             </View>
           </View>
-
-          <View style={styles.usersMsgInputRow}>
-            <Text style={styles.usersMsgInputLabel}>Message:</Text>
-            <View style={styles.usersMsgInputBox} />
+          <View style={styles.usersOrdersCardSmallImage2}>
+            <Text style={styles.usersOrdersSmallLabel}>
+              Top three Orders of the Day
+            </Text>
+            {topOrders.map((o) => (
+              <Text key={o.name} style={styles.usersOrdersSmallValue}>
+                {o.name} : {o.count}
+              </Text>
+            ))}
           </View>
+        </View>
+      </View>
 
-          <Text style={styles.usersHistoryTitle}>Today</Text>
-          {orderHistory.map((h, i) => (
-            <View key={i} style={styles.usersHistoryRow}>
-              <Text style={styles.usersHistoryMsg}>{h.msg}</Text>
-              <Text style={styles.usersHistoryTime}>{h.time}</Text>
-            </View>
-          ))}
-          <Text style={styles.usersHistoryTitle}>Yesterday</Text>
-        </ScrollView>
-   );
+      <View style={styles.usersMsgInputRow}>
+        <Text style={styles.usersMsgInputLabel}>Message:</Text>
+        <View style={styles.usersMsgInputBox} />
+      </View>
+
+      <Text style={styles.usersHistoryTitle}>Today</Text>
+      {orderHistory.map((h, i) => (
+        <View key={i} style={styles.usersHistoryRow}>
+          <Text style={styles.usersHistoryMsg}>{h.msg}</Text>
+          <Text style={styles.usersHistoryTime}>{h.time}</Text>
+        </View>
+      ))}
+      <Text style={styles.usersHistoryTitle}>Yesterday</Text>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({

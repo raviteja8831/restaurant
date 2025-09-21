@@ -5,7 +5,7 @@ import axios from "axios";
 
 export const getBuffetDetails = async (restaurantId, token) => {
   const res = await axios.get(
-    `${BASE_URL}/api/buffetdetails?restaurantId=${restaurantId}`,
+    `${BASE_URL}/buffetdetails?restaurantId=${restaurantId}`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   return res.data;
