@@ -113,6 +113,13 @@ export default function ManagerRegisterScreen() {
       required: true,
     },
     {
+      label: <>UPI <Text style={{ color: 'red' }}>*</Text></>,
+      name: "upi",
+      type: "text",
+      keyboardType: "text",
+      required: true,
+    },
+    {
       label: <>Restaurant Name <Text style={{ color: 'red' }}>*</Text></>,
       name: "name",
       type: "text",
@@ -149,6 +156,7 @@ export default function ManagerRegisterScreen() {
     lastname: "",
     phone: "",
     name: "",
+    upi: "",
     restaurantAddress: DEFAULT_ADDRESS,
     restaurantType: "",
     restaurantTypeOther: "",

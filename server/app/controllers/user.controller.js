@@ -534,7 +534,7 @@ exports.register = async (req, res) => {
       restaurantAddress,
 
       ambiancePhoto,
-
+      upi,
       logo,
       enableBuffet,
       enableVeg,
@@ -567,6 +567,7 @@ exports.register = async (req, res) => {
       logoImage: logoImageUrl,
       latitude: latitude || null,
       longitude: longitude || null,
+      upi: upi || null,
       restaurantType: restaurantType || "Other",
     });
 

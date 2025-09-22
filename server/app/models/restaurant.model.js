@@ -55,6 +55,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      upi:{
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       logoImage: {
         type: Sequelize.STRING,
         allowNull: true,

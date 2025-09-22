@@ -65,6 +65,7 @@ exports.findOne = async (req, res) => {
           "enableSelfService",
           "ambianceImage",
           "logoImage",
+          "upi",
           "createdAt",
           "updatedAt",
         ],
@@ -154,6 +155,20 @@ exports.getRatings = async (req, res) => {
       where: { restaurantId: req.params.id },
     });
     res.json(ratings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getupi = async (req, res) => {
+  try {
+    const restaurant = await Restaurant.findByPk(req.params.id, {
+      attributes: ["upi"],
+    });
+    if (!restaurant) {
+      return res.status(404).json({ error: "Restaurant not found" });
+    }
+    res.json({ upi: restaurant.upi });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
