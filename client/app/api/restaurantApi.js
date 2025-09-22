@@ -16,7 +16,7 @@ import { showApiError } from "../services/messagingService";
   }
 }; */
 
-/* export const getAllRestaurants = async () => {
+export const getAllRestaurants = async () => {
   try {
     const res = await axiosService.get(
       `${API_BASE_URL}${RESTAURANT_API.GET_ALL}`
@@ -26,7 +26,7 @@ import { showApiError } from "../services/messagingService";
     showApiError(error);
     throw error;
   }
-}; */
+};
 
 export const getRestaurantById = async (id) => {
   try {

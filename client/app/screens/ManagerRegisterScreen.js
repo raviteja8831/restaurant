@@ -119,6 +119,19 @@ export default function ManagerRegisterScreen() {
       multiline: true,
       editable: true,
     },
+    {
+      label: "Restaurant Type",
+      name: "restaurantType",
+      type: "select",
+      options: [
+        { label: "Veg", value: "Veg" },
+        { label: "Non-Veg", value: "Non-Veg" },
+        { label: "Multi-cuisine", value: "Multi-cuisine" },
+        { label: "Cafe", value: "Cafe" },
+        { label: "Other", value: "Other" },
+      ],
+      placeholder: "Select type",
+    },
   ];
 
   // Single form state for all fields
@@ -128,6 +141,8 @@ export default function ManagerRegisterScreen() {
     phone: "",
     name: "",
     restaurantAddress: DEFAULT_ADDRESS,
+    restaurantType: "",
+    restaurantTypeOther: "",
   });
 
   // Custom setForm to keep restaurantAddress equal to restaurantName
@@ -165,7 +180,22 @@ export default function ManagerRegisterScreen() {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      // Service type: send array if both selected, else single value or empt
+      // Geocode address to get latitude and longitude
+      let latitude = null;
+      let longitude = null;
+      try {
+        const geoRes = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(form.restaurantAddress)}&key=${GOOGLE_API_KEY}`
+        );
+        const geoData = await geoRes.json();
+        if (geoData.results && geoData.results.length > 0) {
+          latitude = geoData.results[0].geometry.location.lat;
+          longitude = geoData.results[0].geometry.location.lng;
+        }
+      } catch (geoErr) {
+        // If geocoding fails, leave lat/lng null
+      }
+      // Service type: send array if both selected, else single value or empty
       let ambianceImageUrl = "";
       if (ambianceImage) {
         if (
@@ -272,6 +302,9 @@ export default function ManagerRegisterScreen() {
         enableNonveg: nonVeg,
         enableTableService: tableService,
         enableSelfService: selfService,
+        restaurantType: form.restaurantType === 'Other' ? form.restaurantTypeOther : form.restaurantType,
+        latitude,
+        longitude,
       };
       const data = await registerManager(payload);
       alert.success(data.message || "Registered successfully");
@@ -303,7 +336,7 @@ export default function ManagerRegisterScreen() {
                   <View style={styles.stepBox}>
                     <View style={styles.stepFormAreaScroll}>
                       <FormService
-                        config={formConfig}
+                        config={formConfig.filter(f => f.name !== "restaurantType")}
                         values={form}
                         setValues={setForm}
                         onSubmit={handleNext}
@@ -321,16 +354,35 @@ export default function ManagerRegisterScreen() {
                     <View style={styles.stepFormAreaScroll}>
                       {/* Show only restaurant fields, styled like step 1 */}
                       <FormService
-                        config={formConfig}
+                        config={formConfig.filter(f => f.name !== "firstname" && f.name !== "lastname" && f.name !== "phone")}
                         values={form}
                         setValues={setForm}
                         onSubmit={() => {}}
                         submitLabel={null}
                         loading={loading}
-                        hiddenFields={["firstname", "lastname", "phone"]}
+                        hiddenFields={[]}
                         inputStyle={styles.inputStep}
                         labelStyle={styles.labelStep}
                       />
+                      {/* If 'Other' is selected, show a text input for custom value */}
+                      {form.restaurantType === 'Other' && (
+                        <FormService
+                          config={[{
+                            label: "Enter Restaurant Type",
+                            name: "restaurantTypeOther",
+                            type: "text",
+                            placeholder: "Enter custom type",
+                          }]}
+                          values={form}
+                          setValues={setForm}
+                          onSubmit={() => {}}
+                          submitLabel={null}
+                          loading={loading}
+                          inputStyle={styles.inputStep}
+                          labelStyle={styles.labelStep}
+                        />
+                      )}
+                  
                       {/* Extra controls below the form, not inside it */}
                       <View style={{ marginTop: 24 }}>
                         <Button
@@ -341,8 +393,8 @@ export default function ManagerRegisterScreen() {
                         >
                           Use Current Location
                         </Button>
+                   
                         <Text style={styles.sectionTitleStep2Grid}>
-                          Choose your Restaurant Type
                         </Text>
                         <View style={styles.typeFoodGridRow}>
                           <View style={styles.typeFoodGridCol}>

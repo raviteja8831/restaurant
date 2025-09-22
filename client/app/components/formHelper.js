@@ -17,6 +17,7 @@ import {
   RadioButton,
   Button,
 } from "react-native-paper";
+import { Picker } from '@react-native-picker/picker';
 let DateTimePicker;
 try {
   DateTimePicker = require("@react-native-community/datetimepicker").default;
@@ -104,18 +105,16 @@ export function FormInput(props) {
     inputComponent = (
       <View style={styles.inputWrapper}>
         <Text style={styles.selectLabel}>{labelText}</Text>
-        {options.map((opt) => (
-          <TouchableOpacity
-            key={opt.value}
-            style={[
-              styles.selectOption,
-              value === opt.value && styles.selectOptionActive,
-            ]}
-            onPress={() => onChange(name, opt.value)}
-          >
-            <Text style={styles.selectOptionText}>{opt.label}</Text>
-          </TouchableOpacity>
-        ))}
+        <Picker
+          selectedValue={value}
+          onValueChange={(itemValue) => onChange(name, itemValue)}
+          style={styles.input}
+        >
+          <Picker.Item label={props.placeholder || "Select"} value="" />
+          {options.map((opt) => (
+            <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
+          ))}
+        </Picker>
       </View>
     );
   } else if (type === "radio") {

@@ -15,25 +15,11 @@ exports.listQRCodes = async (req, res) => {
     if (!restaurantId) return res.status(400).json({ message: 'restaurantId required' });
     const tables = await db.restaurantTable.findAll({
       where: { restaurantId },
-      attributes: ['id', 'name', 'qrcode', 'status'],
+      attributes: ['id', 'name', 'qrcode', 'status', 'restaurantId'],
       order: [['id', 'ASC']]
     });
-    // If qrcode is not a data URL, generate it on the fly
-    const result = await Promise.all(tables.map(async t => {
-      let imageUrl = t.qrcode;
-      if (!imageUrl || !imageUrl.startsWith('data:image')) {
-        imageUrl = await generateQRCodeDataUrl(`${t.restaurantId}_${t.name}`);
-      }
-      return {
-        id: t.id,
-        tableId: t.id,
-        restaurantId: t.restaurantId,
-        name: t.name,
-        imageUrl,
-        status: t.status
-      };
-    }));
-    res.json(result);
+ 
+    res.json(tables);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -44,22 +30,25 @@ exports.createQRCode = async (req, res) => {
   try {
     const { name, restaurantId } = req.body;
     if (!name || !restaurantId) return res.status(400).json({ message: 'Missing fields' });
+    // Check if restaurant exists
+    const restaurant = await db.restaurant.findByPk(restaurantId);
+    if (!restaurant) return res.status(400).json({ message: 'Invalid restaurantId' });
+    // Generate QR code image
     const value = `${restaurantId}_${name}`;
-    const imageUrl = await generateQRCodeDataUrl(value);
+    const qrcodeDataUrl = await generateQRCodeDataUrl(value);
     // Create table with QR code
     const table = await db.restaurantTable.create({
       name,
       restaurantId,
-      qrcode: imageUrl,
+      qrcode: qrcodeDataUrl,
       status: 'free'
     });
     res.json({
       id: table.id,
-      tableId: table.id,
       restaurantId: table.restaurantId,
       name: table.name,
-      imageUrl: table.qrcode,
-      status: table.status
+      status: table.status,
+      imageUrl: table.qrcode
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

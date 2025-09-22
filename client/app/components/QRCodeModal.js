@@ -5,41 +5,97 @@ import QRCode from 'react-native-qrcode-svg';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
-export default function QRCodeModal({ visible, onClose, onSave, loading }) {
+
+export default function QRCodeModal({ visible, onClose, onSave, loading, restaurantId }) {
   const [name, setName] = useState('');
+  const [showQR, setShowQR] = useState(false);
   const qrRef = useRef();
+
+  // Extract tableId from name (assume name is tableId or similar)
+  const tableId = name.trim();
+  // Generate QR code value with restaurantId and tableId as query params
+  const qrValue = restaurantId && tableId ? `https://yourdomain.com/order?restaurantId=${restaurantId}&tableId=${encodeURIComponent(tableId)}` : '';
 
   const handleSave = () => {
     if (!name) return;
     onSave({ name });
+    setShowQR(true);
     // Do not close modal or clear name
   };
 
   const handleDownload = async () => {
-    if (!qrRef.current) return;
     try {
-      const uri = await qrRef.current.capture();
-      if (Platform.OS === 'web') {
-        // For web, open in new tab
-        window.open(uri, '_blank');
-      } else {
-        await Sharing.shareAsync(uri);
-      }
-    } catch (e) {
+      console.log('Downloading QR code...');
+      qrRef.current.toDataURL(async (data) => {
+        const base64Data = data.replace('data:image/png;base64,', '');
+        if (Platform.OS === 'web') {
+          // Convert base64 to Blob and trigger download
+          function base64ToBlob(base64, mime) {
+            const byteChars = atob(base64);
+            const byteNumbers = new Array(byteChars.length);
+            for (let i = 0; i < byteChars.length; i++) {
+              byteNumbers[i] = byteChars.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type: mime });
+          }
+          const blob = base64ToBlob(base64Data, 'image/png');
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = 'qrcode.png';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        } else {
+          // Save to file and share
+          const fileUri = FileSystem.cacheDirectory + 'qrcode.png';
+          await FileSystem.writeAsStringAsync(fileUri, base64Data, { encoding: FileSystem.EncodingType.Base64 });
+          await Sharing.shareAsync(fileUri);
+        }
+      });
+    } catch (_e) {
       alert('Failed to download QR code');
     }
+  };
+
+  // Clear state on close
+  const handleClose = () => {
+    setName('');
+    setShowQR(false);
+    onClose && onClose();
   };
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.card}>
+                      {showQR && (
+
           <View style={styles.qrRow}>
-       
-            <TouchableOpacity style={styles.downloadIconBtn} onPress={handleDownload}>
-              <MaterialCommunityIcons name="download" size={38} color="#19171d" />
-            </TouchableOpacity>
+            {/* Top right icons */}
+            <View style={styles.topRightIcons}>
+            
+              <TouchableOpacity style={styles.iconBtn} onPress={handleDownload} disabled={!showQR || !qrValue}>
+                <MaterialCommunityIcons name="download" size={30} color={showQR && qrValue ? "#19171d" : "#bbb"} />
+              </TouchableOpacity>
+                <TouchableOpacity style={styles.iconBtn} onPress={handleClose}>
+                <MaterialCommunityIcons name="close" size={30} color="#19171d" />
+              </TouchableOpacity>
+            </View>
+            {showQR && qrValue ? (
+              <View style={styles.qrImgBox}>
+                <QRCode
+                  value={qrValue}
+                  size={120}
+                  getRef={qrRef}
+                />
+              </View>
+            ) : null}
           </View>
+                      )}
           <View style={styles.inputRow}>
             <Text style={styles.inputLabel}>Name:</Text>
             <TextInput
@@ -49,12 +105,16 @@ export default function QRCodeModal({ visible, onClose, onSave, loading }) {
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
+              editable={!showQR}
             />
           </View>
           <View style={styles.btnRow}>
-            <TouchableOpacity style={styles.plusBtn} onPress={handleSave} disabled={loading}>
-              <Text style={styles.plusBtnText}>+</Text>
-            </TouchableOpacity>
+            {!showQR && (
+              <TouchableOpacity style={styles.plusBtn} onPress={handleSave} disabled={loading}>
+                <Text style={styles.plusBtnText}>+</Text>
+              </TouchableOpacity>
+            )}
+          
           </View>
         </View>
       </View>
@@ -105,16 +165,21 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  downloadIconBtn: {
-    position: 'relative',
-    right: 0,
-    left:250,
+  topRightIcons: {
+    position: 'absolute',
     top: 8,
-    zIndex: 2,
-    backgroundColor: 'transparent',
+    right: 12,
+    flexDirection: 'row',
+    zIndex: 10,
+    gap: 8,
+  },
+  iconBtn: {
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 18,
+    padding: 4,
+    marginLeft: 4,
     alignItems: 'center',
     justifyContent: 'center',
-
   },
   inputRow: {
     flexDirection: 'row',
