@@ -283,7 +283,7 @@ export default function UsersTabScreen() {
               <Text style={styles.usersProfileName}>{selectedUser?.name}</Text>
               <Text style={styles.usersProfileRole}>{selectedUser?.role}</Text>
               <Text style={styles.usersLoginTime}>
-                Today Login Time : {dashboard.todayLoginTime}
+                Today Login Time : {dashboard?.todayLoginTime}
               </Text>
             </View>
           </View>
