@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { fetchManagerDashboard, addUserByManager } from "../api/managerApi";
+import { getRestaurantById} from "../api/restaurantApi";
 import { fetchChefStats } from "../api/chefApi";
 import axios from "axios";
 
@@ -34,6 +35,7 @@ export default function ManagerDashboardScreenNew() {
   const [showNewQRModal, setShowNewQRModal] = useState(false);
   const [showTableDetail, setShowTableDetail] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
+  const [showPayModal, setShowPayModal] = useState(false);
   const [qrFormData, setQrFormData] = useState({
     name: "",
   });
@@ -127,6 +129,8 @@ export default function ManagerDashboardScreenNew() {
         setChefLogins(dash.currentlyLoggedIn || 0);
         setChefLogouts(dash.chefLogouts || 0);
         setTotalChefLogins(dash.chefLogins || 0);
+        const response = await getRestaurantById(restaurantId);
+        console.log("Restaurant data by ID:", response);
       } catch (e) {
         // fallback to static if needed
       }
@@ -281,31 +285,66 @@ export default function ManagerDashboardScreenNew() {
             title={restaurantName}
             titleStyle={styles.appbarTitle}
           />
-          <TouchableOpacity style={{ marginRight: 16 }}>
+          <TouchableOpacity
+            style={{ marginRight: 16 }}
+            onPress={() => setShowPayModal(true)}
+          >
             <Text style={styles.payBtnText}>Pay</Text>
           </TouchableOpacity>
         </Appbar.Header>
 
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.todayText}>Today</Text>
-            <Text style={styles.dayText}>{today}</Text>
-            <Text style={styles.dateText}>{date}</Text>
-            <Text style={styles.greetText}>Welcome {managerName}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.profileImg}
-            onPress={() => setProfileVisible(true)}
+          {/* Pay Modal */}
+          <Modal
+            visible={showPayModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowPayModal(false)}
           >
-            <MaterialCommunityIcons
-              name="account-circle"
-              size={60}
-              color="#7b6eea"
-            />
-          </TouchableOpacity>
-        </View>
+            <View style={styles.modalOverlay}>
+              <View style={[styles.profileCard, { alignItems: "center" }]}>
+                <TouchableOpacity
+                  style={{ position: "absolute", top: 10, right: 10, zIndex: 20 }}
+                  onPress={() => setShowPayModal(false)}
+                >
+                  <MaterialCommunityIcons name="close" size={28} color="#222" />
+                </TouchableOpacity>
+                <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 12, color: "#6c63b5" }}>
+                  Payment
+                </Text>
+                {/* Add your payment UI here */}
+                <Text style={{ fontSize: 16, color: "#222", marginBottom: 8 }}>
+                  UPI ID : example@upi
+                </Text>
+                <TouchableOpacity
+                  style={styles.profileCloseBtn}
+                  onPress={() => setShowPayModal(false)}
+                >
+                  <Text style={styles.logoutText}>Update</Text>
+                  <Text style={styles.logoutText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
 
-        {/* Custom Info Card and Buffet Row */}
+          <View style={styles.headerRow}>
+            <View style={styles.headerLeft}>
+              <Text style={styles.todayText}>Today</Text>
+              <Text style={styles.dayText}>{today}</Text>
+              <Text style={styles.dateText}>{date}</Text>
+              <Text style={styles.greetText}>Welcome {managerName}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.profileImg}
+              onPress={() => setProfileVisible(true)}
+            >
+              <MaterialCommunityIcons
+                name="account-circle"
+                size={60}
+                color="#7b6eea"
+              />
+            </TouchableOpacity>
+          </View>
+
         <View style={styles.infoBuffetRow}>
           <Surface style={[styles.infoCard, { flex: 2, marginRight: 8 }]}>
             <Text style={styles.infoTitle}>Current Info</Text>
