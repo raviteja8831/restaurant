@@ -185,11 +185,11 @@ export default function UsersTabScreen() {
       Alert.alert("Error", err.message || "Failed to add user");
     }
   };
+        console.log('userList:', userList);
 
   return (
     <>
       <ScrollView style={styles.container}>
-        {/* Users Avatars Row (Horizontally scrollable) */}
         <View style={styles.usersHeader}>
           <Text style={styles.usersTitle}>Users</Text>
           <ScrollView
@@ -210,7 +210,7 @@ export default function UsersTabScreen() {
                 ]}
                 onPress={() => setSelectedUser(user)}
               >
-                <Text style={styles.userAvatarName}>{user?.name}</Text>
+                <Text style={styles.userAvatarName}>{user.name}</Text>
                 <View style={styles.userAvatarCircle}>
                   <MaterialCommunityIcons
                     name="account"
@@ -218,7 +218,7 @@ export default function UsersTabScreen() {
                     color="#6c63b5"
                   />
                 </View>
-                <Text style={styles.userAvatarRole}>{user?.role}</Text>
+                <Text style={styles.userAvatarRole}>{user.role?.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>

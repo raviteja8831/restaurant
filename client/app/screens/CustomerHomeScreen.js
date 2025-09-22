@@ -15,15 +15,7 @@ import FilterModal from "../Modals/FilterModal";
 import SearchModal from "../Modals/SearchModal";
 import * as Location from 'expo-location';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
-
-// Mock Hyderabad restaurant data
-const RESTAURANTS = [
-  { id: 1, name: "Paradise Biryani", cuisine: "Biryani", latitude: 17.4375, longitude: 78.4456 },
-  { id: 2, name: "Chutneys", cuisine: "South Indian", latitude: 17.4239, longitude: 78.4867 },
-  { id: 3, name: "Barbeque Nation", cuisine: "BBQ", latitude: 17.4412, longitude: 78.3936 },
-  { id: 4, name: "Ohri's", cuisine: "Multi-cuisine", latitude: 17.4260, longitude: 78.4500 },
-  { id: 5, name: "Bawarchi", cuisine: "Biryani", latitude: 17.4065, longitude: 78.4891 },
-];
+import { getAllRestaurants } from '../api/restaurantApi';
 
 
 function CustomerHomeScreen() {
@@ -35,13 +27,14 @@ function CustomerHomeScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [restaurants, setRestaurants] = useState([]);
   // Only for web: load Google Maps API
   const { isLoaded } = Platform.OS === 'web'
     // eslint-disable-next-line react-hooks/rules-of-hooks
     ? useJsApiLoader({ googleMapsApiKey: 'AIzaSyCJT87ZYDqm6bVLxRsg4Zde87HyefUfASQ' })
     : { isLoaded: true };
 
-  // Get user location on mount
+  // Get user location and fetch restaurants on mount
   useEffect(() => {
     (async () => {
       try {
@@ -55,20 +48,23 @@ function CustomerHomeScreen() {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         });
-      } catch (e) {
+      } catch (_e) {
         // Use default location
+      }
+      try {
+        const data = await getAllRestaurants();
+        setRestaurants(data);
+      } catch (_e) {
+        setRestaurants([]);
       }
       setLoading(false);
     })();
   }, []);
 
-  // Filtering logic
-  const filteredRestaurants = RESTAURANTS.filter(r => {
-    let matchesFilter = selectedFilter ? r.cuisine === selectedFilter : true;
-    let matchesSearch = searchQuery ? r.name.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-    return matchesFilter && matchesSearch;
-  });
-
+  // Filtering logic: Only include restaurants with valid lat/lng
+  const filteredRestaurants = restaurants.filter(r =>
+    typeof r.latitude === 'number' && typeof r.longitude === 'number' && !isNaN(r.latitude) && !isNaN(r.longitude)
+  );
   // Handlers
   const handleFilterPress = () => setShowFilter(true);
   const handleSearchPress = () => setShowSearch(true);
@@ -110,7 +106,7 @@ function CustomerHomeScreen() {
               onClick={() => setSelectedRestaurant(r)}
               opacity={selectedRestaurant && selectedRestaurant.id === r.id ? 1 : 0.7}
             >
-              {selectedRestaurant && selectedRestaurant.id === r.id && (
+            {selectedRestaurant && selectedRestaurant.id === r.id && (
                 <InfoWindow position={{ lat: r.latitude, lng: r.longitude }} onCloseClick={() => setSelectedRestaurant(null)}>
                   <div>
                     <h4>{r.name}</h4>
@@ -129,7 +125,7 @@ function CustomerHomeScreen() {
       const maps = require('expo-maps');
       MapView = maps.MapView;
       NativeMarker = maps.Marker;
-    } catch (e) {
+    } catch (_e) {
       MapView = null;
       NativeMarker = null;
     }
@@ -174,68 +170,105 @@ function CustomerHomeScreen() {
 
     return (
       <View style={Platform.OS === 'web' ? styles.fullScreenWeb : styles.container}>
-      {/* Top Controls */}
-      <View style={styles.topControls}>
-        <TouchableOpacity
-          style={styles.gpsIndicator}
-          onPress={handleFilterPress}
-        >
-          <Image
-            source={require("../../assets/images/filter-image.png")}
-            style={styles.filterImage}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.searchButton}
-          onPress={handleSearchPress}
-        >
-          <MaterialIcons name="search" size={24} color="#333" />
-        </TouchableOpacity>
-      </View>
+        {/* Top Controls */}
+        <View style={styles.topControls}>
+          <TouchableOpacity
+            style={styles.gpsIndicator}
+            onPress={handleFilterPress}
+          >
+            <Image
+              source={require("../../assets/images/filter-image.png")}
+              style={styles.filterImage}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={handleSearchPress}
+          >
+            <MaterialIcons name="search" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
 
-      {/* Map Area */}
+        {/* Map Area */}
         <View style={styles.mapWebContainer}>
           {mapContent}
         </View>
 
-      {/* Filter Modal */}
-      <FilterModal
-        visible={showFilter}
-        onClose={() => setShowFilter(false)}
-        onFilterSelect={handleFilterSelect}
-      />
 
-      {/* Search Modal */}
-      <SearchModal
-        visible={showSearch}
-        onClose={() => setShowSearch(false)}
-        onSearch={handleSearch}
-      />
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNavigation}>
-        <TouchableOpacity
-          style={styles.navButton}
-          onPress={handlePersonTabPress}
-        >
-          <MaterialIcons name="person" size={24} color="white" />
-        </TouchableOpacity>
+        {/* Filter Modal */}
+        <FilterModal
+          visible={showFilter}
+          onClose={() => setShowFilter(false)}
+          onFilterSelect={handleFilterSelect}
+        />
 
-        <TouchableOpacity
-          style={[styles.navButton, styles.scanButton]}
-          onPress={handleScanPress}
-        >
-          <MaterialCommunityIcons name="qrcode-scan" size={28} color="white" />
-        </TouchableOpacity>
+        {/* Search Modal */}
+        <SearchModal
+          visible={showSearch}
+          onClose={() => setShowSearch(false)}
+          onSearch={handleSearch}
+        />
 
-        <TouchableOpacity style={styles.navButton}>
-          <MaterialIcons name="navigation" size={24} color="white" />
-        </TouchableOpacity>
+        {/* Bottom Navigation */}
+        <View style={styles.bottomNavigation}>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={handlePersonTabPress}
+          >
+            <MaterialIcons name="person" size={24} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.navButton, styles.scanButton]}
+            onPress={handleScanPress}
+          >
+            <MaterialCommunityIcons name="qrcode-scan" size={28} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navButton}>
+            <MaterialIcons name="navigation" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  );
+    );
 }
 const styles = StyleSheet.create({
+  restaurantListContainer: {
+    position: 'absolute',
+    top: 90,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 12,
+    padding: 10,
+    zIndex: 2,
+    maxHeight: 260,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  restaurantListItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  restaurantName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  restaurantCuisine: {
+    fontSize: 14,
+    color: '#666',
+  },
+  noRestaurantsText: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 16,
+    paddingVertical: 12,
+  },
   mapWebContainer: {
     position: 'absolute',
     top: 0,
