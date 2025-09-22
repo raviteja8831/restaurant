@@ -541,6 +541,8 @@ exports.register = async (req, res) => {
       enableNonveg,
       enableTableService,
       enableSelfService,
+      latitude, longitude,
+      restaurantType,
     } = req.body;
 
     // Convert restaurantType and foodType to comma-separated values if arra
@@ -563,6 +565,9 @@ exports.register = async (req, res) => {
         enableSelfService === true || enableSelfService === "true",
       ambianceImage: ambianceImageUrl,
       logoImage: logoImageUrl,
+      latitude: latitude || null,
+      longitude: longitude || null,
+      restaurantType: restaurantType || "Other",
     });
 
     // Create manager user for the restaurant

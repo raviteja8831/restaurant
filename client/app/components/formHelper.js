@@ -108,7 +108,7 @@ export function FormInput(props) {
         <Picker
           selectedValue={value}
           onValueChange={(itemValue) => onChange(name, itemValue)}
-          style={styles.input}
+          style={styles.selectPicker}
         >
           <Picker.Item label={props.placeholder || "Select"} value="" />
           {options.map((opt) => (
@@ -270,6 +270,17 @@ const styles = StyleSheet.create({
   selectOptionText: {
     fontSize: 14,
     color: "#333",
+  },
+  selectPicker: {
+    minHeight: 44,
+    borderRadius: 6,
+    backgroundColor: "#fff",
+    paddingHorizontal: 12,
+    fontSize: 15,
+    borderWidth: 0,
+    color: "#222",
+    marginBottom: 24,
+    justifyContent: 'center',
   },
   radioRow: {
     flexDirection: "row",
