@@ -204,8 +204,8 @@ export default function UsersTabScreen() {
                   styles.userAvatarCol,
                   selectedUser &&
                     selectedUser.id === user.id && {
-                      borderColor: "#6c63b5",
-                      borderWidth: 2,
+                      // borderColor: "#6c63b5",
+                      // borderWidth: 2,
                     },
                 ]}
                 onPress={() => setSelectedUser(user)}
@@ -390,6 +390,7 @@ export default function UsersTabScreen() {
                   fontWeight: "bold",
                   fontSize: 13,
                   marginBottom: 2,
+                  
                 }}
               >
                 Total Orders Completed
@@ -415,6 +416,7 @@ export default function UsersTabScreen() {
                   fontWeight: "bold",
                   fontSize: 13,
                   marginBottom: 2,
+                  alignSelf: "flex-start",
                 }}
               >
                 Total Orders Completed
@@ -438,7 +440,7 @@ export default function UsersTabScreen() {
                   style={{
                     backgroundColor: "#d1c4e9",
                     borderRadius: 8,
-                    paddingHorizontal: 12,
+                    paddingHorizontal: 2,
                     paddingVertical: 4,
                   }}
                   onPress={() => setShowPeriodDropdown((v) => !v)}
@@ -672,7 +674,10 @@ export default function UsersTabScreen() {
           allottedMenuItemIds,
           action,
         })}
-        <TabBar />
+        {/* <TabBar /> */}
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: -42 }}>
+                <TabBar  />
+              </View>
       </ScrollView>
     </>
   );
@@ -803,9 +808,9 @@ const styles = StyleSheet.create({
   },
   usersAllottedTitle: {
     fontWeight: "bold",
-    fontSize: 15,
+    fontSize: 12,
     color: "#6c63b5",
-    marginBottom: 6,
+    marginBottom: 0,
   },
   usersAllottedDish: {
     fontSize: 13,

@@ -1,3 +1,7 @@
+// Reusable RedStar component
+const RedStar = () => (
+  <Text style={{ color: 'red', fontSize: 16, fontWeight: 'bold' }}>*</Text>
+);
 import React, { useEffect } from "react";
 import { useRouter } from "expo-router";
 import {
@@ -91,9 +95,10 @@ export default function ManagerRegisterScreen() {
   // const [error, setError] = React.useState(""); // Removed unused variable
   const formConfig = [
     {
-      label: "First Name",
+      label:<> First Name <Text style={{ color: 'red' }}>*</Text></>,
       name: "firstname",
       type: "text",
+      required: true,
     },
     {
       label: "Last Name",
@@ -101,33 +106,37 @@ export default function ManagerRegisterScreen() {
       type: "text",
     },
     {
-      label: "Phone",
+      label: <>Phone Number <Text style={{ color: 'red' }}>*</Text></>,
       name: "phone",
       type: "text",
       keyboardType: "phone-pad",
+      required: true,
     },
     {
-      label: "Restaurant Name",
+      label: <>Restaurant Name <Text style={{ color: 'red' }}>*</Text></>,
       name: "name",
       type: "text",
+      required: true,
     },
     {
-      label: "Restaurant Address",
+      label: <>Restaurant Address <Text style={{ color: 'red' }}>*</Text></>,
       name: "restaurantAddress",
       type: "textarea",
       value: address,
       multiline: true,
       editable: true,
+      required: true,
     },
     {
       label: "Restaurant Type",
       name: "restaurantType",
       type: "select",
+      required: true,
       options: [
-        { label: "Veg", value: "Veg" },
-        { label: "Non-Veg", value: "Non-Veg" },
         { label: "Multi-cuisine", value: "Multi-cuisine" },
         { label: "Cafe", value: "Cafe" },
+        { label: "3 Star", value: "3 Star" },
+        { label: "5 Star", value: "5 Star" },
         { label: "Other", value: "Other" },
       ],
       placeholder: "Select type",
@@ -352,9 +361,46 @@ export default function ManagerRegisterScreen() {
                 {step === 2 && (
                   <View style={styles.stepBox}>
                     <View style={styles.stepFormAreaScroll}>
-                      {/* Show only restaurant fields, styled like step 1 */}
+                      {/* Restaurant Name field with red star */}
+                      <View>
+                        <FormService
+                          config={formConfig.filter(f => f.name === "name")}
+                          values={form}
+                          setValues={setForm}
+                          onSubmit={() => {}}
+                          submitLabel={null}
+                          loading={loading}
+                          hiddenFields={[]}
+                          inputStyle={styles.inputStep}
+                          labelStyle={styles.labelStep}
+                        />
+                      </View>
+                      {/* Restaurant Address field with red star */}
+                      <View>
+                        <FormService
+                          config={formConfig.filter(f => f.name === "restaurantAddress")}
+                          values={form}
+                          setValues={setForm}
+                          onSubmit={() => {}}
+                          submitLabel={null}
+                          loading={loading}
+                          hiddenFields={[]}
+                          inputStyle={styles.inputStep}
+                          labelStyle={styles.labelStep}
+                        />
+                      </View>
+                      {/* Use Current Location button below address */}
+                      <Button
+                        mode="contained"
+                        style={styles.locationBtnStep2}
+                        icon="crosshairs-gps"
+                        onPress={handleUseCurrentLocation}
+                      >
+                        Use Current Location
+                      </Button>
+                      {/* Restaurant Type dropdown */}
                       <FormService
-                        config={formConfig.filter(f => f.name !== "firstname" && f.name !== "lastname" && f.name !== "phone")}
+                        config={formConfig.filter(f => f.name === "restaurantType")}
                         values={form}
                         setValues={setForm}
                         onSubmit={() => {}}
@@ -382,18 +428,8 @@ export default function ManagerRegisterScreen() {
                           labelStyle={styles.labelStep}
                         />
                       )}
-                  
                       {/* Extra controls below the form, not inside it */}
                       <View style={{ marginTop: 24 }}>
-                        <Button
-                          mode="contained"
-                          style={styles.locationBtnStep2}
-                          icon="crosshairs-gps"
-                          onPress={handleUseCurrentLocation}
-                        >
-                          Use Current Location
-                        </Button>
-                   
                         <Text style={styles.sectionTitleStep2Grid}>
                         </Text>
                         <View style={styles.typeFoodGridRow}>
@@ -1042,6 +1078,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginLeft: 2,
   },
+  requiredstyle: {
+      color: 'red',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
   fixedBottomBarStep: {
     position: "absolute",
     left: 0,

@@ -13,7 +13,7 @@ const tabs = [
 export default function TabBar({ activeTab }) {
   const router = useRouter();
   return (
-    <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#8D8BEA', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 12, elevation: 8 }}>
+    <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 12, elevation: 8 }}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.key}
