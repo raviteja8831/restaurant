@@ -22,6 +22,7 @@ db.message = require("./message.model.js")(sequelize, Sequelize);
 db.users = require("./user.model.js")(sequelize, Sequelize);
 db.customer = require("./customer.model.js")(sequelize, Sequelize);
 db.roles = require("./role.model.js")(sequelize, Sequelize);
+db.orderStatus = require("./orderStatus.model.js")(sequelize, Sequelize);
 db.restaurant = require("./restaurant.model.js")(sequelize, Sequelize);
 db.restaurantUser = require("./restaurantuser.model.js")(sequelize, Sequelize);
 db.buffetOrder = require("./buffetOrder.model.js")(sequelize, Sequelize);
@@ -97,6 +98,13 @@ db.menuItem.hasMany(db.orderProducts, {
 // Order <-> Restauranttable association
 db.orders.belongsTo(db.restaurantTable, { foreignKey: "tableId", as: "table" });
 db.restaurantTable.hasMany(db.orders, { foreignKey: "tableId", as: "orders" });
+
+// Order Status associations
+db.orders.belongsTo(db.orderStatus, {
+  foreignKey: "statusId",
+  as: "orderStatus",
+});
+db.orderStatus.hasMany(db.orders, { foreignKey: "statusId", as: "orders" });
 
 // Many-to-many: restaurantUser <-> menuItem through userMenuItem
 db.restaurantUser.belongsToMany(db.menuItem, {

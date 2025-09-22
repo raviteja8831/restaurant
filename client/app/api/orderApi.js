@@ -77,3 +77,16 @@ export const deleteOrder = async (orderId) => {
     throw error;
   }
 };
+
+export const updateOrderProductStatusList = async (orderId, data) => {
+  try {
+    const res = await axiosService.post(
+      `${API_BASE_URL}/orders/orderproduct/${orderId}`,
+      data
+    );
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+};

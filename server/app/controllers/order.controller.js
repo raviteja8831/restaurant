@@ -357,3 +357,105 @@ exports.updateOrderStatus = async (req, res) => {
     });
   }
 };
+exports.getOrderProductsByOrderId = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const orderProducts = await OrderProduct.findAll({
+      where: { orderId },
+      include: [
+        {
+          model: MenuItem,
+          as: "menuitem",
+          attributes: ["id", "name", "price"],
+        },
+      ],
+      attributes: [
+        "id",
+        "orderId",
+        "menuitemId",
+        "quantity",
+        "status",
+        "comments",
+        "createdAt",
+        "updatedAt",
+      ],
+    });
+
+    if (!orderProducts || orderProducts.length === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "No order products found for this order",
+      });
+    }
+    for (const item of orderProducts) {
+      await OrderProduct.update(
+        { status: 1 },
+        {
+          where: { id: item.id, orderId },
+          transaction: t,
+        }
+      );
+    }
+    res.status(200).json({
+      status: "success",
+      data: orderProducts,
+    });
+  } catch (error) {
+    console.error("Error in getOrderProductsByOrderId:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching order products",
+      error: error.message,
+    });
+  }
+};
+
+exports.updateOrderProductStatusList = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    // Validate status exists in orderStatus table
+    const validStatus = await db.orderStatus.findByPk(status);
+    if (!validStatus) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid status ID provided",
+      });
+    }
+
+    // Start a transaction
+    const result = await db.sequelize.transaction(async (t) => {
+      // Fetch updated order products
+      const updatedProducts = await OrderProduct.findAll({
+        where: { orderId },
+        transaction: t,
+      });
+
+      // Bulk update all products with the new status
+      await OrderProduct.update(
+        { status: status },
+        {
+          where: { orderId },
+          transaction: t,
+        }
+      );
+
+      return updatedProducts;
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Order products updated successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error in updateOrderProductStatusList:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Error updating order products",
+      error: error.message,
+    });
+  }
+};

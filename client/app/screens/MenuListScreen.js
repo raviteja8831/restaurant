@@ -19,7 +19,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { menuliststyles, responsiveStyles } from "../styles/responsive";
 import { getMenusWithItems } from "../api/menuApi";
 import { AlertService } from "../services/alert.service";
-import { getOrderItemCount } from "../api/orderApi";
+import {
+  getOrderItemCount,
+  updateOrderProductStatusList,
+} from "../api/orderApi";
 import { getRestaurantById } from "../api/restaurantApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useUserData } from "../services/getUserData";
@@ -64,13 +67,14 @@ export default function MenuListScreen() {
       console.log("MenuListScreen focused, User ID:", userId);
       fetchselectedOrderCount();
       fetchMenuData();
-    }, [userId])
+    }, [userId, params.restaurantId, params.hotelId])
   );
   const fetchMenuData = async () => {
     try {
       setLoading(true);
-      restaurant.id = 1;
-      const response = await getMenusWithItems(restaurant.id);
+      // restaurant.id = 1;
+      var restId = params.restaurantId || params.hotelId;
+      const response = await getMenusWithItems(restId);
       console.log("Fetched menu data:", response);
       setMenuCategories(response);
     } catch (error) {
@@ -84,8 +88,8 @@ export default function MenuListScreen() {
   const fetchselectedOrderCount = async () => {
     try {
       setLoading(true);
-      restaurant.id = 1;
-      const response = await getOrderItemCount(restaurant.id, userId);
+      var restId = params.restaurantId || params.hotelId;
+      const response = await getOrderItemCount(restId, userId);
       console.log("Fetched order item count:", response);
       setOrderSummary((prev) => ({
         ...prev,
@@ -111,7 +115,7 @@ export default function MenuListScreen() {
       params: {
         category: category.id,
         categoryName: category.name,
-        restaurantId: restaurant.id,
+        restaurantId: params.restaurantId || params.hotelId,
         // userId: params.userId || 1,
         orderID: orderSummary.orderId || null,
         ishotel: ishotel,
@@ -121,8 +125,8 @@ export default function MenuListScreen() {
   useEffect(() => {
     const fetchRestaurantData = async () => {
       try {
-        params.hotelId = params.hotelId || 1;
-        const response = await getRestaurantById(params.hotelId);
+        const restId = params.hotelId || params.restaurantId;
+        const response = await getRestaurantById(restId);
         if (response.buffets) {
           const hasActiveBuffet = response.buffets.some(
             (buffet) => buffet?.isActive === true
@@ -140,7 +144,7 @@ export default function MenuListScreen() {
     };
 
     fetchRestaurantData(); // Call the function here
-  }, [params.hotelId]);
+  }, [params.hotelId, params.restaurantId]);
 
   const handleBackPress = () => {
     if (ishotel == "false") {
@@ -154,13 +158,24 @@ export default function MenuListScreen() {
   };
 
   const handleFinalOrder = () => {
-    router.push({
-      pathname: "/payorder",
-      params: {
-        orderID: orderSummary.orderId,
-        // userId: params.userId || 1,
-      },
-    });
+    try {
+      const response = updateOrderProductStatusList(orderSummary.orderId, {
+        status: "1",
+      });
+      console.log("Order status update response:", response);
+      if (response.status == "success") {
+        router.push({
+          pathname: "/payorder",
+          params: {
+            orderID: orderSummary.orderId,
+            // userId: params.userId || 1,
+          },
+        });
+      }
+    } catch (error) {
+      AlertService.error("Failed to update order status. Please try again.");
+      console.error("Error updating order status:", error);
+    }
   };
   useEffect(() => {
     if (loading) {
@@ -230,7 +245,8 @@ export default function MenuListScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            {isbuffet}
+
+            {/* {isbuffet} */}
             {ishotel == "true" && isbuffet && (
               <View style={menuliststyles.buffetSection}>
                 <TouchableOpacity
@@ -256,7 +272,7 @@ export default function MenuListScreen() {
             {ishotel == "false" &&
               Object.keys(orderSummary).length > 0 &&
               orderSummary.totalItems > 0 && (
-                <View style={menuliststyles.totalSection}>
+                <View style={menuliststyles.buffetSection}>
                   <View style={menuliststyles.totalContainer}>
                     <Text style={menuliststyles.totalText}>
                       Total Amount = ₹{orderSummary.totalCost}/-

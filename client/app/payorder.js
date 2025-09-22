@@ -24,6 +24,7 @@ import {
 } from "./api/orderApi";
 import CommentModal from "./Modals/CommentModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUserData } from "./services/getUserData";
 const { width, height } = Dimensions.get("window");
 
 export default function OrderSummaryScreen() {
@@ -38,7 +39,16 @@ export default function OrderSummaryScreen() {
   const [editingItem, setEditingItem] = useState(null);
   const [removedItems, setRemovedItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [userId, setUserId] = useState(null);
+  // const [userId, setUserId] = useState(null);
+  const { userId, error } = useUserData();
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text>Error loading user data. Please try again.</Text>
+      </View>
+    );
+  }
   function router_call() {
     router.push({
       pathname: "/menu-list",
@@ -54,30 +64,30 @@ export default function OrderSummaryScreen() {
       Alert.alert("Error", "Failed to delete order. Please try again.");
     }
   };
-  useEffect(() => {
-    const initializeProfile = async () => {
-      try {
-        const userProfile = await AsyncStorage.getItem("user_profile");
-        if (userProfile) {
-          const user = JSON.parse(userProfile);
-          console.log("User Profile:", user); // Debug log
-          setUserId(user.id);
-          // Only fetch profile data if we have a userId
-          if (user.id) {
-            await fetchProfileData(user.id);
-          }
-        } else {
-          console.log("No user profile found");
-          router.push("/customer-login");
-        }
-      } catch (error) {
-        console.error("Error initializing profile:", error);
-        // AlertService.error("Error loading profile");
-      }
-    };
+  // useEffect(() => {
+  //   const initializeProfile = async () => {
+  //     try {
+  //       const userProfile = await AsyncStorage.getItem("user_profile");
+  //       if (userProfile) {
+  //         const user = JSON.parse(userProfile);
+  //         console.log("User Profile:", user); // Debug log
+  //         setUserId(user.id);
+  //         // Only fetch profile data if we have a userId
+  //         if (user.id) {
+  //           await fetchProfileData(user.id);
+  //         }
+  //       } else {
+  //         console.log("No user profile found");
+  //         router.push("/customer-login");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error initializing profile:", error);
+  //       // AlertService.error("Error loading profile");
+  //     }
+  //   };
 
-    initializeProfile();
-  }, []);
+  //   initializeProfile();
+  // }, []);
   useEffect(() => {
     initializeData();
   }, [params.orderID, userId]);
@@ -257,7 +267,7 @@ export default function OrderSummaryScreen() {
             <Text style={[styles.hcell, styles.qtyColumn]}>Qty</Text>
             <Text style={[styles.hcell, styles.priceColumn]}>Price</Text>
             <Text style={[styles.hcell, styles.totalColumn]}>Total</Text>
-            <Text style={[styles.hcell, styles.editColumn]}></Text>
+            {/* <Text style={[styles.hcell, styles.editColumn]}></Text> */}
           </View>
 
           {/* Order Rows */}
@@ -288,7 +298,7 @@ export default function OrderSummaryScreen() {
                 {order.quantity * order.price}
               </Text>
               {/* Edit icon or quantity controls */}
-              <View style={styles.editColumn}>
+              {/*      <View style={styles.editColumn}>
                 {editingItem === order.id ? (
                   <View style={styles.quantityControls}>
                     <TouchableOpacity
@@ -320,7 +330,7 @@ export default function OrderSummaryScreen() {
                     <Feather name="edit-2" size={14} color="#000" />
                   </TouchableOpacity>
                 )}
-              </View>
+              </View> */}
             </View>
           ))}
         </TouchableOpacity>
@@ -332,7 +342,7 @@ export default function OrderSummaryScreen() {
           <Text style={[styles.cell, styles.qtyColumn]} />
           <Text style={[styles.cell, styles.priceColumn]} />
           <Text style={[styles.cell, styles.totalColumn]}>{totalAmount}</Text>
-          <View style={styles.editColumn} />
+          {/* <View style={styles.editColumn} /> */}
         </View>
         {/* Rating Section */}
         <View style={styles.ratingSection}>
