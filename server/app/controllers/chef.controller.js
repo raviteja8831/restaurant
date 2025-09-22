@@ -11,6 +11,7 @@ const MenuItem = db.menuItem;
 const userMenuItem = db.userMenuItem;
 const message = db.message;
 const roles = db.roles;
+const OrderStatus = db.orderStatus;
 
 const chefController = {};
 
@@ -381,6 +382,24 @@ chefController.sendChefMessage = async (req, res) => {
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get all order statuses
+chefController.getOrderStatuses = async (req, res) => {
+  try {
+    const orderStatuses = await OrderStatus.findAll({
+      attributes: ["id", "name", "createdAt", "updatedAt"],
+      order: [["id", "ASC"]],
+    });
+
+    res.json(orderStatuses);
+  } catch (e) {
+    console.error("Error fetching order statuses:", e);
+    res.status(500).json({
+      message: "Error fetching order statuses",
+      error: e.message,
+    });
   }
 };
 

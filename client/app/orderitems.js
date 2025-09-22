@@ -151,7 +151,7 @@ export default function ItemsListScreen() {
       userId: userId,
       restaurantId: params.restaurantId,
       total: 0,
-      status: "PENDING",
+      status: "1",
       orderItems: selectedItems || [],
       orderID: params.orderID || null,
       removedItems: remove_list,
@@ -168,6 +168,10 @@ export default function ItemsListScreen() {
     // if (path_re) {
     router.push({
       pathname: "/menu-list",
+      params: {
+        // hotelId: params.ishotel == "true" ? params.restaurantId : null,
+        restaurantId: params.restaurantId,
+      },
     });
     // }
   };
@@ -336,9 +340,12 @@ export default function ItemsListScreen() {
   const handleBackPress = () => {
     var obj = { pathname: "/menu-list" };
     if (params.ishotel == "true") {
-      obj.params = { hotelId: params.restaurantId, ishotel: "true" };
+      obj.params = {
+        hotelId: params.restaurantId || params.hotelId,
+        ishotel: "true",
+      };
     } else {
-      obj.params = { hotelId: params.restaurantId };
+      obj.params = { restaurantId: params.restaurantId, ishotel: "false" };
     }
     router.push(obj);
   };
