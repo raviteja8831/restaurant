@@ -36,6 +36,11 @@ export default function ChefLoginScreen({ navigation }) {
 
       {/* Phone input */}
       <View style={styles.formContainer}>
+        <Image
+                source={require("../../assets/images/logo.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Phone Number  :</Text>
         <TextInput
@@ -62,9 +67,10 @@ export default function ChefLoginScreen({ navigation }) {
       </View>
 </View>
       {/* Fingerprint icon at bottom center */}
-      <View style={styles.fingerprintWrap}>
-        <TouchableOpacity style={styles.fingerprint} onPress={handleLogin}>
-          <Image source={require('../../assets/images/login_thumb.png')} style={styles.fingerprintIcon} />
+      <View style={styles.loginbutton}>
+        <TouchableOpacity  onPress={handleLogin}>
+          {/* <Image source={require('../../assets/images/login.png')} style={styles.fingerprintIcon} /> */}
+          <Text style={styles.buttonTextStep}>Login</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -73,9 +79,51 @@ export default function ChefLoginScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   formContainer: {
-    marginTop: 20,
+    // marginTop: 20,
     width: '100%',
     alignItems: 'center',
+  },
+
+  logo: {
+    width: 180,
+    height: 120,
+    marginBottom: 24,
+    alignSelf: "center",
+  },
+  bottomButtonStep: {
+    borderRadius: 14,
+    width: "92%",
+    alignSelf: "center",
+    paddingVertical: 8,
+    backgroundColor: "#6c6cf2",
+    marginTop: 0,
+    marginBottom: 0,
+    elevation: 0,
+  },
+  loginbutton: {
+    borderColor: 'rgba(0, 0, 0, 0)',
+    borderWidth: 0,
+    width: '45%',
+    shadowColor: 'rgba(0, 0, 0, 0)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    bottom : 48,
+    position: 'absolute',
+  },
+  buttonTextStep: {
+    backgroundColor: "#6c6cf2",
+    textAlign: "center",
+    borderRadius: 14,
+    fontSize: 26,
+    color: "#fff",
+    fontWeight: "bold",
+    letterSpacing: 1,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    paddingBottom: 13,
+    paddingLeft: 10,
+    // lineHeight removed for button text
   },
   container: {
     flex: 1,

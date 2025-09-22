@@ -291,7 +291,7 @@ export default function ManagerDashboardScreenNew() {
             <Text style={styles.todayText}>Today</Text>
             <Text style={styles.dayText}>{today}</Text>
             <Text style={styles.dateText}>{date}</Text>
-            <Text style={styles.greetText}>Hi {managerName}</Text>
+            <Text style={styles.greetText}>Welcome {managerName}</Text>
           </View>
           <TouchableOpacity
             style={styles.profileImg}
@@ -339,6 +339,8 @@ export default function ManagerDashboardScreenNew() {
                 justifyContent: "center",
                 flexDirection: "column",
                 position: "relative",
+                backgroundColor: "transparent",
+                boxShadow: "none",
               },
             ]}
           >
@@ -366,7 +368,7 @@ export default function ManagerDashboardScreenNew() {
                   <View
                     style={[
                       styles.buffetMenuPopupNew,
-                      { position: "absolute", top: 32, right: 0, zIndex: 100 },
+                      { position: "absolute", top: -132, right: 0, zIndex: 100 },
                     ]}
                   >
                     <TouchableOpacity
@@ -413,7 +415,7 @@ export default function ManagerDashboardScreenNew() {
               style={{ marginTop: 8, alignItems: "center", width: "100%" }}
             >
               <Text
-                style={{ color: "#6c63b5", fontWeight: "bold", fontSize: 15 }}
+                style={{ color: "#1f1d1d", fontWeight: "bold", fontSize: 15 }}
               >
                 {buffet.type || "Buffet Type"}
               </Text>

@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 // import { userData } from "../Mock/CustomerHome";
 import { getUserReviews } from "../api/reviewApi";
@@ -240,8 +241,20 @@ export default function UserProfileScreen() {
             router.push("/Customer-Login");
           }}
         >
-          <MaterialIcons name="logout" size={24} color="#fff" />
-          <Text style={styles.logoutText}>Logout</Text>
+          {/* <MaterialIcons name="logout" size={24} color="#fff" />
+          <Text style={styles.logoutText}>Logout</Text> */}
+          
+          <MaterialCommunityIcons
+                  name="power"
+                  size={28}
+                  color="#000"
+                />
+                <Text style={styles.logoutText} >
+                {/* onPress={() => handleLogout()}> */}
+                  Logout
+                </Text>
+
+
         </TouchableOpacity>
       </View>
 
@@ -347,12 +360,20 @@ const styles = StyleSheet.create({
   noOrders: { fontSize: 12, fontStyle: "italic", color: "gray" },
   separator: { height: 8 },
   logoutButton: {
-    backgroundColor: "#d9534f",
+    backgroundColor: "#6c63b5",
     borderRadius: 5,
     padding: 10,
     flexDirection: "row",
     alignSelf: "right",
   },
+
+  logoutText: {
+    fontSize: 18,
+    color: "#fff",
+    marginLeft: 8,
+    fontWeight: "700"
+  },
+
   reviewItem: {
     // backgroundColor: "#fff",
     borderRadius: 10,

@@ -86,7 +86,7 @@ export default function QRCodeScreen() {
             <Text style={styles.dropdownText}>{selectedDate}</Text>
             <MaterialCommunityIcons name="chevron-down" size={20} color="#7b6eea" />
           </TouchableOpacity>
-          <Text style={styles.statsText}>No of Customers today : <Text style={styles.statsNum}>50</Text></Text>
+          {/* <Text style={styles.statsText}>No of Customers today : <Text style={styles.statsNum}>50</Text></Text> */}
         </View>
         <Modal
           visible={dropdownVisible}
@@ -128,7 +128,9 @@ export default function QRCodeScreen() {
           />
         )}
   <QRCodeModal visible={showModal} onClose={() => setShowModal(false)} onSave={handleAddQRCode} loading={saving} restaurantId={restaurantId} />
-      <TabBar activeTab="qrcodes" />
+      <View style={{ position: 'absolute', left: 0, right: 0, bottom: -42 }}>
+        <TabBar activeTab="qrcodes" />
+      </View>
     </ScrollView>
   );
 }

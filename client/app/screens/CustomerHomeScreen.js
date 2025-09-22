@@ -87,11 +87,35 @@ function CustomerHomeScreen() {
       mapContent = <Text>Loading map...</Text>;
     } else {
       mapContent = (
+        // <GoogleMap
+        //   mapContainerStyle={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', margin: 0, padding: 0, borderRadius: 0, overflow: 'hidden' }}
+        //   center={{ lat: userLocation.latitude, lng: userLocation.longitude }}
+        //   zoom={13}
+        // >
         <GoogleMap
-          mapContainerStyle={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', margin: 0, padding: 0, borderRadius: 0, overflow: 'hidden' }}
-          center={{ lat: userLocation.latitude, lng: userLocation.longitude }}
-          zoom={13}
-        >
+  mapContainerStyle={{
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100vw',
+    height: '100vh',
+    margin: 0,
+    padding: 0,
+    borderRadius: 0,
+    overflow: 'hidden',
+  }}
+  center={{ lat: userLocation.latitude, lng: userLocation.longitude }}
+  zoom={13}
+  options={{
+    fullscreenControl: false,
+    streetViewControl: false,
+    mapTypeControl: false,
+    zoomControl: false,
+  }}
+>
+
           {/* User marker */}
           <Marker
             position={{ lat: userLocation.latitude, lng: userLocation.longitude }}
@@ -185,7 +209,7 @@ function CustomerHomeScreen() {
             style={styles.searchButton}
             onPress={handleSearchPress}
           >
-            <MaterialIcons name="search" size={24} color="#333" />
+            <MaterialIcons name="search" size={44} color="#333" />
           </TouchableOpacity>
         </View>
 
@@ -330,9 +354,10 @@ const styles = StyleSheet.create({
     elevation: 5, */
   },
   filterImage: {
-    width: 16,
-    height: 16,
+    width: 36,
+    height: 36,
     resizeMode: "contain",
+    fontSize: 36,
   },
   searchButton: {
     // backgroundColor: "white",
@@ -359,7 +384,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   navButton: {
-    backgroundColor: "#BBBAEF",
+    // backgroundColor: "#BBBAEF",
+    backgroundColor: "#6682b6ff",
     borderRadius: 16,
     padding: 16,
     shadowColor: "#000",
