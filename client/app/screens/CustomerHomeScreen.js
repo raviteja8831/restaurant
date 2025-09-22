@@ -123,22 +123,46 @@ function CustomerHomeScreen() {
           />
           {/* Restaurant markers */}
           {filteredRestaurants.map(r => (
+            // <Marker
+            //   key={r.id}
+            //   position={{ lat: r.latitude, lng: r.longitude }}
+            //   label={r.name}
+            //   onClick={() => setSelectedRestaurant(r)}
+            //   opacity={selectedRestaurant && selectedRestaurant.id === r.id ? 1 : 0.7}
+            // >
+            // {selectedRestaurant && selectedRestaurant.id === r.id && (
+            //     <InfoWindow position={{ lat: r.latitude, lng: r.longitude }} onCloseClick={() => setSelectedRestaurant(null)}>
+            //       <div>
+            //         <h4>{r.name}</h4>
+            //         <p>{r.cuisine}</p>
+            //       </div>
+            //     </InfoWindow>
+            //   )}
+            // </Marker>
             <Marker
-              key={r.id}
-              position={{ lat: r.latitude, lng: r.longitude }}
-              label={r.name}
-              onClick={() => setSelectedRestaurant(r)}
-              opacity={selectedRestaurant && selectedRestaurant.id === r.id ? 1 : 0.7}
-            >
-            {selectedRestaurant && selectedRestaurant.id === r.id && (
-                <InfoWindow position={{ lat: r.latitude, lng: r.longitude }} onCloseClick={() => setSelectedRestaurant(null)}>
-                  <div>
-                    <h4>{r.name}</h4>
-                    <p>{r.cuisine}</p>
-                  </div>
-                </InfoWindow>
-              )}
-            </Marker>
+  key={r.id}
+  position={{ lat: r.latitude, lng: r.longitude }}
+  label={r.name}
+  onClick={() => setSelectedRestaurant(r)}
+  icon={{
+    url: '/restaurant-marker.jpeg',
+    scaledSize: new window.google.maps.Size(60, 60),
+  }}
+  opacity={selectedRestaurant && selectedRestaurant.id === r.id ? 1 : 0.7}
+>
+  {selectedRestaurant && selectedRestaurant.id === r.id && (
+    <InfoWindow
+      position={{ lat: r.latitude, lng: r.longitude }}
+      onCloseClick={() => setSelectedRestaurant(null)}
+    >
+      <div>
+        <h4>{r.name}</h4>
+        <p>{r.cuisine}</p>
+      </div>
+    </InfoWindow>
+  )}
+</Marker>
+
           ))}
         </GoogleMap>
       );
