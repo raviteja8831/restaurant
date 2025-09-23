@@ -125,12 +125,17 @@ export default function OrderSummaryScreen() {
   // NEW: Build UPI intent and open UPI app
   const payWithUPI = async () => {
     // Use UPI ID and name from orderDetails if available; otherwise fallback.
-    const upiId = orderDetails.upiId || orderDetails.restaurantUpi || "receiver@upi";
-    const receiverName = orderDetails.restaurantName || orderDetails.restaurant || "Receiver";
+    const upiId =
+      orderDetails.upiId || orderDetails.restaurantUpi || "receiver@upi";
+    const receiverName =
+      orderDetails.restaurantName || orderDetails.restaurant || "Receiver";
     const amount = Number(totalAmount) || 0;
 
     if (amount <= 0) {
-      Alert.alert("Invalid amount", "Total amount must be greater than 0 to pay.");
+      Alert.alert(
+        "Invalid amount",
+        "Total amount must be greater than 0 to pay."
+      );
       return;
     }
 
@@ -142,9 +147,9 @@ export default function OrderSummaryScreen() {
       upiId
     )}&pn=${encodeURIComponent(receiverName)}&tr=${encodeURIComponent(
       txnRef
-    )}&tn=${encodeURIComponent("Payment for order " + (params.orderID || ""))}&am=${encodeURIComponent(
-      amount.toString()
-    )}&cu=INR`;
+    )}&tn=${encodeURIComponent(
+      "Payment for order " + (params.orderID || "")
+    )}&am=${encodeURIComponent(amount.toString())}&cu=INR`;
 
     try {
       const supported = await Linking.canOpenURL(upiUrl);
@@ -175,7 +180,10 @@ export default function OrderSummaryScreen() {
   // NEW: Called when user submits UTR in modal
   const handleVerifyAndComplete = async () => {
     if (!paymentUTR || paymentUTR.trim().length === 0) {
-      Alert.alert("Missing Transaction ID", "Please enter the transaction/UTR ID from your UPI app.");
+      Alert.alert(
+        "Missing Transaction ID",
+        "Please enter the transaction/UTR ID from your UPI app."
+      );
       return;
     }
     try {
@@ -303,13 +311,13 @@ export default function OrderSummaryScreen() {
                 style={[
                   styles.cell,
                   styles.statusColumn,
-                  order.status === "Served" && { color: "green" },
-                  order.status === "Ready" && { color: "limegreen" },
-                  order.status === "Preparing" && { color: "orange" },
-                  order.status === "Waiting" && { color: "red" },
+                  order.status == 1 && { color: "#F4962A" },
+                  order.status == 2 && { color: "#F4EE2A" },
+                  order.status == 3 && { color: "#2AF441" },
+                  order.status == 4 && { color: "#809782" },
                 ]}
               >
-                {order.status}
+                {order.statusText}
               </Text>
               <Text style={[styles.cell, styles.orderColumn]}>
                 {order.menuItemName}
@@ -394,7 +402,9 @@ export default function OrderSummaryScreen() {
                 style={styles.input}
                 autoCapitalize="none"
                 autoCorrect={false}
-                keyboardType={Platform.OS === "ios" ? "default" : "visible-password"}
+                keyboardType={
+                  Platform.OS === "ios" ? "default" : "visible-password"
+                }
               />
               <View style={styles.modalButtons}>
                 <TouchableOpacity
@@ -415,7 +425,9 @@ export default function OrderSummaryScreen() {
                   {paying ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <Text style={styles.modalButtonText}>Verify & Complete</Text>
+                    <Text style={styles.modalButtonText}>
+                      Verify & Complete
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -426,7 +438,6 @@ export default function OrderSummaryScreen() {
     </ScrollView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -594,7 +605,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   payButton: {
-    // backgroundColor: "#8C8AEB",
+    backgroundColor: "#8C8AEB",
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 12,

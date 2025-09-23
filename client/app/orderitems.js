@@ -150,8 +150,8 @@ export default function ItemsListScreen() {
     const order = {
       userId: userId,
       restaurantId: params.restaurantId,
-      total: 0,
-      status: "1",
+      total: totalCost,
+      // status: "1",
       orderItems: selectedItems || [],
       orderID: params.orderID || null,
       removedItems: remove_list,
