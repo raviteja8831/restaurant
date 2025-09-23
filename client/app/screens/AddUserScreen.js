@@ -17,8 +17,8 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
   ];
 
   const handleSave = async () => {
-    if (!firstname || !lastname || !password || !role || !phone) {
-      Alert.alert('Validation', 'All fields are required.');
+    if (!firstname || !password || !role || !phone) {
+      Alert.alert('Validation', 'All fields except Last Name are required.');
       return;
     }
     setLoading(true);
@@ -30,6 +30,9 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
     }
     setLoading(false);
   };
+
+  // Save button is enabled only if all fields except lastname are filled and not loading
+  const isSaveDisabled = !firstname || !password || !role || !phone || loading;
 
   return (
     <View style={styles.overlay}>
@@ -69,7 +72,11 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
           <TouchableOpacity style={[styles.button, { backgroundColor: '#aaa' }]} onPress={onClose} disabled={loading}>
             <Text style={styles.buttonText}>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={handleSave} disabled={loading}>
+          <TouchableOpacity
+            style={[styles.button, isSaveDisabled && { backgroundColor: '#aaa' }]}
+            onPress={handleSave}
+            disabled={isSaveDisabled}
+          >
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Save</Text>}
           </TouchableOpacity>
         </View>
