@@ -6,7 +6,7 @@ import { router } from "expo-router";
 import AddMenuItemScreen from "./screens/AddMenuItemScreen";
 import { addMenuItem, updateMenuItemsStatus } from "./api/menuApi";
 import { useAlert } from "./services/alertService";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const menuCategories = [
   { label: "Hot & Cold beverages", icon: "cup" },
   { label: "Soups", icon: "music" },
@@ -25,11 +25,22 @@ export default function MenuScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const alert = useAlert();
   // TODO: Replace with real menuId from context/store/props
-  const menuId = 1;
 
+  // const handleAddSave = async (item) => {
+  //   try {
+  //     await addMenuItem({ ...item, menuId });
+  //     alert.success('Menu item added successfully!');
+  //     setShowAddModal(false);
+  //   } catch (error) {
+  //     alert.error(error?.response?.data?.message || error?.message || 'Failed to add menu item');
+  //   }
+  // };
   const handleAddSave = async (item) => {
     try {
-      await addMenuItem({ ...item, menuId });
+      const userProfile = await AsyncStorage.getItem('user_profile');
+      const parsedProfile = JSON.parse(userProfile);
+      const restaurantId = parsedProfile?.restaurant?.id;
+      await addMenuItem({ ...item, restaurantId });
       alert.success('Menu item added successfully!');
       setShowAddModal(false);
     } catch (error) {
@@ -81,7 +92,7 @@ export default function MenuScreen() {
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSave={handleAddSave}
-        menuId={menuId}
+        // menuId={menuId}
       />
     </>
   );

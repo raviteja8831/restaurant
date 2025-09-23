@@ -101,7 +101,7 @@ export default function ManagerDashboardScreenNew() {
         }
         // Pass restaurantId to dashboard API
         const restaurantId =
-          user?.restaurantId || user?.restaurant_id || user?.id;
+          user?.restaurant.id;
         const dash = await fetchManagerDashboard(restaurantId, token);
         setDashboard(dash);
         setRestaurantName(
@@ -153,53 +153,6 @@ export default function ManagerDashboardScreenNew() {
   const addUserFormConfig = [
     // Not used anymore, form fields are now custom below
   ];
-
-  // Users tab mock data
-  const users = [
-    { name: "Mohan", role: "Manager" },
-    { name: "Kiran", role: "Chef" },
-    { name: "Anil", role: "Chef" },
-    { name: "Anoop", role: "Chef" },
-    { name: "Vishal", role: "Chef" },
-    { name: "Anthony", role: "Chef" },
-  ];
-  const selectedUser = users[1];
-  const allottedDishes = [
-    "Masala Dosa",
-    "Plain Dosa",
-    "Rava Dosa",
-    "Paper Dosa",
-    "Masala Paper Dosa",
-    "Set Dosa",
-    "Pesarttu",
-    "Cheese Dosa",
-    "Neer Dosa",
-    "Adai Dosa",
-    "Oats Dosa",
-    "Masala Oats Dosa",
-    "Moong Dal Dosa",
-    "Jower Dosa",
-    "Butter Dosa",
-    "Masala Butter Dosa",
-    "Paneer Dosa",
-    "Masala Paneer Dosa",
-    "Poori",
-  ];
-  const todayLoginTime = "8:00 AM";
-  const totalOrders = 65;
-  const topOrders = [
-    { name: "Masala Dosa", count: 20 },
-    { name: "Set Dosa", count: 12 },
-    { name: "Paper Dosa", count: 10 },
-  ];
-  const orderHistory = [
-    { msg: "Masala Dosa 4 Nos to Table No 5", time: "9:20AM" },
-    { msg: "Set Dosa 3 Nos to Table No 4", time: "9:15PM" },
-    { msg: "Plain Dosa 6 Nos to Table No 7", time: "9:10AM" },
-    { msg: "Oats Dosa 1 Nos to Table No 1", time: "9:08AM" },
-    { msg: "Onion Dosa 6 Nos to Parcel Table", time: "9:00AM" },
-  ];
-
 
 
   // Mock transaction data for tables

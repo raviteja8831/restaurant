@@ -60,17 +60,22 @@ export default function CustomerRegisterScreen() {
     >
       <Surface style={styles.container}>
         {/* Top-right icon */}
-        <View style={styles.topRightIcon}>
+        {/* <View style={styles.topRightIcon}>
           <Image
             source={require("../../assets/images/logo.png")}
             style={{ width: 28, height: 28 }}
           />
-        </View>
+        </View> */}
 
         {/* Title */}
-        <Text style={styles.title}>Menutha</Text>
+        {/* <Text style={styles.title}>Menutha</Text> */}
 
         {/* Form */}
+        <Image
+                        source={require("../../assets/images/logo.png")}
+                        style={styles.logo}
+                        resizeMode="contain"
+                      />
         <View style={styles.formContainer}>
           <TextInput
             style={styles.input}
@@ -143,6 +148,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: height * 0.05,
     right: width * 0.05,
+  },
+  logo: {
+    width: 180,
+    height: 120,
+    marginBottom: 24,
+    alignSelf: "center",
   },
   title: {
     fontSize: 32,

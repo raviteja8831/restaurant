@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -98,13 +98,17 @@ export default function UsersTabScreen() {
   const fetchAllottedMenuItems = async (userId) => {
     try {
       const items = await getUserAllottedMenuItems(userId);
-      //setAllottedUserMenuItemIds(items);
+      setAllottedUserMenuItemIds(items);
       // Fix: backend returns { menuItems: [...] }
-      setAllottedMenuItemIds((items.menuItems || []).map((i) => i.id));
+      setAllottedMenuItemIds((items || []).map((i) => i.id));
     } catch (_err) {
       setAllottedMenuItemIds([]);
     }
   };
+  useEffect(() => {
+    console.log("allottedUserMenuItemIds changed:", allottedMenuItemIds);
+  }, [allottedMenuItemIds]);
+ 
 
   const fetchMenus = async () => {
     try {
@@ -668,12 +672,6 @@ export default function UsersTabScreen() {
           action={action}
           onAdd={handleAddMenuItem}
         />
-        {console.log("AddMenuItemModal rendered", {
-          showAddMenuModal,
-          menusWithItems,
-          allottedMenuItemIds,
-          action,
-        })}
         {/* <TabBar /> */}
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: -42 }}>
                 <TabBar  />

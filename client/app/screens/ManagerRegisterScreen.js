@@ -341,9 +341,14 @@ export default function ManagerRegisterScreen() {
           style={{ flex: 1, backgroundColor: '#8D8BEA' }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
+          <Image
+                        source={require("../../assets/images/logo.png")}
+                        style={styles.logo}
+                        resizeMode="contain"
+                      />
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 32 }}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -874,6 +879,12 @@ const styles = StyleSheet.create({
   },
   formWrapper: {
     flex: 1,
+  },
+  logo: {
+    width: 180,
+    height: 120,
+    marginBottom: 24,
+    alignSelf: "center",
   },
   typeFoodGridRow: {
     flexDirection: "row",
