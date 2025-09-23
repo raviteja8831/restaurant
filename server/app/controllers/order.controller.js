@@ -68,7 +68,7 @@ exports.createOrder = async (req, res) => {
             // Create new order item
             await OrderProduct.create({
               orderId: req.body.orderID, // Changed from orderId to orderID
-              menuItemId: item.id,
+              menuitemId: item.id,
               quantity: item.quantity,
               comments: item.comments || "",
             });
@@ -106,15 +106,23 @@ exports.createOrder = async (req, res) => {
       return res.status(200).json(existingOrder);
     } else {
       // Create new order if no orderID provided
-      const order = await Order.create(req.body);
+      var order_data = {
+        restaurantId: req.body.restaurantId,
+        userId: req.body.userId,
+        total: req.body.total || 0,
+      };
+      order_data.status = "PENDING";
+      const order = await Order.create(order_data);
 
       // Check if order items exist in the request body
       if (req.body.orderItems && Array.isArray(req.body.orderItems)) {
         // Create order products for each item
         const orderProducts_ = req.body.orderItems.map((item) => ({
           orderId: order.id,
-          menuItemId: item.id,
+          menuitemId: item.id, // Changed from item.menuId to item.id
           quantity: item.quantity,
+          // status: 1, // Default status for new items
+          comments: item.comments || "", // Added comments field
         }));
 
         // Bulk create all order products
@@ -253,6 +261,11 @@ exports.getSelectedOrderItems = async (req, res) => {
           as: "menuitem",
           attributes: ["id", "name", "price"],
         },
+        {
+          model: db.orderStatus,
+          as: "orderStatus",
+          attributes: ["name"],
+        },
       ],
       raw: true,
       nest: true,
@@ -265,7 +278,8 @@ exports.getSelectedOrderItems = async (req, res) => {
       menuItemName: item.menuitem.name,
       price: item.menuitem.price,
       quantity: item.quantity,
-      status: order.status,
+      statusText: item?.orderStatus?.name,
+      status: item.status,
       comments: item.comments || "",
     }));
 
@@ -279,6 +293,7 @@ exports.getSelectedOrderItems = async (req, res) => {
         userId: order.userId,
         totalAmount: order.totalAmount,
         createdAt: order.createdAt,
+        orderItems: orderItems,
       },
       orderItems: formatted,
     };
@@ -296,7 +311,7 @@ exports.getSelectedOrderItems = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { status, totalAmount, updatedItems, removedItems } = req.body;
+    const { totalAmount, updatedItems, removedItems } = req.body;
 
     // Start a transaction
     const result = await db.sequelize.transaction(async (t) => {
@@ -326,7 +341,7 @@ exports.updateOrderStatus = async (req, res) => {
 
       const order = await Order.update(
         {
-          status,
+          status: "COMPLETED",
           total: totalAmount,
         },
         {

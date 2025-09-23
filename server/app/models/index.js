@@ -52,7 +52,6 @@ db.restaurantTable = require("./restauranttable.model.js")(
 db.announcement = require("./announcement.model.js")(sequelize, Sequelize);
 db.orderProducts = require("./orderproducts.model.js")(sequelize, Sequelize);
 db.userMenuItem = require("./user_menuitem.model.js")(sequelize, Sequelize);
-
 db.restaurantReview.belongsTo(db.restaurant, {
   foreignKey: "restaurantId",
   as: "reviewedRestaurant",
@@ -100,10 +99,10 @@ db.orders.belongsTo(db.restaurantTable, { foreignKey: "tableId", as: "table" });
 db.restaurantTable.hasMany(db.orders, { foreignKey: "tableId", as: "orders" });
 
 // Order Status associations
-/* db.orders.belongsTo(db.orderStatus, {
-  foreignKey: "statusId",
+db.orderProducts.belongsTo(db.orderStatus, {
+  foreignKey: "status",
   as: "orderStatus",
-}); */
+});
 // db.orderStatus.hasMany(db.orders, { foreignKey: "statusId", as: "orders" });
 
 // Many-to-many: restaurantUser <-> menuItem through userMenuItem
