@@ -15,6 +15,7 @@ module.exports = (app) => {
   router.get("/messages/:userId", chefController.chefMessages);
   router.post("/messages", chefController.sendChefMessage);
   router.post("/logout", chefController.chefLogout); // Protected logout route
+  router.post("/updateorders/status/", chefController.updateOrderStatus);
 
   app.use("/api/chef", router);
 };

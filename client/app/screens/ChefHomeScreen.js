@@ -11,7 +11,12 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import OrderMostImg from "../../assets/images/order_most.png";
 import { router } from "expo-router";
-import { chefLogout, fetchChefMessages, fetchChefOrders } from "../api/chefApi";
+import {
+  chefLogout,
+  fetchChefMessages,
+  fetchChefOrders,
+  updateOrderStatus,
+} from "../api/chefApi";
 import { setApiAuthToken } from "../api/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -144,28 +149,320 @@ export default function ChefHomeScreen() {
         {loading ? (
           <ActivityIndicator color="#7b6eea" size="large" />
         ) : (
+          /*  (
           orders.map((order, i) => {
             // Get first orderProduct and its menuitem for display
-            const firstProduct = order.orderProducts && order.orderProducts[0];
-            const menuItemName =
-              firstProduct && firstProduct.menuitem
-                ? firstProduct.menuitem.name
-                : "Order";
-            const tableNumber = order.tableId ? `Table ${order.tableId}` : "";
-            return (
-              <View key={i} style={styles.orderCard}>
-                <View>
-                  <Text style={styles.orderName}>{menuItemName}</Text>
-                  <Text style={styles.orderTable}>{tableNumber}</Text>
+            return order.orderProducts.map((firstProduct, j) => {
+              // const firstProduct = order.orderProducts && order.orderProducts[0];
+              const menuItemName =
+                firstProduct && firstProduct.menuitem
+                  ? firstProduct.menuitem.name
+                  : "Order";
+
+              const tableNumber = order.tableId ? `Table ${order.tableId}` : "";
+              return (
+                <View key={i} style={styles.orderCard}>
+                  <View>
+                    <Text style={styles.orderName}>{menuItemName}</Text>
+                    <Text style={styles.orderTable}>{tableNumber}</Text>
+                  </View>
+                  <Image
+                    source={OrderMostImg}
+                    style={[
+                      styles.orderIcon,
+                      {
+                        width: 32,
+                        height: 32,
+                        tintColor:
+                          order.status === 1
+                            ? "#f0ad4e"
+                            : order.status === 2
+                            ? "#5bc0de"
+                            : order.status === 3
+                            ? "#5cb85c"
+                            : order.status === 4
+                            ? "#0275d8"
+                            : "#666",
+                      },
+                    ]}
+                    resizeMode="contain"
+                  />
+
+                  <Modal
+                    visible={order.showDropdown || false}
+                    transparent={true}
+                    animationType="fade"
+                  >
+                    <View style={styles.modalOverlay}>
+                      <View
+                        style={[styles.profileCard, { alignItems: "center" }]}
+                      >
+                        <TouchableOpacity
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 10,
+                            zIndex: 20,
+                          }}
+                          onPress={() => {
+                            const updatedOrders = [...orders];
+                            updatedOrders[i]["orderProducts"][
+                              j
+                            ].showDropdown = false;
+                            setOrders(updatedOrders);
+                          }}
+                        >
+                          <MaterialCommunityIcons
+                            name="close"
+                            size={28}
+                            color="#222"
+                          />
+                        </TouchableOpacity>
+
+                        <Text
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: 18,
+                            marginBottom: 12,
+                            color: "#6c63b5",
+                          }}
+                        >
+                          Update Order Status
+                        </Text>
+
+                        {[
+                          { id: 1, label: "Waiting", color: "#f0ad4e" },
+                          { id: 2, label: "Preparing", color: "#5bc0de" },
+                          { id: 3, label: "Ready", color: "#5cb85c" },
+                          { id: 4, label: "Served", color: "#0275d8" },
+                        ].map((status) => (
+                          <TouchableOpacity
+                            key={status.id}
+                            style={[
+                              styles.profileCloseBtn,
+                              {
+                                backgroundColor:
+                                  order.status === status.id
+                                    ? status.color
+                                    : "#a9a1e2",
+                                marginBottom: 8,
+                                width: "80%",
+                              },
+                            ]}
+                            onPress={async () => {
+                              const updatedOrders = [...orders];
+                              updatedOrders[i]["orderProducts"][j].status =
+                                status.id;
+                              updatedOrders[i]["orderProducts"][
+                                j
+                              ].showDropdown = false;
+                              setOrders(updatedOrders);
+                              await updateOrderStatus({
+                                id: firstProduct.id,
+                                status: status.id,
+                              });
+                            }}
+                          >
+                            <Text style={{ color: "white" }}>
+                              {status.label}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  </Modal>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      const updatedOrders = [...orders];
+                      updatedOrders[i]["orderProducts"][j].showDropdown = true;
+                      setOrders(updatedOrders);
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      padding: 8,
+                    }}
+                  >
+                    <Text style={{ color: "#666", marginRight: 8 }}>
+                      {firstProduct.status === 1
+                        ? "Waiting"
+                        : firstProduct.status === 2
+                        ? "Preparing"
+                        : firstProduct.status === 3
+                        ? "Ready"
+                        : firstProduct.status === 4
+                        ? "Served"
+                        : "Unknown"}
+                    </Text>
+                    <MaterialCommunityIcons
+                      name="chevron-down"
+                      size={24}
+                      color="#666"
+                    />
+                  </TouchableOpacity>
                 </View>
-                <Image
-                  source={OrderMostImg}
-                  style={[styles.orderIcon, { width: 32, height: 32 }]}
-                  resizeMode="contain"
-                />
-              </View>
-            );
+              );
+            });
           })
+        ) */ orders.map((order, i) =>
+            order.orderProducts.map((firstProduct, j) => {
+              const menuItemName =
+                firstProduct && firstProduct.menuitem
+                  ? firstProduct.menuitem.name
+                  : "Order";
+
+              const tableNumber = order.tableId ? `Table ${order.tableId}` : "";
+
+              return (
+                <View
+                  key={`${order.id}-${firstProduct.id || j}`}
+                  style={styles.orderCard}
+                >
+                  <View>
+                    <Text style={styles.orderName}>{menuItemName}</Text>
+                    <Text style={styles.orderTable}>{tableNumber}</Text>
+                  </View>
+
+                  <Image
+                    source={OrderMostImg}
+                    style={[
+                      styles.orderIcon,
+                      {
+                        width: 32,
+                        height: 32,
+                        tintColor:
+                          order.status === 1
+                            ? "#f0ad4e"
+                            : order.status === 2
+                            ? "#5bc0de"
+                            : order.status === 3
+                            ? "#5cb85c"
+                            : order.status === 4
+                            ? "#0275d8"
+                            : "#666",
+                      },
+                    ]}
+                    resizeMode="contain"
+                  />
+
+                  <Modal
+                    visible={order.showDropdown || false}
+                    transparent={true}
+                    animationType="fade"
+                  >
+                    <View style={styles.modalOverlay}>
+                      <View
+                        style={[styles.profileCard, { alignItems: "center" }]}
+                      >
+                        <TouchableOpacity
+                          style={{
+                            position: "absolute",
+                            top: 10,
+                            right: 10,
+                            zIndex: 20,
+                          }}
+                          onPress={() => {
+                            const updatedOrders = [...orders];
+                            updatedOrders[i]["orderProducts"][
+                              j
+                            ].showDropdown = false;
+                            setOrders(updatedOrders);
+                          }}
+                        >
+                          <MaterialCommunityIcons
+                            name="close"
+                            size={28}
+                            color="#222"
+                          />
+                        </TouchableOpacity>
+
+                        <Text
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: 18,
+                            marginBottom: 12,
+                            color: "#6c63b5",
+                          }}
+                        >
+                          Update Order Status
+                        </Text>
+
+                        {[
+                          { id: 1, label: "Waiting", color: "#f0ad4e" },
+                          { id: 2, label: "Preparing", color: "#5bc0de" },
+                          { id: 3, label: "Ready", color: "#5cb85c" },
+                          { id: 4, label: "Served", color: "#0275d8" },
+                        ].map((status) => (
+                          <TouchableOpacity
+                            key={`${firstProduct.id || j}-${status.id}`}
+                            style={[
+                              styles.profileCloseBtn,
+                              {
+                                backgroundColor:
+                                  order.status === status.id
+                                    ? status.color
+                                    : "#a9a1e2",
+                                marginBottom: 8,
+                                width: "80%",
+                              },
+                            ]}
+                            onPress={async () => {
+                              const updatedOrders = [...orders];
+                              updatedOrders[i]["orderProducts"][j].status =
+                                status.id;
+                              updatedOrders[i]["orderProducts"][
+                                j
+                              ].showDropdown = false;
+                              setOrders(updatedOrders);
+                              await updateOrderStatus({
+                                id: firstProduct.id,
+                                status: status.id,
+                              });
+                            }}
+                          >
+                            <Text style={{ color: "white" }}>
+                              {status.label}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  </Modal>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      const updatedOrders = [...orders];
+                      updatedOrders[i]["orderProducts"][j].showDropdown = true;
+                      setOrders(updatedOrders);
+                    }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      padding: 8,
+                    }}
+                  >
+                    <Text style={{ color: "#666", marginRight: 8 }}>
+                      {firstProduct.status === 1
+                        ? "Waiting"
+                        : firstProduct.status === 2
+                        ? "Preparing"
+                        : firstProduct.status === 3
+                        ? "Ready"
+                        : firstProduct.status === 4
+                        ? "Served"
+                        : "Unknown"}
+                    </Text>
+                    <MaterialCommunityIcons
+                      name="chevron-down"
+                      size={24}
+                      color="#666"
+                    />
+                  </TouchableOpacity>
+                </View>
+              );
+            })
+          )
         )}
       </View>
     </View>
