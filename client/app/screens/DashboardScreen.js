@@ -96,6 +96,7 @@ export default function ManagerDashboardScreenNew() {
           setProfile({
             name: user.firstname || user.name || "",
             phone: user.phone || "",
+            restaurant: user.restaurant || null, // Include restaurant data from user profile
           });
         }
         // Pass restaurantId to dashboard API
@@ -104,7 +105,7 @@ export default function ManagerDashboardScreenNew() {
         const dash = await fetchManagerDashboard(restaurantId, token);
         setDashboard(dash);
         setRestaurantName(
-          dash.restaurantName || HEADINGS.ManagerDashboardScreen
+          dash.restaurantName || user?.restaurant?.name || HEADINGS.ManagerDashboardScreen
         );
         setToday(dash.today || "");
         setDate(dash.date || "");
@@ -199,27 +200,7 @@ export default function ManagerDashboardScreenNew() {
     { msg: "Onion Dosa 6 Nos to Parcel Table", time: "9:00AM" },
   ];
 
-  // Reviews and Ratings mock data
-  const reviews = [
-    {
-      hotelName: "Sai Hotel (3 Star Hotel)",
-      description: "ssssssegegegwegg",
-      rating: 5,
-      status: "Excellent",
-    },
-    {
-      hotelName: "Kamat Hotel",
-      description: "asdafewqfewqc",
-      rating: 5,
-      status: "Excellent",
-    },
-    {
-      hotelName: "Udupi Kitchen Hotel",
-      description: "gafsvgregerqverqgrqegqergewg",
-      rating: 5,
-      status: "Excellent",
-    },
-  ];
+
 
   // Mock transaction data for tables
   const tableTransactions = [
@@ -282,7 +263,8 @@ export default function ManagerDashboardScreenNew() {
             <MaterialCommunityIcons name="food" size={28} color="#6c63b5" />
           </TouchableOpacity>
           <Appbar.Content
-            title={restaurantName}
+            // title={restaurantName}
+            title={profile.restaurant?.name || restaurantName}
             titleStyle={styles.appbarTitle}
           />
           <TouchableOpacity

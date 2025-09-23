@@ -1,5 +1,5 @@
 export const HEADINGS = {
-  ManagerDashboardScreen: 'Hotel Sai (3 Star)',
+  // ManagerDashboardScreen: 'Hotel Sai (3 Star)',
   ChefHomeScreen: 'Chef Home',
   MenuScreen: 'Menu',
   RatingsScreen: 'Reviews and Ratings',

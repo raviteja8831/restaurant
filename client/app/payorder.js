@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,25 +6,25 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
-  Image,
   Dimensions,
-  ScrollViewBase,
   ActivityIndicator,
   Alert,
+  Modal,
+  TextInput,
+  Platform,
 } from "react-native";
-// import { orderData } from "../app/Mock/CustomerHome";
 import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { wp, hp, responsiveStyles } from "./styles/responsive";
-import { addReview } from "./api/reviewsApi";
 import {
   getOrderItemList,
   deleteOrder,
   updateOrderStatus,
 } from "./api/orderApi";
+import { addReview } from "./api/reviewsApi";
 import CommentModal from "./Modals/CommentModal";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useUserData } from "./services/getUserData";
+import * as Linking from "expo-linking";
+
 const { width, height } = Dimensions.get("window");
 
 export default function OrderSummaryScreen() {
@@ -39,7 +39,12 @@ export default function OrderSummaryScreen() {
   const [editingItem, setEditingItem] = useState(null);
   const [removedItems, setRemovedItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // const [userId, setUserId] = useState(null);
+
+  // UTR modal state
+  const [showUTRModal, setShowUTRModal] = useState(false);
+  const [paymentUTR, setPaymentUTR] = useState("");
+  const [paying, setPaying] = useState(false);
+
   const { userId, error } = useUserData();
 
   if (error) {
@@ -49,13 +54,14 @@ export default function OrderSummaryScreen() {
       </View>
     );
   }
+
   function router_call() {
     router.push({
       pathname: "/menu-list",
     });
   }
+
   const handleDeleteOrder = async (orderId) => {
-    // alert("Are you sure you want to delete this order?");
     try {
       await deleteOrder(orderId);
       router_call();
@@ -64,30 +70,7 @@ export default function OrderSummaryScreen() {
       Alert.alert("Error", "Failed to delete order. Please try again.");
     }
   };
-  // useEffect(() => {
-  //   const initializeProfile = async () => {
-  //     try {
-  //       const userProfile = await AsyncStorage.getItem("user_profile");
-  //       if (userProfile) {
-  //         const user = JSON.parse(userProfile);
-  //         console.log("User Profile:", user); // Debug log
-  //         setUserId(user.id);
-  //         // Only fetch profile data if we have a userId
-  //         if (user.id) {
-  //           await fetchProfileData(user.id);
-  //         }
-  //       } else {
-  //         console.log("No user profile found");
-  //         router.push("/customer-login");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error initializing profile:", error);
-  //       // AlertService.error("Error loading profile");
-  //     }
-  //   };
 
-  //   initializeProfile();
-  // }, []);
   useEffect(() => {
     initializeData();
   }, [params.orderID, userId]);
@@ -95,28 +78,16 @@ export default function OrderSummaryScreen() {
   const initializeData = async () => {
     try {
       setLoading(true);
-      // First fetch the menu items
       const menuItems = await getOrderItemList(params.orderID, userId);
-
       setOrderItems(menuItems.orderItems || []);
       setOrderDetails(menuItems.order_details || {});
     } catch (error) {
-      // AlertService.error(error);
+      console.error("Error initializing data:", error);
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    if (loading) {
-      /*   return (
-        <ActivityIndicator
-          size="large"
-          color="#6c63b5"
-          style={{ marginTop: 20 }}
-        />
-      ); */
-    }
-  }, [loading]);
+
   useEffect(() => {
     setTotalAmount(
       orderItems.reduce((sum, item) => {
@@ -132,7 +103,6 @@ export default function OrderSummaryScreen() {
       router.back();
     } else {
       router_call();
-      // 👈 fallback route
     }
   };
 
@@ -152,27 +122,86 @@ export default function OrderSummaryScreen() {
     setIsModalOpen(false);
   };
 
-  const handleSubmitAndPay = async () => {
+  // NEW: Build UPI intent and open UPI app
+  const payWithUPI = async () => {
+    // Use UPI ID and name from orderDetails if available; otherwise fallback.
+    const upiId = orderDetails.upiId || orderDetails.restaurantUpi || "receiver@upi";
+    const receiverName = orderDetails.restaurantName || orderDetails.restaurant || "Receiver";
+    const amount = Number(totalAmount) || 0;
+
+    if (amount <= 0) {
+      Alert.alert("Invalid amount", "Total amount must be greater than 0 to pay.");
+      return;
+    }
+
+    // Create unique transaction reference
+    const txnRef = `TXN${Date.now()}`;
+
+    // Build UPI URI (common format)
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(
+      upiId
+    )}&pn=${encodeURIComponent(receiverName)}&tr=${encodeURIComponent(
+      txnRef
+    )}&tn=${encodeURIComponent("Payment for order " + (params.orderID || ""))}&am=${encodeURIComponent(
+      amount.toString()
+    )}&cu=INR`;
+
     try {
-      setLoading(true);
+      const supported = await Linking.canOpenURL(upiUrl);
+      if (!supported) {
+        // On iOS canOpenURL might return false for custom schemes if not allowed.
+        // Try fallback of using "https://pay.google.com/..."? But generally we alert the user.
+        Alert.alert(
+          "No UPI App",
+          "No UPI app found or cannot open UPI on this device. Please install a UPI app (Google Pay, PhonePe, Paytm) and try again."
+        );
+        return;
+      }
+
+      // Open the UPI URL. This will switch user to their UPI app.
+      await Linking.openURL(upiUrl);
+
+      // After opening UPI app, show modal to collect UTR/Txn ID from user (manual verification)
+      setShowUTRModal(true);
+    } catch (err) {
+      console.error("Error launching UPI app:", err);
+      Alert.alert(
+        "Payment Error",
+        "Could not open UPI app. Please ensure you have a UPI app installed."
+      );
+    }
+  };
+
+  // NEW: Called when user submits UTR in modal
+  const handleVerifyAndComplete = async () => {
+    if (!paymentUTR || paymentUTR.trim().length === 0) {
+      Alert.alert("Missing Transaction ID", "Please enter the transaction/UTR ID from your UPI app.");
+      return;
+    }
+    try {
+      setPaying(true);
+
+      // Call your existing updateOrderStatus to mark Completed and pass payments details
       const response = await updateOrderStatus(params.orderID, {
         status: "Completed",
-        // Send updated quantities for remaining items
         updatedItems: orderItems.map((item) => ({
           id: item.id,
           quantity: item.quantity,
         })),
         totalAmount: totalAmount,
-        // Send removed items for deletion
         removedItems: removedItems.map((item) => ({
           id: item.id,
         })),
+        // You may pass the txn id so backend can log it
+        payment: {
+          method: "UPI",
+          txnId: paymentUTR,
+        },
       });
 
-      // Update the total amount and status from the response
-      if (response.data && response.data.order) {
-        setTotalAmount(response.data.order.totalAmount);
-        // Update order items with new status
+      // Optionally update client state based on response
+      if (response?.data?.order) {
+        setTotalAmount(response.data.order.totalAmount || totalAmount);
         const updatedItems = orderItems.map((item) => ({
           ...item,
           status: "Completed",
@@ -180,6 +209,7 @@ export default function OrderSummaryScreen() {
         setOrderItems(updatedItems);
         initializeData();
       }
+
       if (userRating > 0) {
         await addReview({
           userId: userId,
@@ -188,21 +218,28 @@ export default function OrderSummaryScreen() {
           orderId: params.orderID,
         });
       }
+
+      setShowUTRModal(false);
+      setPaymentUTR("");
       router.push({
         pathname: "/customer-home",
       });
-    } catch (error) {
-      console.error("Failed to process order:", error);
-      // Alert.alert("Error", "Failed to process order. Please try again.");
+    } catch (err) {
+      console.error("Failed to verify payment / complete order:", err);
+      Alert.alert("Error", "Failed to complete order. Please try again.");
     } finally {
-      setLoading(false);
+      setPaying(false);
     }
   };
 
+  const handleSubmitAndPay = async () => {
+    // Instead of directly marking order Completed, start UPI flow
+    await payWithUPI();
+  };
+
   const handleModalClose = () => {
-    // setIsModalOpen(false);
-    setEditingItem(null); // Reset edit state to show pencil icon
-    initializeData(); // Refresh the data
+    setEditingItem(null);
+    initializeData();
   };
 
   const handleQuantityChange = async (itemId, change) => {
@@ -212,32 +249,25 @@ export default function OrderSummaryScreen() {
         : item
     );
 
-    // Find items that now have quantity 0
     const itemsToRemove = updatedItems.filter((item) => item.quantity === 0);
     if (itemsToRemove.length > 0) {
       setRemovedItems((prev) => [...prev, ...itemsToRemove]);
     }
 
-    // Remove items with quantity 0
     const filteredItems = updatedItems.filter((item) => item.quantity > 0);
 
-    // Calculate new total after filtering
     const newTotal = filteredItems.reduce(
       (sum, item) => sum + item.quantity * item.price,
       0
     );
 
-    // Update the items first
     setOrderItems(filteredItems);
 
-    // Then check if total is 0 and show modal
     if (newTotal === 0) {
       setIsModalOpen(true);
     }
   };
-  useEffect(() => {
-    console.log("Order summary:", removedItems);
-  }, [removedItems]);
+
   return (
     <ScrollView
       style={{ backgroundColor: "#EBEBFF", padding: 15 }}
@@ -254,23 +284,19 @@ export default function OrderSummaryScreen() {
           </View>
         </View>
 
-        {/* Table Container */}
         <TouchableOpacity
           style={styles.tableContainer}
           activeOpacity={1}
           onPress={() => setEditingItem(null)}
         >
-          {/* Table Header */}
           <View style={styles.tableHeader}>
             <Text style={[styles.hcell, styles.statusColumn]}>Status</Text>
             <Text style={[styles.hcell, styles.orderColumn]}>Order</Text>
             <Text style={[styles.hcell, styles.qtyColumn]}>Qty</Text>
             <Text style={[styles.hcell, styles.priceColumn]}>Price</Text>
             <Text style={[styles.hcell, styles.totalColumn]}>Total</Text>
-            {/* <Text style={[styles.hcell, styles.editColumn]}></Text> */}
           </View>
 
-          {/* Order Rows */}
           {orderItems.map((order) => (
             <View key={order.id} style={styles.tableRow}>
               <Text
@@ -297,54 +323,18 @@ export default function OrderSummaryScreen() {
               <Text style={[styles.cell, styles.totalColumn]}>
                 {order.quantity * order.price}
               </Text>
-              {/* Edit icon or quantity controls */}
-              {/*      <View style={styles.editColumn}>
-                {editingItem === order.id ? (
-                  <View style={styles.quantityControls}>
-                    <TouchableOpacity
-                      style={[styles.quantityButton, responsiveStyles.bg1]}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        handleQuantityChange(order.id, -1);
-                      }}
-                    >
-                      <Text style={styles.quantityButtonText}>-</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        handleQuantityChange(order.id, 1);
-                      }}
-                    >
-                      <Text style={styles.quantityButtonText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleEditPress(order.id);
-                    }}
-                  >
-                    <Feather name="edit-2" size={14} color="#000" />
-                  </TouchableOpacity>
-                )}
-              </View> */}
             </View>
           ))}
         </TouchableOpacity>
 
-        {/* Total Row */}
         <View style={styles.totalRow}>
           <Text style={[styles.cell, styles.statusColumn]} />
           <Text style={[styles.cell, styles.orderColumn]}>Total</Text>
           <Text style={[styles.cell, styles.qtyColumn]} />
           <Text style={[styles.cell, styles.priceColumn]} />
           <Text style={[styles.cell, styles.totalColumn]}>{totalAmount}</Text>
-          {/* <View style={styles.editColumn} /> */}
         </View>
-        {/* Rating Section */}
+
         <View style={styles.ratingSection}>
           <Text style={styles.feedback}>
             Please Rate this Restaurant as a Feedback
@@ -366,28 +356,77 @@ export default function OrderSummaryScreen() {
           </View>
         </View>
 
-        {/* PAID Stamp */}
         <View style={styles.stampContainer}>
-          {/* <Text style={styles.paidStamp}>PAID</Text> */}
           <Text style={styles.thankYouText}>Thank you!</Text>
         </View>
 
-        {/* Pay Button */}
         <TouchableOpacity
-          style={[styles.payButton, responsiveStyles.bg1]}
+          style={[styles.payButton]}
           onPress={handleSubmitAndPay}
         >
           <Text style={styles.payText}>Submit & Pay</Text>
         </TouchableOpacity>
+
         <CommentModal
           visible={isModalOpen}
           onClose={handleModalClose}
           onSubmit={handleModalSubmit}
         />
+
+        {/* UTR / Transaction ID Modal */}
+        <Modal
+          visible={showUTRModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowUTRModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.utrModal}>
+              <Text style={styles.modalTitle}>Enter Transaction ID</Text>
+              <Text style={styles.modalSubtitle}>
+                After completing the payment in your UPI app, paste/type the
+                transaction ID / UTR here to confirm payment.
+              </Text>
+              <TextInput
+                placeholder="Enter UPI Transaction ID (UTR)"
+                value={paymentUTR}
+                onChangeText={setPaymentUTR}
+                style={styles.input}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType={Platform.OS === "ios" ? "default" : "visible-password"}
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => {
+                    setShowUTRModal(false);
+                    setPaymentUTR("");
+                  }}
+                  disabled={paying}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.confirmButton]}
+                  onPress={handleVerifyAndComplete}
+                  disabled={paying}
+                >
+                  {paying ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.modalButtonText}>Verify & Complete</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
