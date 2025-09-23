@@ -26,9 +26,9 @@ export const loginManager = async (credentials) => {
 };
 
 // Fetch manager dashboard data
-export const fetchManagerDashboard = async () => {
+export const fetchManagerDashboard = async (restaurantId) => {
   try {
-    const res = await api.get(MANAGER_API.DASHBOARD);
+    const res = await api.get(`${MANAGER_API.DASHBOARD}/${restaurantId}`);
     return res.data;
   } catch (error) {
     showApiError(error);

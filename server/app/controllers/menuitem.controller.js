@@ -1,7 +1,11 @@
 const db = require('../models');
 const MenuItem = db.menuItem;
+const Menu = db.menu; // Add this line to define the menu model
+
 exports.create = async (req, res) => {
   try {
+    const menu = await Menu.create(req.body); // Create menu and get the instance
+    req.body.menuId = menu.id; // Assign the menu id to req.body
     const item = await MenuItem.create(req.body);
     res.status(201).json(item);
   } catch (err) {

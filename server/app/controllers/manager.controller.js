@@ -29,9 +29,11 @@ const formatShortTime = (date) => {
 
 exports.dashboard = async (req, res) => {
   try {
-    // Use restaurantId from request (query or body)
-    const restaurantId = req.query.restaurantId || req.body.restaurantId || 1;
-
+    const restaurantId = req.params.restaurantId || req.query.restaurantId;
+    if (!restaurantId) {
+      return res.status(400).json({ message: "restaurantId is required"+ req });
+    }
+    console.log("Fetching dashboard for restaurantId:", restaurantId);
     // Get manager (first manager for this restaurant)
     const manager = await db.restaurantUser.findOne({
       where: { restaurantId, role_id: 1 },

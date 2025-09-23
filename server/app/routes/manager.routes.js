@@ -3,7 +3,7 @@ module.exports = app => {
   const router = require("express").Router();
 
   // Manager dashboard (mock)
-  router.get('/dashboard', manager.dashboard);
+  router.get('/dashboard/:restaurantId', manager.dashboard);
 
   app.use('/api/manager', router);
 };
