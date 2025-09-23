@@ -157,11 +157,14 @@ export default function MenuListScreen() {
     }
   };
 
-  const handleFinalOrder = () => {
+  const handleFinalOrder = async () => {
     try {
-      const response = updateOrderProductStatusList(orderSummary.orderId, {
-        status: "1",
-      });
+      const response = await updateOrderProductStatusList(
+        orderSummary.orderId,
+        {
+          status: "1",
+        }
+      );
       console.log("Order status update response:", response);
       if (response.status == "success") {
         router.push({
