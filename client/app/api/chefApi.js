@@ -59,3 +59,14 @@ export const sendChefMessage = async (data) => {
     return false;
   }
 };
+export const updateOrderStatus = async (data) => {
+  try {
+    const res = await api.post(`/updateorders/status`, {
+      data,
+    });
+    return res.data;
+  } catch (error) {
+    showApiError(error);
+    throw error;
+  }
+};

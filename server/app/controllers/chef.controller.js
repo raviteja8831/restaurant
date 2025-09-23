@@ -402,5 +402,25 @@ chefController.getOrderStatuses = async (req, res) => {
     });
   }
 };
+chefController.updateOrderStatus = async (req, res) => {
+  try {
+    const { id, statusId } = req.body;
+
+    // Find the order and update its status
+    const order = await db.orderProducts.findByPk(id);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Update the order status
+    order.status = statusId;
+    await order.save();
+
+    res.json({ message: "Order status updated successfully" });
+  } catch (e) {
+    console.error("Error updating order status:", e);
+    res.status(500).json({ message: "Server error", error: e.message });
+  }
+};
 
 module.exports = chefController;

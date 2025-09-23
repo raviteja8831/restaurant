@@ -125,7 +125,7 @@ export default function ItemsListScreen() {
         comments: orderItems[item.id]?.comments || "",
         orderItemId: orderItems[item.id]?.id || null,
       }));
-
+      console.log("combinedItems", combinedItems);
       setItems(combinedItems);
       setSelectedItems(combinedItems.filter((item) => item.selected));
     } catch (error) {
