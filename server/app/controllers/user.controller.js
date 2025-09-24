@@ -108,18 +108,18 @@ exports.getUserProfile = async (req, res) => {
     // Format orders for response
     const formattedOrders = orders.map((order) => ({
       id: order.id,
-      restaurantName: order.orderRestaurant.name,
-      restaurantAddress: order.orderRestaurant.address,
-      restaurantImage: order.orderRestaurant.image,
-      date: new Date(order.createdAt).toLocaleDateString(),
-      time: new Date(order.createdAt).toLocaleTimeString(),
+      restaurantName: order?.orderRestaurant?.name,
+      restaurantAddress: order?.orderRestaurant?.address,
+      restaurantImage: order?.orderRestaurant?.image,
+      date: new Date(order?.createdAt).toLocaleDateString(),
+      time: new Date(order?.createdAt).toLocaleTimeString(),
       totalAmount: order?.total,
       method: order?.paymentMethod,
-      items: order.orderProducts.map((product) => ({
-        name: product.menuitem.name,
-        quantity: product.quantity,
-        price: product.menuitem.price,
-        total: product.quantity * product.menuitem.price,
+      items: order?.orderProducts?.map((product) => ({
+        name: product?.menuitem?.name,
+        quantity: product?.quantity,
+        price: product?.menuitem?.price,
+        total: product?.quantity * product?.menuitem?.price,
       })),
     }));
     const favorites = await db.restaurantReview.findAll({
@@ -139,13 +139,13 @@ exports.getUserProfile = async (req, res) => {
     // Format favorites for response
     const formattedFavorites = favorites.map((favorite) => ({
       id: favorite.id,
-      restaurantId: favorite.reviewedRestaurant.id,
-      restaurantName: favorite.reviewedRestaurant.name,
-      restaurantAddress: favorite.reviewedRestaurant.address,
-      restaurantImage: favorite.reviewedRestaurant.image,
-      review: favorite.review,
-      rating: favorite.rating,
-      addedAt: new Date(favorite.createdAt).toLocaleDateString(),
+      restaurantId: favorite?.reviewedRestaurant?.id,
+      restaurantName: favorite?.reviewedRestaurant?.name,
+      restaurantAddress: favorite?.reviewedRestaurant?.address,
+      restaurantImage: favorite?.reviewedRestaurant?.image,
+      review: favorite?.review,
+      rating: favorite?.rating,
+      addedAt: new Date(favorite?.createdAt).toLocaleDateString(),
     }));
 
     // Get recent payments/transactions
@@ -541,7 +541,8 @@ exports.register = async (req, res) => {
       enableNonveg,
       enableTableService,
       enableSelfService,
-      latitude, longitude,
+      latitude,
+      longitude,
       restaurantType,
     } = req.body;
 

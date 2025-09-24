@@ -103,6 +103,13 @@ function CustomerHomeScreen() {
           ishotel: "false",
         },
       });
+      /*  router.push({
+        pathname: "/HotelDetails",
+        params: {
+          id: selectedRestaurant ? selectedRestaurant.id : null,
+          // ishotel: "false",
+        },
+      }); */
     }
   }, [selectedRestaurant]);
 

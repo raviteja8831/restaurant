@@ -428,12 +428,11 @@ exports.getOrderProductsByOrderId = async (req, res) => {
 
 exports.updateOrderProductStatusList = async (req, res) => {
   try {
-    // const { orderId } = req.params;
-    // return res.json(req.body.data);
-    const { status, id } = req.body;
+    const { orderId } = req.params;
+    const { status } = req.body;
 
     // Validate status exists in orderStatus table
-    const validStatus = await db.orderStatus.findByPk(Number(status));
+    const validStatus = await db.orderStatus.findByPk(status);
     if (!validStatus) {
       return res.status(400).json({
         status: "error",
@@ -445,20 +444,20 @@ exports.updateOrderProductStatusList = async (req, res) => {
     const result = await db.sequelize.transaction(async (t) => {
       // Fetch updated order products
       const updatedProducts = await OrderProduct.findAll({
-        where: { id },
+        where: { orderId },
         transaction: t,
       });
 
       // Bulk update all products with the new status
-      const ke = await OrderProduct.update(
+      await OrderProduct.update(
         { status: status },
         {
-          where: { id },
+          where: { orderId, status: null },
           transaction: t,
         }
       );
 
-      return ke;
+      return updatedProducts;
     });
 
     res.status(200).json({

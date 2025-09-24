@@ -61,7 +61,7 @@ export const sendChefMessage = async (data) => {
 };
 export const updateOrderStatus = async (data) => {
   try {
-    const res = await api.post(`orders/orderproduct/status`, {
+    const res = await api.post(`chef/updateorders/status`, {
       ...data,
     });
     return res.data;

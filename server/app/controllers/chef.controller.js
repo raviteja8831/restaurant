@@ -143,7 +143,10 @@ chefController.chefDashboard = async (req, res) => {
             {
               model: db.orderProducts,
               as: "orderProducts",
-              where: { menuitemId: { [Op.in]: menuItemIds } },
+              where: {
+                menuitemId: { [Op.in]: menuItemIds },
+                status: { [Op.ne]: 4 },
+              },
               required: true,
               include: [
                 {
@@ -404,7 +407,7 @@ chefController.getOrderStatuses = async (req, res) => {
 };
 chefController.updateOrderStatus = async (req, res) => {
   try {
-    const { id, statusId } = req.body;
+    const { id, status } = req.body;
 
     // Find the order and update its status
     const order = await db.orderProducts.findByPk(id);
@@ -413,10 +416,13 @@ chefController.updateOrderStatus = async (req, res) => {
     }
 
     // Update the order status
-    order.status = statusId;
+    order.status = status;
     await order.save();
 
-    res.json({ message: "Order status updated successfully" });
+    res.status(200).json({
+      message: "Order status updated successfully",
+      status: "success",
+    });
   } catch (e) {
     console.error("Error updating order status:", e);
     res.status(500).json({ message: "Server error", error: e.message });
