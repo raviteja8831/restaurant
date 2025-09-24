@@ -58,6 +58,10 @@ export default function OrderSummaryScreen() {
   function router_call() {
     router.push({
       pathname: "/menu-list",
+      params: {
+        restaurantId: params.restaurantId || "",
+        ishotel: params.ishotel,
+      },
     });
   }
 

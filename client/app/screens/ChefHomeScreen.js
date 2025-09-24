@@ -177,9 +177,7 @@ export default function ChefHomeScreen() {
                     style={styles.orderCard}
                   >
                     <View>
-                      <Text style={styles.orderName}>
-                        {menuItemName}, {firstProduct.id}
-                      </Text>
+                      <Text style={styles.orderName}>{menuItemName}</Text>
                       <Text style={styles.orderTable}>{tableNumber}</Text>
                     </View>
 

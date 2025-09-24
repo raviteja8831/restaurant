@@ -171,6 +171,8 @@ export default function MenuListScreen() {
           pathname: "/payorder",
           params: {
             orderID: orderSummary.orderId,
+            restaurantId: params.restaurantId || params.hotelId,
+            ishotel: ishotel,
             // userId: params.userId || 1,
           },
         });
