@@ -16,6 +16,7 @@ import { hotelDetailsData } from "./Mock/CustomerHome";
 import { hoteldetailsstyles, responsiveStyles } from "./styles/responsive";
 import { useEffect } from "react";
 import { getRestaurantById } from "./api/restaurantApi";
+import { IMG_BASE_URL } from "./constants/api.constants";
 
 const HotelDetails = () => {
   const router = useRouter();
@@ -80,16 +81,25 @@ const HotelDetails = () => {
     <SafeAreaView style={hoteldetailsstyles.container}>
       <ScrollView>
         {/* Header Image */}
-        {hotelData?.logoImage && (
+        {hotelData?.ambianceImage ? (
           <Image
-            source={{ uri: hotelData?.logoImage }}
+            source={{ uri: `${IMG_BASE_URL}${hotelData?.ambianceImage}` }}
             style={hoteldetailsstyles.headerImage}
             defaultSource={require("../assets/images/logo.png")}
+          />
+        ) : (
+          <View
+            style={[hoteldetailsstyles.placeholderImage, { marginBottom: 50 }]}
           />
         )}
 
         {/* Header Top: Back arrow + floating icons */}
-        <View style={hoteldetailsstyles.headerTop}>
+        <View
+          style={[
+            hoteldetailsstyles.headerTop,
+            // { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1 },
+          ]}
+        >
           <TouchableOpacity
             style={hoteldetailsstyles.backButton}
             onPress={handleBackPress}

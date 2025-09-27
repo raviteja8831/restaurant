@@ -110,6 +110,7 @@ exports.createOrder = async (req, res) => {
         restaurantId: req.body.restaurantId,
         userId: req.body.userId,
         total: req.body.total || 0,
+        tableId: req.body.tableId,
       };
       order_data.status = "PENDING";
       const order = await Order.create(order_data);
@@ -274,7 +275,7 @@ exports.getSelectedOrderItems = async (req, res) => {
     const formatted = orderItems.map((item) => ({
       id: item.id,
       orderId: item.orderId,
-      menuItemId: item.menuItemId,
+      menuItemId: item.menuitem.id,
       menuItemName: item.menuitem.name,
       price: item.menuitem.price,
       quantity: item.quantity,

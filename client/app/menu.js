@@ -1,6 +1,14 @@
-
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Switch, Dimensions } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Switch,
+  Dimensions,
+  ScrollView,
+  useWindowDimensions,
+} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import AddMenuItemScreen from "./screens/AddMenuItemScreen";
@@ -8,16 +16,16 @@ import { addMenuItem, updateMenuItemsStatus } from "./api/menuApi";
 import { useAlert } from "./services/alertService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 const menuCategories = [
-  { label: "Hot & Cold beverages", icon: "cup" },
-  { label: "Soups", icon: "music" },
-  { label: "Breakfast", icon: "bread-slice" },
-  { label: "Starters", icon: "star" },
-  { label: "Indian Breads", icon: "food-variant" },
-  { label: "Main Course", icon: "food" },
-  { label: "Salads", icon: "leaf" },
-  { label: "Ice creams & Desserts", icon: "ice-cream" },
+  { label: "Hot & Cold beverages", icon: "bevereage" },
+  { label: "Soups", icon: "soup" },
+  { label: "Breakfast", icon: "breakfast" },
+  { label: "Starters", icon: "staters" },
+  { label: "Indian Breads", icon: "indian-bread" },
+  { label: "Main Course", icon: "main-course" },
+  { label: "Salads", icon: "salads" },
+  { label: "Ice creams & Desserts", icon: "ice-cream-sesserts" },
+  { label: "Liquor", icon: "liquor" },
 ];
-
 export default function MenuScreen() {
   const [enableAll, setEnableAll] = useState(false);
   // Placeholder: Replace with real menu item IDs from state/store
@@ -37,14 +45,18 @@ export default function MenuScreen() {
   // };
   const handleAddSave = async (item) => {
     try {
-      const userProfile = await AsyncStorage.getItem('user_profile');
+      const userProfile = await AsyncStorage.getItem("user_profile");
       const parsedProfile = JSON.parse(userProfile);
       const restaurantId = parsedProfile?.restaurant?.id;
       await addMenuItem({ ...item, restaurantId });
-      alert.success('Menu item added successfully!');
+      alert.success("Menu item added successfully!");
       setShowAddModal(false);
     } catch (error) {
-      alert.error(error?.response?.data?.message || error?.message || 'Failed to add menu item');
+      alert.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to add menu item"
+      );
     }
   };
 
@@ -53,38 +65,74 @@ export default function MenuScreen() {
     setEnableAll(value);
     try {
       await updateMenuItemsStatus(menuItemIds, value);
-      alert.success(`All menu items ${value ? 'enabled' : 'disabled'}!`);
+      alert.success(`All menu items ${value ? "enabled" : "disabled"}!`);
     } catch (error) {
-      alert.error(error?.response?.data?.message || error?.message || 'Failed to update status');
+      alert.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update status"
+      );
     }
   };
+
+  const { width, height } = useWindowDimensions();
+  const isSmallScreen = width < 300;
+  const iconSize = isSmallScreen ? 28 : 36;
+  const cardWidth = Math.min(width / 2 - 32, 200);
 
   return (
     <>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/dashboard')}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.replace("/dashboard")}
+          >
             <MaterialCommunityIcons name="arrow-left" size={28} color="#222" />
           </TouchableOpacity>
           <Text style={styles.title}>Menu</Text>
         </View>
-        {/* Menu Grid */}
-        <View style={styles.gridContainer}>
-          {menuCategories.map((cat, idx) => (
-            <TouchableOpacity key={cat.label} style={styles.menuCard}>
-              <MaterialCommunityIcons name={cat.icon} size={36} color="#222" style={{ marginBottom: 8 }} />
-              <Text style={styles.menuLabel}>{cat.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        {/* Enable All */}
-        <View style={styles.enableAllRow}>
-          <Switch value={enableAll} onValueChange={handleEnableAll} />
-          <Text style={styles.enableAllText}>Enable All</Text>
-        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Menu Grid */}
+          <View style={styles.gridContainer}>
+            {menuCategories.map((cat, idx) => (
+              <TouchableOpacity
+                key={cat.label}
+                style={[styles.menuCard, { width: cardWidth }]}
+              >
+                <MaterialCommunityIcons
+                  name={cat.icon}
+                  size={iconSize}
+                  color="#222"
+                  style={{ marginBottom: 8 }}
+                />
+                <Text
+                  style={[styles.menuLabel, isSmallScreen && { fontSize: 12 }]}
+                >
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Enable All */}
+          {/*  <View style={styles.enableAllRow}>
+            <Switch value={enableAll} onValueChange={handleEnableAll} />
+            <Text style={styles.enableAllText}>Enable All</Text>
+          </View> */}
+        </ScrollView>
+
         {/* Add Button */}
-        <TouchableOpacity style={styles.addBtn} onPress={() => setShowAddModal(true)}>
+        <TouchableOpacity
+          style={[styles.addBtn, { width: width - 60 }]}
+          onPress={() => setShowAddModal(true)}
+        >
           <Text style={styles.addBtnText}>+Add</Text>
         </TouchableOpacity>
       </View>
@@ -103,7 +151,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#8D8BEA",
     paddingTop: 40,
-    alignItems: "center",
+  },
+  scrollView: {
+    flex: 1,
+    width: "100%",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 100, // Space for the Add button
   },
   header: {
     flexDirection: "row",
@@ -136,11 +191,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   menuCard: {
-    width: Dimensions.get("window").width / 2 - 32,
-    height: 80,
+    minHeight: 80,
     backgroundColor: "#fff",
     borderRadius: 12,
     margin: 8,
+    padding: 8,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",

@@ -31,7 +31,14 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: false,
       },
-
+      tableId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "restauranttable",
+          key: "id",
+        },
+      },
       /*  paymentMethod: {
         type: Sequelize.STRING,
         allowNull: false,
