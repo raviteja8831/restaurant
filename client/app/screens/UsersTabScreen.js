@@ -51,6 +51,7 @@ export default function UsersTabScreen() {
   const chefRoleId = 2;
   const [restaurantId, setRestaurantId] = useState("");
   const [allottedUserMenuItemIds, setAllottedUserMenuItemIds] = useState([]);
+  const [loginUser, setLoginUser] = useState({});
 
   useEffect(() => {
     const loadUserAndFetchList = async () => {
@@ -59,6 +60,7 @@ export default function UsersTabScreen() {
         let user = null;
         if (userStr) {
           user = JSON.parse(userStr);
+          setLoginUser(user)
           // Fix: set restaurantId using useState
           setRestaurantId(user?.restaurant?.id || "");
         }
@@ -130,7 +132,7 @@ export default function UsersTabScreen() {
     if (!message.trim()) return;
     setSending(true);
     try {
-      await sendMessageToUser(selectedUser.id, message, "Manager");
+      await sendMessageToUser(selectedUser.id, message, loginUser.id);
       setMessage("");
       fetchMessages(selectedUser.id);
     } catch (err) {
@@ -151,6 +153,7 @@ export default function UsersTabScreen() {
   };
 
   const handleAddMenuItem = async (menuItemIds) => {
+    console.log("Adding menu items:", menuItemIds);
     try {
       await saveUserMenuItems(selectedUser.id, menuItemIds); // Accepts array
       setShowAddMenuModal(false);
@@ -564,9 +567,16 @@ export default function UsersTabScreen() {
             }}
           >
             {messages.length ? (
-              <Text style={{ color: "#333", fontSize: 14 }}>
-                {messages[messages.length - 1].message}
-              </Text>
+              messages.map((msg, idx) => (
+                <View key={msg.id || idx} style={{ marginBottom: 6 }}>
+                  <Text style={{ color: "#333", fontSize: 14 }}>
+                    {msg.message}
+                  </Text>
+                  <Text style={{ color: "#888", fontSize: 12, marginTop: 2 }}>
+                    {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ""}
+                  </Text>
+                </View>
+              ))
             ) : (
               <Text style={{ color: "#888", fontSize: 14 }}>
                 No messages yet
