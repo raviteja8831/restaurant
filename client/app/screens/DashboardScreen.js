@@ -256,7 +256,7 @@ export default function ManagerDashboardScreenNew() {
               <Text style={styles.buffetTitle}>Buffet</Text>
               <View style={{ position: "relative" }}>
                 <TouchableOpacity
-                  // onPress={() => setBuffetMenuVisible(!buffetMenuVisible)}
+                   onPress={() => setBuffetMenuVisible(!buffetMenuVisible)}
                   style={styles.buffetMenuIcon}
                 >
                   <MaterialCommunityIcons
@@ -302,7 +302,9 @@ export default function ManagerDashboardScreenNew() {
             </View>
             <TouchableOpacity
               style={styles.buffetIcon}
-              onPress={() => setBuffetVisible(true)}
+              // onPress={() => setBuffetVisible(true)
+
+             // }
             >
               <Image
                 source={require("../../assets/images/buffet.png")}
@@ -312,7 +314,7 @@ export default function ManagerDashboardScreenNew() {
             </TouchableOpacity>
             {/* Make buffet type clickable to open modal */}
             <TouchableOpacity
-              onPress={() => setBuffetVisible(true)}
+              // onPress={() => setBuffetVisible(true)}
               style={{ marginTop: 8, alignItems: "center", width: "100%" }}
             >
               <Text
