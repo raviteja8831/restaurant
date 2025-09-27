@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import {
   View,
   Text,
@@ -35,6 +36,8 @@ export default function UserProfileScreen() {
   const [reviews, setReviews] = useState([]);
   const [favoritesData, setFavoritesData] = useState([]);
   const [transactionsData, setTransactionsData] = useState([]);
+  const [bufferOrders, setBufferOrders] = useState([]);
+  const [tableOrders, setTableOrders] = useState([]);
   // const [userId, setUserId] = useState(null);
   const [userData, setUserData] = useState({
     orders: [],
@@ -74,6 +77,8 @@ export default function UserProfileScreen() {
       setUserData(response.data.user || {});
       setFavoritesData(response.data.favorites || []);
       setTransactionsData(response.data.orders || []);
+      setBufferOrders(response.data.bufferOrders || []);
+      setTableOrders(response.data.tableOrders || []);
       setReviews(response.data.orders || []);
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -121,59 +126,229 @@ export default function UserProfileScreen() {
     </ScrollView>
   );
 
+  const [expandedSection, setExpandedSection] = useState("");
+
+  const AccordionHeader = React.memo(({ title, isExpanded, onPress }) => (
+    <TouchableOpacity
+      style={[
+        styles.accordionHeader,
+        isExpanded && styles.accordionHeaderActive,
+      ]}
+      onPress={onPress}
+    >
+      <Text style={styles.accordionTitle}>{title}</Text>
+      <MaterialIcons
+        name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+        size={24}
+        color="#000"
+      />
+    </TouchableOpacity>
+  ));
+
+  AccordionHeader.propTypes = {
+    title: PropTypes.string.isRequired,
+    isExpanded: PropTypes.bool.isRequired,
+    onPress: PropTypes.func.isRequired,
+  };
+
+  const renderTransactionItems = (items) => {
+    if (!items || items.length === 0)
+      return <Text style={styles.noOrders}>No Items</Text>;
+
+    return (
+      <>
+        {items.map((order, idx) => (
+          <View key={idx} style={styles.tableRow}>
+            <Text style={[styles.cell, styles.orderColumn]}>{order.name}</Text>
+            <Text style={[styles.cell, styles.qtyColumn]}>
+              {order.quantity}
+            </Text>
+            <Text style={[styles.cell, styles.priceColumn]}>{order.price}</Text>
+            <Text style={[styles.cell, styles.totalColumn]}>{order.total}</Text>
+          </View>
+        ))}
+      </>
+    );
+  };
+
+  const renderTransactionCard = (item) => (
+    <View style={styles.transactionCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.hotelName}>{item.restaurantName}</Text>
+        <Text style={styles.members}>{item.members}</Text>
+        <Text style={styles.totalAmount}>₹{item.totalAmount}/-</Text>
+      </View>
+
+      <View style={styles.ordersSection}>
+        {renderTransactionItems(item.items)}
+
+        <View style={styles.tableFooter}>
+          <Text style={[styles.cell, styles.orderColumn]}>Total</Text>
+          <Text style={[styles.cell, styles.totalColumn]}>
+            {item.totalAmount}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+  const renderBuffetData = (item) => (
+    <View style={styles.transactionCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.hotelName}>{item?.restaurant?.name}</Text>
+
+        <Text style={styles.members}>{item?.buffet?.name}</Text>
+        <Text style={styles.members}>Persons: {item?.persons}</Text>
+        <Text style={styles.totalAmount}>
+          {" "}
+          Per Person : ₹{item?.buffet?.price}/-
+        </Text>
+      </View>
+
+      <View style={styles.ordersSection}>
+        {/* {renderTransactionItems(item.items)} */}
+
+        <View style={styles.tableFooter}>
+          <Text style={[styles.cell, styles.orderColumn]}>Total</Text>
+          <Text style={[styles.cell, styles.totalColumn]}>
+            {item?.buffet?.price * item?.persons}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+  const renderTableData = (item) => (
+    <View style={styles.transactionCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.hotelName}>{item?.restaurant?.name}</Text>
+
+        <Text style={styles.members}>{item?.table?.name}</Text>
+        <Text style={styles.members}>
+          Date: {new Date(item?.starttime).toLocaleDateString()}
+        </Text>
+        <Text style={styles.members}>
+          Time: {new Date(item?.starttime).toLocaleTimeString()}
+        </Text>
+        <Text style={styles.totalAmount}> Per Table : ₹{item?.amount}/-</Text>
+      </View>
+
+      <View style={styles.ordersSection}>
+        <View style={styles.tableFooter}>
+          <Text style={[styles.cell, styles.orderColumn]}>Total</Text>
+          <Text style={[styles.cell, styles.totalColumn]}>{item?.amount}</Text>
+        </View>
+      </View>
+    </View>
+  );
+
   const renderTransactionsTab = () => (
     <ScrollView style={styles.tabContent}>
-      {transactionsData.map((item, index) => (
-        <View key={item.id} style={styles.transactionCard}>
-          {/* Header */}
-          <View style={styles.cardHeader}>
-            <Text style={styles.hotelName}>{item.restaurantName}</Text>
-            <Text style={styles.members}>{item.members}</Text>
-            <Text style={styles.totalAmount}>₹{item.totalAmount}/-</Text>
-          </View>
+      {/* Regular Orders Accordion */}
+      <AccordionHeader
+        title="Orders"
+        isExpanded={expandedSection === "orders"}
+        onPress={() =>
+          setExpandedSection(expandedSection === "orders" ? "" : "orders")
+        }
+      />
+      {expandedSection === "orders" && (
+        <View style={styles.accordionContent}>
+          {transactionsData.map((item, index) => (
+            <View key={item.id} style={styles.transactionCard}>
+              {/* Header */}
+              <View style={styles.cardHeader}>
+                <Text style={styles.hotelName}>{item.restaurantName}</Text>
+                <Text style={styles.members}>{item.members}</Text>
+                <Text style={styles.totalAmount}>₹{item.totalAmount}/-</Text>
+              </View>
 
-          {/* Orders Section */}
-          <View style={styles.ordersSection}>
-            <Text style={styles.ordersTitle}>Orders</Text>
+              {/* Orders Section */}
+              <View style={styles.ordersSection}>
+                <Text style={styles.ordersTitle}>Orders</Text>
 
-            {item.items && item.items.length > 0 ? (
-              <>
-                {item.items.map((order, idx) => (
-                  <View key={idx} style={styles.tableRow}>
-                    <Text style={[styles.cell, styles.orderColumn]}>
-                      {order.name}
-                    </Text>
-                    <Text style={[styles.cell, styles.qtyColumn]}>
-                      {order.quantity}
-                    </Text>
-                    <Text style={[styles.cell, styles.priceColumn]}>
-                      {order.price}
-                    </Text>
-                    <Text style={[styles.cell, styles.totalColumn]}>
-                      {order.total}
-                    </Text>
-                  </View>
-                ))}
+                {item.items && item.items.length > 0 ? (
+                  <>
+                    {item.items.map((order, idx) => (
+                      <View key={idx} style={styles.tableRow}>
+                        <Text style={[styles.cell, styles.orderColumn]}>
+                          {order.name}
+                        </Text>
+                        <Text style={[styles.cell, styles.qtyColumn]}>
+                          {order.quantity}
+                        </Text>
+                        <Text style={[styles.cell, styles.priceColumn]}>
+                          {order.price}
+                        </Text>
+                        <Text style={[styles.cell, styles.totalColumn]}>
+                          {order.total}
+                        </Text>
+                      </View>
+                    ))}
 
-                {/* Footer Total */}
-                <View style={styles.tableFooter}>
-                  <Text style={[styles.cell, styles.orderColumn]}>Total</Text>
-                  <Text style={[styles.cell, styles.totalColumn]}>
-                    {item.totalAmount}
-                  </Text>
-                </View>
-              </>
-            ) : (
-              <Text style={styles.noOrders}>No Orders</Text>
-            )}
-          </View>
+                    {/* Footer Total */}
+                    <View style={styles.tableFooter}>
+                      <Text style={[styles.cell, styles.orderColumn]}>
+                        Total
+                      </Text>
+                      <Text style={[styles.cell, styles.totalColumn]}>
+                        {item.totalAmount}
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <Text style={styles.noOrders}>No Orders</Text>
+                )}
+              </View>
 
-          {/* Separator */}
-          {index < transactionsData.length - 1 && (
-            <View style={styles.separator} />
-          )}
+              {/* Separator */}
+              {index < transactionsData.length - 1 && (
+                <View style={styles.separator} />
+              )}
+            </View>
+          ))}
         </View>
-      ))}
+      )}
+
+      {/* Table Bookings Accordion */}
+      <AccordionHeader
+        title="Table Bookings"
+        isExpanded={expandedSection === "tables"}
+        onPress={() =>
+          setExpandedSection(expandedSection === "tables" ? "" : "tables")
+        }
+      />
+      {expandedSection === "tables" && (
+        <View style={styles.accordionContent}>
+          {tableOrders.map((item, index) => (
+            <View key={item.id}>
+              {renderTableData(item)}
+              {index < tableOrders.length - 1 && (
+                <View style={styles.separator} />
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Buffet Bookings Accordion */}
+      <AccordionHeader
+        title="Buffet Bookings"
+        isExpanded={expandedSection === "buffet"}
+        onPress={() =>
+          setExpandedSection(expandedSection === "buffet" ? "" : "buffet")
+        }
+      />
+      {expandedSection === "buffet" && (
+        <View style={styles.accordionContent}>
+          {bufferOrders.map((item, index) => (
+            <View key={item.id}>
+              {renderBuffetData(item)}
+              {index < bufferOrders.length - 1 && (
+                <View style={styles.separator} />
+              )}
+            </View>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 
@@ -241,20 +416,7 @@ export default function UserProfileScreen() {
             router.push("/Customer-Login");
           }}
         >
-          {/* <MaterialIcons name="logout" size={24} color="#fff" />
-          <Text style={styles.logoutText}>Logout</Text> */}
-          
-          <MaterialCommunityIcons
-                  name="power"
-                  size={28}
-                  color="#000"
-                />
-                <Text style={styles.logoutText} >
-                {/* onPress={() => handleLogout()}> */}
-                  Logout
-                </Text>
-
-
+          <MaterialCommunityIcons name="power" size={28} color="#000" />
         </TouchableOpacity>
       </View>
 
@@ -338,6 +500,29 @@ export default function UserProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  accordionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#8C8AEB",
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  accordionHeaderActive: {
+    backgroundColor: "#6c63b5",
+  },
+  accordionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  accordionContent: {
+    marginBottom: 16,
+    backgroundColor: "#bbbaef",
+    borderRadius: 8,
+    padding: 8,
+  },
   ordersTitle: { fontWeight: "bold", marginBottom: 4 },
   ordersSection: { marginTop: 4 },
   tableHeader: { flexDirection: "row", borderBottomWidth: 1, paddingBottom: 2 },
@@ -360,7 +545,7 @@ const styles = StyleSheet.create({
   noOrders: { fontSize: 12, fontStyle: "italic", color: "gray" },
   separator: { height: 8 },
   logoutButton: {
-    backgroundColor: "#6c63b5",
+    // backgroundColor: "#6c63b5",
     borderRadius: 5,
     padding: 10,
     flexDirection: "row",
@@ -371,7 +556,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#fff",
     marginLeft: 8,
-    fontWeight: "700"
+    fontWeight: "700",
   },
 
   reviewItem: {

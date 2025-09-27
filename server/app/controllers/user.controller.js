@@ -104,6 +104,44 @@ exports.getUserProfile = async (req, res) => {
       order: [["createdAt", "DESC"]],
       limit: 5,
     });
+    const tableOrders = await db.tableBooking.findAll({
+      where: {
+        userId,
+      },
+      include: [
+        {
+          model: db.restaurant,
+          as: "restaurant",
+          attributes: ["name", "address"],
+        },
+        {
+          model: db.restaurantTable,
+          as: "table",
+          attributes: ["name"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      // limit: 5,
+    });
+    const bufferOrders = await db.buffetOrder.findAll({
+      where: {
+        userId,
+      },
+      include: [
+        {
+          model: db.buffet,
+          as: "buffet",
+          attributes: ["name", "price"],
+        },
+        {
+          model: db.restaurant,
+          as: "restaurant",
+          attributes: ["name", "address"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      // limit: 5,
+    });
 
     // Format orders for response
     const formattedOrders = orders.map((order) => ({
@@ -147,37 +185,6 @@ exports.getUserProfile = async (req, res) => {
       rating: favorite?.rating,
       addedAt: new Date(favorite?.createdAt).toLocaleDateString(),
     }));
-
-    // Get recent payments/transactions
-    /*   const payments = await db.orders.findAll({
-      where: {
-        userId,
-        status: "COMPLETED",
-      },
-      include: [
-        {
-          model: db.restaurant,
-          as: "orderRestaurant",
-          attributes: ["name", "address"],
-        },
-      ],
-      order: [["createdAt", "DESC"]],
-      // limit: 5,
-      attributes: ["id", "total", "createdAt", "membercount"], //"paymentMethod"
-    });
-
-    // Format payments for response
-    const formattedPayments = payments.map((payment) => ({
-      id: payment.id,
-      amount: payment.total,
-      restaurantName: payment.orderRestaurant.name,
-      restaurantAddress: payment.orderRestaurant.address,
-      date: new Date(payment.createdAt).toLocaleDateString(),
-      time: new Date(payment.createdAt).toLocaleTimeString(),
-      method: payment?.paymentMethod || "ONLINE",
-    })); */
-
-    // Return formatted response
     return res.status(200).send({
       status: "success",
       data: {
@@ -190,6 +197,8 @@ exports.getUserProfile = async (req, res) => {
         },
         orders: formattedOrders,
         favorites: formattedFavorites,
+        tableOrders: tableOrders,
+        bufferOrders: bufferOrders,
         // payments: formattedPayments,
       },
     });
