@@ -62,6 +62,8 @@ export default function LoginScreen() {
       Alert.alert("API user", JSON.stringify(user));
       if (role === "manager") {
         router.push("/dashboard");
+      } else  if (role === "chef") {
+        router.push("/chef-home");
       } else {
         Alert.alert(
           "Login Failed",
@@ -120,7 +122,7 @@ export default function LoginScreen() {
       {/* Register Link */}
       <View style={styles.registerContainer}>
         <Text style={styles.registerText}>Don’t have an account? </Text>
-  <TouchableOpacity onPress={() => router.replace('/customer-register')}>
+  <TouchableOpacity onPress={() => router.replace('/manager-register')}>
           <Text style={styles.registerLink}>Register</Text>
         </TouchableOpacity>
       </View>

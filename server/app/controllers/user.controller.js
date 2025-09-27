@@ -223,6 +223,7 @@ exports.getRestaurantUsers = async (req, res) => {
         "lastname",
         "role_id",
         "restaurantId",
+        "userImage",
         "createdAt",
         "updatedAt",
       ],
@@ -578,7 +579,7 @@ exports.register = async (req, res) => {
 
       restaurantAddress,
 
-      ambiancePhoto,
+      ambianceImage,
       upi,
       logo,
       enableBuffet,
@@ -590,12 +591,8 @@ exports.register = async (req, res) => {
       longitude,
       restaurantType,
     } = req.body;
+console.log(req.body);
 
-    // Convert restaurantType and foodType to comma-separated values if arra
-
-    // Upload ambiancePhoto if it's a file (base64 or file path)
-    let ambianceImageUrl = ambiancePhoto;
-    // Upload logo if needed (similar logic)
     let logoImageUrl = logo;
 
     // Create restaurant first
@@ -609,7 +606,7 @@ exports.register = async (req, res) => {
         enableTableService === true || enableTableService === "true",
       enableSelfService:
         enableSelfService === true || enableSelfService === "true",
-      ambianceImage: ambianceImageUrl,
+      ambianceImage: ambianceImage || null,
       logoImage: logoImageUrl,
       latitude: latitude || null,
       longitude: longitude || null,
@@ -761,6 +758,7 @@ exports.addRestaurantUser = async (req, res) => {
       phone,
       restaurantId,
       role_id,
+      userImage,
     } = req.body;
 
     // Use restaurant_id or restaurantId (prefer restaurant_id if both)
@@ -778,6 +776,7 @@ exports.addRestaurantUser = async (req, res) => {
       role_id: role_id,
       phone,
       restaurantId: restId,
+      userImage: userImage,
     });
     return res.status(201).send({
       message: "User added to existing restaurant successfully",

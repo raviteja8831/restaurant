@@ -22,6 +22,11 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: true,
     },
+    userImage: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
     restaurantId: {
       type: Sequelize.INTEGER,
       allowNull: false,
