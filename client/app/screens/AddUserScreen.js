@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadImage } from '../api/imageApi';
 
 export default function AddUserScreen({ navigation, onSave, onClose }) {
   const [firstname, setFirstname] = useState('');
@@ -8,6 +10,9 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
   const [phone, setPhone] = useState('');
+  const [userImage, setUserImage] = useState(null);
+  const [userImageUrl, setUserImageUrl] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
 
@@ -16,14 +21,49 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
     { label: 'Manager', value: 'Manager' },
   ];
 
+  const handlePickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: false,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setUserImage(result.assets[0].uri);
+    }
+  };
+
   const handleSave = async () => {
     if (!firstname || !password || !role || !phone) {
       Alert.alert('Validation', 'All fields except Last Name are required.');
       return;
     }
     setLoading(true);
+    let imageUrl = userImageUrl;
+    if (userImage && !userImageUrl) {
+      setUploadingImage(true);
+      try {
+        const filename = userImage.split("/").pop();
+        const match = /\.(\w+)$/.exec(filename ?? "");
+        const typeMime = match ? `image/${match[1]}` : `image/jpeg`;
+        const fileObj = {
+          uri: userImage,
+          name: filename,
+          type: typeMime,
+        };
+        const data = await uploadImage(fileObj);
+        imageUrl = data.url;
+        setUserImageUrl(imageUrl);
+      } catch (err) {
+        Alert.alert('Image Upload Error', err.message || 'Failed to upload image');
+        setUploadingImage(false);
+        setLoading(false);
+        return;
+      }
+      setUploadingImage(false);
+    }
     try {
-      await onSave({ firstname, lastname, password, role, phone });
+      await onSave({ firstname, lastname, password, role, phone, userImage: imageUrl });
       Alert.alert('Success', 'User added successfully!');
     } catch (err) {
       Alert.alert('Error', err.message || 'Failed to add user');
@@ -38,6 +78,21 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
     <View style={styles.overlay}>
       <View style={styles.form}>
         <Text style={styles.title}>Add Profile</Text>
+        {/* User Image Upload */}
+        <TouchableOpacity
+          style={{ alignItems: 'center', marginBottom: 16 }}
+          onPress={handlePickImage}
+          disabled={uploadingImage || loading}
+        >
+          {userImage ? (
+            <Image source={{ uri: userImage }} style={{ width: 80, height: 80, borderRadius: 40, marginBottom: 6 }} />
+          ) : (
+            <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#e0e0e0', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+              <Text style={{ color: '#888', fontSize: 32 }}>+</Text>
+            </View>
+          )}
+          <Text style={{ color: '#7b6eea', fontWeight: 'bold' }}>Upload Photo</Text>
+        </TouchableOpacity>
         <TextInput style={styles.input} placeholder="First Name" value={firstname} onChangeText={setFirstname} />
         <TextInput style={styles.input} placeholder="Last Name" value={lastname} onChangeText={setLastname} />
         <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
@@ -77,7 +132,7 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
             onPress={handleSave}
             disabled={isSaveDisabled}
           >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Save</Text>}
+            {loading || uploadingImage ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Save</Text>}
           </TouchableOpacity>
         </View>
       </View>

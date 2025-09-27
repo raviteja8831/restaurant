@@ -1,3 +1,42 @@
+// Update table (edit name and regenerate QR)
+exports.updateQRCode = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    if (!id || !name) return res.status(400).json({ message: 'Missing fields' });
+    const table = await db.restaurantTable.findByPk(id);
+    if (!table) return res.status(404).json({ message: 'Table not found' });
+    // Regenerate QR code with new name
+    const value = `${table.restaurantId}_${name}`;
+    const qrcodeDataUrl = await generateQRCodeDataUrl(value);
+    table.name = name;
+    table.qrcode = qrcodeDataUrl;
+    await table.save();
+    res.json({
+      id: table.id,
+      restaurantId: table.restaurantId,
+      name: table.name,
+      status: table.status,
+      imageUrl: table.qrcode
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Delete table (QR code)
+exports.deleteQRCode = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Missing id' });
+    const table = await db.restaurantTable.findByPk(id);
+    if (!table) return res.status(404).json({ message: 'Table not found' });
+    await table.destroy();
+    res.json({ message: 'Table deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 
 const db = require('../models');

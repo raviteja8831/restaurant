@@ -295,3 +295,7 @@ db.restaurantTable.hasMany(db.tableBooking, {
   foreignKey: "tableId",
   as: "bookings",
 });
+db.message.belongsTo(db.restaurantUser, { as: 'fromUser', foreignKey: 'fromUserId' });
+db.message.belongsTo(db.restaurantUser, { as: 'toUser', foreignKey: 'toUserId' });
+db.message.belongsTo(db.roles, { as: 'fromRole', foreignKey: 'fromRoleId' });
+db.message.belongsTo(db.roles, { as: 'toRole', foreignKey: 'toRoleId' });

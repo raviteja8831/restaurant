@@ -22,9 +22,11 @@ export const addTable = async (tableData) => {
   }
 };
 
+
+// For QR tables, use /api/qrcodes/:id (PUT)
 export const updateTable = async (id, tableData) => {
   try {
-    const res = await api.put(`${TABLE_API.UPDATE}/${id}`, tableData);
+    const res = await api.put(`/qrcodes/${id}`, tableData);
     return res.data;
   } catch (error) {
     showApiError(error);
@@ -32,9 +34,11 @@ export const updateTable = async (id, tableData) => {
   }
 };
 
+
+// For QR tables, use /api/qrcodes/:id (DELETE)
 export const deleteTable = async (id) => {
   try {
-    const res = await api.delete(`${TABLE_API.DELETE}/${id}`);
+    const res = await api.delete(`/qrcodes/${id}`);
     return res.data;
   } catch (error) {
     showApiError(error);

@@ -232,6 +232,7 @@ exports.getRestaurantUsers = async (req, res) => {
         "lastname",
         "role_id",
         "restaurantId",
+        "userImage",
         "createdAt",
         "updatedAt",
       ],
@@ -280,19 +281,64 @@ exports.saveUserMenuItems = async (req, res) => {
 // Send a message to a user (simple in-memory, for demo)
 let userMessages = {};
 
+// Send a message to a user (persisted in UserMessage model)
 exports.sendMessageToUser = async (req, res) => {
   const { userId } = req.params;
   const { message, from } = req.body;
   if (!message) return res.status(400).json({ error: "Message required" });
-  if (!userMessages[userId]) userMessages[userId] = [];
-  userMessages[userId].push({ message, from, time: new Date() });
-  res.json({ success: true });
+  // if (!fromUserId || !fromRoleId || !toRoleId) return res.status(400).json({ error: "fromUserId, fromRoleId, toRoleId required" });
+  try {
+    await db.message.create({
+      fromUserId: from,
+      fromRoleId:1,
+      toUserId: userId,
+      toRoleId:2,
+      message
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// Get messages for a user
+// Get messages for a user (from UserMessage model)
 exports.getMessagesForUser = async (req, res) => {
   const { userId } = req.params;
-  res.json({ messages: userMessages[userId] || [] });
+  try {
+    const messages = await db.message.findAll({
+      where: { toUserId: userId },
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: db.restaurantUser,
+          as: 'fromUser',
+          attributes: ['id', 'firstname', 'lastname', 'phone', 'role_id', 'restaurantId'],
+          include: [
+            {
+              model: db.roles,
+              as: 'role',
+              attributes: ['id', 'name']
+            }
+          ]
+        },
+        {
+          model: db.restaurantUser,
+          as: 'toUser',
+          attributes: ['id', 'firstname', 'lastname', 'phone', 'role_id', 'restaurantId'],
+          include: [
+            {
+              model: db.roles,
+              as: 'role',
+              attributes: ['id', 'name']
+            }
+          ]
+        }
+      ]
+    });
+    res.json({ messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 // Get dashboard data for a user (profile, allotted menu, stats, top orders, today's orders)
 exports.getDashboardData = async (req, res) => {
@@ -542,7 +588,7 @@ exports.register = async (req, res) => {
 
       restaurantAddress,
 
-      ambiancePhoto,
+      ambianceImage,
       upi,
       logo,
       enableBuffet,
@@ -554,12 +600,8 @@ exports.register = async (req, res) => {
       longitude,
       restaurantType,
     } = req.body;
+console.log(req.body);
 
-    // Convert restaurantType and foodType to comma-separated values if arra
-
-    // Upload ambiancePhoto if it's a file (base64 or file path)
-    let ambianceImageUrl = ambiancePhoto;
-    // Upload logo if needed (similar logic)
     let logoImageUrl = logo;
 
     // Create restaurant first
@@ -573,7 +615,7 @@ exports.register = async (req, res) => {
         enableTableService === true || enableTableService === "true",
       enableSelfService:
         enableSelfService === true || enableSelfService === "true",
-      ambianceImage: ambianceImageUrl,
+      ambianceImage: ambianceImage || null,
       logoImage: logoImageUrl,
       latitude: latitude || null,
       longitude: longitude || null,
@@ -725,6 +767,7 @@ exports.addRestaurantUser = async (req, res) => {
       phone,
       restaurantId,
       role_id,
+      userImage,
     } = req.body;
 
     // Use restaurant_id or restaurantId (prefer restaurant_id if both)
@@ -742,6 +785,7 @@ exports.addRestaurantUser = async (req, res) => {
       role_id: role_id,
       phone,
       restaurantId: restId,
+      userImage: userImage,
     });
     return res.status(201).send({
       message: "User added to existing restaurant successfully",

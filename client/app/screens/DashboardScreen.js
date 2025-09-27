@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { fetchManagerDashboard, addUserByManager } from "../api/managerApi";
-import { getRestaurantById} from "../api/restaurantApi";
-import { fetchChefStats } from "../api/chefApi";
+import { fetchManagerDashboard } from "../api/managerApi";
+import { updateRestaurantUpi } from "../api/updateRestaurantUpi";
 import axios from "axios";
 
 import { HEADINGS } from "../constants/headings";
@@ -19,40 +19,28 @@ import {
   ScrollView,
   TextInput,
   Dimensions,
+  Image,
+  Switch,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Image, Switch } from "react-native";
 import { Appbar, Surface } from "react-native-paper";
 import TabBar from "./TabBarScreen";
 
 export default function ManagerDashboardScreenNew() {
+  const [salesDateFilter, setSalesDateFilter] = useState("day");
+  const [incomeDateFilter, setIncomeDateFilter] = useState("day");
+  const [showSalesDropdown, setShowSalesDropdown] = useState(false);
+  const [showIncomeDropdown, setShowIncomeDropdown] = useState(false);
   // Tab state management
-  const [activeTab, setActiveTab] = useState("Dashboard");
-  const [showOrdersDropdown, setShowOrdersDropdown] = useState(false);
-  const [ordersPeriodLabel, setOrdersPeriodLabel] = useState("Year");
 
   // QR Code states
-  const [showNewQRModal, setShowNewQRModal] = useState(false);
-  const [showTableDetail, setShowTableDetail] = useState(false);
-  const [selectedTable, setSelectedTable] = useState(null);
   const [showPayModal, setShowPayModal] = useState(false);
-  const [qrFormData, setQrFormData] = useState({
-    name: "",
-  });
-
-  // Demo values for each period (replace with real data as needed)
-  const yearOrders = "365/345";
-  const monthOrders = "34/12";
-  const weekOrders = "7/2";
-  const ordersPeriodValue =
-    ordersPeriodLabel === "Year"
-      ? yearOrders
-      : ordersPeriodLabel === "Month"
-      ? monthOrders
-      : weekOrders;
+  const [upi, setUpi] = useState("");
+  const [upiEdit, setUpiEdit] = useState(false);
+  const [upiLoading, setUpiLoading] = useState(false);
 
   // State for API data
-  const [dashboard, setDashboard] = useState(null);
+  // const [dashboard, setDashboard] = useState(null);
   const [managerName, setManagerName] = useState("");
   const [restaurantName, setRestaurantName] = useState(
     HEADINGS.ManagerDashboardScreen
@@ -72,7 +60,7 @@ export default function ManagerDashboardScreenNew() {
   const [profile, setProfile] = useState({ name: "", phone: "" });
   const [salesData, setSalesData] = useState([]);
   const [incomeData, setIncomeData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
   const [buffetVisible, setBuffetVisible] = useState(false);
   const [buffetMenuVisible, setBuffetMenuVisible] = useState(false);
@@ -84,9 +72,7 @@ export default function ManagerDashboardScreenNew() {
   // Fetch dashboard data on mount
   useEffect(() => {
     async function fetchData() {
-      setLoading(true);
       try {
-        // Get user data from AsyncStorage
         const userStr = await AsyncStorage.getItem("user_profile");
         const token = await AsyncStorage.getItem("auth_token");
         let user = null;
@@ -96,14 +82,11 @@ export default function ManagerDashboardScreenNew() {
           setProfile({
             name: user.firstname || user.name || "",
             phone: user.phone || "",
-            restaurant: user.restaurant || null, // Include restaurant data from user profile
+            restaurant: user.restaurant || null,
           });
         }
-        // Pass restaurantId to dashboard API
-        const restaurantId =
-          user?.restaurant.id;
-        const dash = await fetchManagerDashboard(restaurantId, token);
-        setDashboard(dash);
+        const restaurantId = user?.restaurant.id;
+        const dash = await fetchManagerDashboard(restaurantId, token, salesDateFilter);
         setRestaurantName(
           dash.restaurantName || user?.restaurant?.name || HEADINGS.ManagerDashboardScreen
         );
@@ -124,73 +107,17 @@ export default function ManagerDashboardScreenNew() {
         });
         setSalesData(dash.salesData || []);
         setIncomeData(dash.incomeData || []);
-        // Chef stats
-        //const chefStats = await fetchChefStats();
-        const chefStats = "";
         setChefLogins(dash.currentlyLoggedIn || 0);
         setChefLogouts(dash.chefLogouts || 0);
         setTotalChefLogins(dash.chefLogins || 0);
-        const response = await getRestaurantById(restaurantId);
-        console.log("Restaurant data by ID:", response);
-      } catch (e) {
+        setUpi(dash.upi || "");
+      } catch (_e) {
         // fallback to static if needed
       }
-      setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [salesDateFilter]);
 
-  // Add User Modal state and config
-  const [addUserModal, setAddUserModal] = useState(false);
-  const [addUserForm, setAddUserForm] = useState({
-    name: "",
-    password: "",
-    role: "Chef",
-    phone: "",
-    showRoleDropdown: false,
-  });
-  const [addUserLoading, setAddUserLoading] = useState(false);
-  const addUserFormConfig = [
-    // Not used anymore, form fields are now custom below
-  ];
-
-
-  // Mock transaction data for tables
-  const tableTransactions = [
-    {
-      name: "Prakash",
-      contact: "8660435235",
-      time: "07:12:00 AM",
-      amount: "600",
-      status: "Pending",
-    },
-    {
-      name: "Abhishek",
-      contact: "9660435235",
-      time: "07:12:00 AM",
-      amount: "350",
-      status: "Paid",
-    },
-    {
-      name: "Karthick",
-      contact: "7676869534",
-      time: "07:12:00 AM",
-      amount: "800",
-      status: "Paid",
-    },
-    {
-      name: "Amruth",
-      contact: "9868785564",
-      time: "07:12:00 AM",
-      amount: "1200",
-      status: "Paid",
-    },
-  ];
-
-  const handleTableClick = (tableNum) => {
-    setSelectedTable(tableNum);
-    setShowTableDetail(true);
-  };
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem("auth_token");
@@ -198,6 +125,7 @@ export default function ManagerDashboardScreenNew() {
       router.replace("/login");
     } catch (e) {
       // Optionally handle error
+      console.log(e, "error in logout");
     }
   };
 
@@ -236,7 +164,7 @@ export default function ManagerDashboardScreenNew() {
             onRequestClose={() => setShowPayModal(false)}
           >
             <View style={styles.modalOverlay}>
-              <View style={[styles.profileCard, { alignItems: "center" }]}>
+              <View style={[styles.profileCard, { alignItems: "center" }]}> 
                 <TouchableOpacity
                   style={{ position: "absolute", top: 10, right: 10, zIndex: 20 }}
                   onPress={() => setShowPayModal(false)}
@@ -246,17 +174,69 @@ export default function ManagerDashboardScreenNew() {
                 <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 12, color: "#6c63b5" }}>
                   Payment
                 </Text>
-                {/* Add your payment UI here */}
-                <Text style={{ fontSize: 16, color: "#222", marginBottom: 8 }}>
-                  UPI ID : example@upi
-                </Text>
-                <TouchableOpacity
-                  style={styles.profileCloseBtn}
-                  onPress={() => setShowPayModal(false)}
-                >
-                  <Text style={styles.logoutText}>Update</Text>
-                  <Text style={styles.logoutText}>Close</Text>
-                </TouchableOpacity>
+                {/* Editable UPI field */}
+                {upiEdit ? (
+                  <TextInput
+                    value={upi}
+                    onChangeText={setUpi}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: "#ccc",
+                      borderRadius: 8,
+                      padding: 8,
+                      fontSize: 16,
+                      color: "#222",
+                      marginBottom: 8,
+                      width: 220,
+                      backgroundColor: "#fff",
+                    }}
+                    placeholder="Enter UPI ID"
+                    editable={!upiLoading}
+                  />
+                ) : (
+                  <Text style={{ fontSize: 16, color: "#222", marginBottom: 8 }}>
+                    UPI ID : {upi || "Not set"}
+                  </Text>
+                )}
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  {upiEdit ? (
+                    <TouchableOpacity
+                      style={styles.profileCloseBtn}
+                      disabled={upiLoading}
+                      onPress={async () => {
+                        setUpiLoading(true);
+                        try {
+                          const userStr = await AsyncStorage.getItem("user_profile");
+                          const user = userStr ? JSON.parse(userStr) : {};
+                          const restaurantId = user?.restaurant?.id;
+                          await updateRestaurantUpi(restaurantId, upi);
+                          setUpiEdit(false);
+                        } catch (_err) {
+                          // Optionally show error
+                        }
+                        setUpiLoading(false);
+                      }}
+                    >
+                      <Text style={styles.logoutText}>{upiLoading ? "Saving..." : "Save"}</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.profileCloseBtn}
+                      onPress={() => setUpiEdit(true)}
+                    >
+                      <Text style={styles.logoutText}>Edit</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={styles.profileCloseBtn}
+                    onPress={() => {
+                      setShowPayModal(false);
+                      setUpiEdit(false);
+                    }}
+                  >
+                    <Text style={styles.logoutText}>Close</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </Modal>
@@ -329,7 +309,7 @@ export default function ManagerDashboardScreenNew() {
               <Text style={styles.buffetTitle}>Buffet</Text>
               <View style={{ position: "relative" }}>
                 <TouchableOpacity
-                  onPress={() => setBuffetMenuVisible(!buffetMenuVisible)}
+                   onPress={() => setBuffetMenuVisible(!buffetMenuVisible)}
                   style={styles.buffetMenuIcon}
                 >
                   <MaterialCommunityIcons
@@ -375,7 +355,9 @@ export default function ManagerDashboardScreenNew() {
             </View>
             <TouchableOpacity
               style={styles.buffetIcon}
-              onPress={() => setBuffetVisible(true)}
+              // onPress={() => setBuffetVisible(true)
+
+             // }
             >
               <Image
                 source={require("../../assets/images/buffet.png")}
@@ -385,7 +367,7 @@ export default function ManagerDashboardScreenNew() {
             </TouchableOpacity>
             {/* Make buffet type clickable to open modal */}
             <TouchableOpacity
-              onPress={() => setBuffetVisible(true)}
+              // onPress={() => setBuffetVisible(true)}
               style={{ marginTop: 8, alignItems: "center", width: "100%" }}
             >
               <Text
@@ -412,7 +394,7 @@ export default function ManagerDashboardScreenNew() {
                       }
                     );
                     // Optionally, refresh dashboard/buffet info here
-                  } catch (err) {
+                  } catch (_err) {
                     // Optionally show error
                   }
                 }}
@@ -530,8 +512,39 @@ export default function ManagerDashboardScreenNew() {
 
         {/* Orders Chart */}
         <Surface style={styles.chartCard}>
-          <View style={styles.chartHeader}>
+          <View style={{ ...styles.chartHeader, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={styles.chartTitle}>Produce Sales</Text>
+            <TouchableOpacity
+              style={styles.weekDropdown}
+              onPress={() => setShowSalesDropdown(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.weekDropdownText}>
+                {salesDateFilter === 'day' ? 'Today' : salesDateFilter.charAt(0).toUpperCase() + salesDateFilter.slice(1)}
+              </Text>
+              <MaterialCommunityIcons name="chevron-down" size={20} color="#fff" style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+            {/* Modal for sales dropdown */}
+            <Modal
+              visible={showSalesDropdown}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowSalesDropdown(false)}
+            >
+              <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)' }} onPress={() => setShowSalesDropdown(false)}>
+                <View style={{ borderRadius: 10, padding: 8, width: 180 }}>
+                  <Picker
+                    selectedValue={salesDateFilter}
+                    onValueChange={(val) => { setSalesDateFilter(val); setShowSalesDropdown(false); }}
+                  >
+                    <Picker.Item label="Today" value="day" />
+                    <Picker.Item label="Week" value="week" />
+                    <Picker.Item label="Month" value="month" />
+                    <Picker.Item label="Year" value="year" />
+                  </Picker>
+                </View>
+              </TouchableOpacity>
+            </Modal>
           </View>
           <LineChart
             data={{
@@ -564,8 +577,39 @@ export default function ManagerDashboardScreenNew() {
         </Surface>
         {/* Income Graph */}
         <Surface style={styles.chartCard}>
-          <View style={styles.chartHeader}>
+          <View style={{ ...styles.chartHeader, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={styles.chartTitle}>Income Graph</Text>
+            <TouchableOpacity
+              style={styles.weekDropdown}
+              onPress={() => setShowIncomeDropdown(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.weekDropdownText}>
+                {incomeDateFilter === 'day' ? 'Today' : incomeDateFilter.charAt(0).toUpperCase() + incomeDateFilter.slice(1)}
+              </Text>
+              <MaterialCommunityIcons name="chevron-down" size={20} color="#fff" style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+            {/* Modal for income dropdown */}
+            <Modal
+              visible={showIncomeDropdown}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowIncomeDropdown(false)}
+            >
+              <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)' }} onPress={() => setShowIncomeDropdown(false)}>
+                <View style={{ borderRadius: 10, padding: 8, width: 180 }}>
+                  <Picker
+                    selectedValue={incomeDateFilter}
+                    onValueChange={(val) => { setIncomeDateFilter(val); setShowIncomeDropdown(false); }}
+                  >
+                    <Picker.Item label="Today" value="day" />
+                    <Picker.Item label="Week" value="week" />
+                    <Picker.Item label="Month" value="month" />
+                    <Picker.Item label="Year" value="year" />
+                  </Picker>
+                </View>
+              </TouchableOpacity>
+            </Modal>
           </View>
           <LineChart
             data={{
@@ -596,6 +640,7 @@ export default function ManagerDashboardScreenNew() {
             style={{ borderRadius: 16 }}
           />
         </Surface>
+
 
         {/* Profile Modal */}
         <Modal
