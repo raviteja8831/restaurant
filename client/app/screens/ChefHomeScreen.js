@@ -33,7 +33,7 @@ export default function ChefHomeScreen() {
       setLoading(true);
       try {
         // Use common user profile and token keys
-        const userStr = await AsyncStorage.getItem("chef_profile");
+        const userStr = await AsyncStorage.getItem("user_profile");
         const token = await AsyncStorage.getItem("auth_token");
         let user = null;
         if (token) {
@@ -56,7 +56,7 @@ export default function ChefHomeScreen() {
   const handleOrderStatusUpdate = async (data) => {
     const response = await updateOrderStatus(data);
     if (response.status === "success") {
-      const userStr = await AsyncStorage.getItem("chef_profile");
+      const userStr = await AsyncStorage.getItem("user_profile");
       let user = null;
       if (userStr) {
         user = JSON.parse(userStr);
@@ -73,16 +73,18 @@ export default function ChefHomeScreen() {
         style={styles.powerIcon}
         onPress={async () => {
           let user = null;
-          const userStr = await AsyncStorage.getItem("chef_profile");
+          const userStr = await AsyncStorage.getItem("user_profile");
           if (userStr) {
             user = JSON.parse(userStr);
-            setChefName(user.firstname || user.name || "");
+            setChefName(user.firstname+ "" + user.lastname );
             setLoginAt(user.loginAT || "");
           }
-          const logout = await chefLogout(user ? user.id : null);
-          console.log("Logout:", logout);
-          AsyncStorage.removeItem("chef_token");
-          router.replace("/chef-login");
+           const logout = await chefLogout(user ? user.id : null);
+           console.log("Logout:", logout);
+          AsyncStorage.removeItem("auth_token");
+          AsyncStorage.removeItem("user_profile");
+
+          router.replace("/login");
         }}
       >
         <MaterialCommunityIcons name="power" size={28} color="#222" />
@@ -110,12 +112,14 @@ export default function ChefHomeScreen() {
               <View key={i} style={styles.msgBox}>
                 <Text style={styles.msgText}>{msg.message}</Text>
                 <View style={{ marginTop: 8 }}>
-                  <Text style={styles.msgMeta}>From: {msg.fromUserId}</Text>
                   <Text style={styles.msgMeta}>
-                    Time:{" "}
-                    {msg.createdAt
-                      ? new Date(msg.createdAt).toLocaleString()
-                      : ""}
+                    From: {msg.fromUser && (msg.fromUser.firstname || msg.fromUser.lastname)
+                      ? `${msg.fromUser.firstname || ''} ${msg.fromUser.lastname || ''}`.trim()
+                      : 'Unknown'}
+                    {msg.fromUser && msg.fromUser.role && msg.fromUser.role.name ? ` (${msg.fromUser.role.name})` : ''}
+                  </Text>
+                  <Text style={styles.msgMeta}>
+                    Sent: {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ''}
                   </Text>
                 </View>
               </View>

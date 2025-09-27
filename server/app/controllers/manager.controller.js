@@ -30,10 +30,39 @@ const formatShortTime = (date) => {
 exports.dashboard = async (req, res) => {
   try {
     const restaurantId = req.params.restaurantId || req.query.restaurantId;
+    const dateFilter = req.query.dateFilter || "day";
     if (!restaurantId) {
       return res.status(400).json({ message: "restaurantId is required"+ req });
     }
-    console.log("Fetching dashboard for restaurantId:", restaurantId);
+    console.log("Fetching dashboard for restaurantId:", restaurantId, "dateFilter:", dateFilter);
+
+    // Date range logic
+    let startDate, endDate;
+    const now = new Date();
+    switch (dateFilter) {
+      case "week":
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 6);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case "month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        break;
+      case "year":
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+        break;
+      case "day":
+      default:
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+    }
     // Get manager (first manager for this restaurant)
     const manager = await db.restaurantUser.findOne({
       where: { restaurantId, role_id: 1 },
@@ -42,29 +71,24 @@ exports.dashboard = async (req, res) => {
     // Get restaurant
     const restaurant = await db.restaurant.findByPk(restaurantId);
 
-    // Get today's date range
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(todayDate);
-    tomorrow.setDate(todayDate.getDate() + 1);
-
-    // Orders today
+    // Orders in range
     const ordersToday = await db.orders.count({
       where: {
         restaurantId,
-        createdAt: { [Op.gte]: todayDate, [Op.lt]: tomorrow },
+        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
       },
     });
 
-    // Get chef login statistics
-    const todayFormatted = formatIndianDateTime(todayDate).split(" ")[0]; // Get only the date part
+  // Get chef login statistics
+  const todayFormatted = formatIndianDateTime(startDate).split(" ")[0]; // Get only the date part
 
-    // 1. Total unique chefs who logged in today
+    // 1. Total unique chefs who logged in in range
     const totalUniqueLogins = await db.chefLogin.count({
       where: {
         restaurantId,
         loginTime: {
-          [Op.like]: `${todayFormatted}%`,
+          [Op.gte]: startDate,
+          [Op.lte]: endDate,
         },
       },
       distinct: true,
@@ -81,12 +105,13 @@ exports.dashboard = async (req, res) => {
       ],
     });
 
-    // 2. Currently logged in chefs (unique chefs with login time today but no logout time)
+    // 2. Currently logged in chefs (unique chefs with login time in range but no logout time)
     const currentlyLoggedIn = await db.chefLogin.count({
       where: {
         restaurantId,
         loginTime: {
-          [Op.like]: `${todayFormatted}%`,
+          [Op.gte]: startDate,
+          [Op.lte]: endDate,
         },
         logOutTime: null,
       },
@@ -104,12 +129,13 @@ exports.dashboard = async (req, res) => {
       col: "chefId",
     });
 
-    // 3. Number of unique chefs who logged out today
+    // 3. Number of unique chefs who logged out in range
     const logoutsToday = await db.chefLogin.count({
       where: {
         restaurantId,
         logOutTime: {
-          [Op.like]: `${todayFormatted}%`,
+          [Op.gte]: startDate,
+          [Op.lte]: endDate,
         },
       },
       include: [
@@ -126,31 +152,31 @@ exports.dashboard = async (req, res) => {
       col: "chefId",
     });
 
-    // Tables served today (distinct tableId in orders)
+    // Tables served in range (distinct tableId in orders)
     const tablesServed = await db.orders.count({
       where: {
         restaurantId,
-        createdAt: { [Op.gte]: todayDate, [Op.lt]: tomorrow },
+        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
       },
       distinct: true,
       col: "tableId",
     });
 
-    // Customers today (distinct userId in orders)
+    // Customers in range (distinct userId in orders)
     const customers = await db.orders.count({
       where: {
         restaurantId,
-        createdAt: { [Op.gte]: todayDate, [Op.lt]: tomorrow },
+        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
       },
       distinct: true,
       col: "userId",
     });
 
-    // Transaction amount today
+    // Transaction amount in range
     const orders = await db.orders.findAll({
       where: {
         restaurantId,
-        createdAt: { [Op.gte]: todayDate, [Op.lt]: tomorrow },
+        createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
       },
       attributes: ["total"],
     });
@@ -169,30 +195,107 @@ exports.dashboard = async (req, res) => {
     const buffetItems = "Poori, All types of Dosa, Chow Chow Bath, Rice Bath";
     const buffetPrice = "800 Rs";
 
-    // Sales data (mocked, or aggregate from orders)
-    const salesData = [
-      { label: "Oct", value: 20 },
-      { label: "Nov", value: 45 },
-      { label: "Dec", value: 28 },
-      { label: "Jan", value: 80 },
-      { label: "Feb", value: 99 },
-      { label: "Mar", value: 43 },
-      { label: "Apr", value: 50 },
-      { label: "May", value: 60 },
-      { label: "Jun", value: 70 },
-    ];
-    // Income data (mocked, or aggregate from orders)
-    const incomeData = [
-      { label: "Feb", value: 10 },
-      { label: "Mar", value: 20 },
-      { label: "Apr", value: 15 },
-      { label: "May", value: 30 },
-      { label: "Jun", value: 40 },
-      { label: "Jul", value: 50 },
-      { label: "Aug", value: 60 },
-      { label: "Sep", value: 55 },
-      { label: "Oct", value: 65 },
-    ];
+    // Sales data and income data from orders (filtered by dateFilter)
+    const { fn, col, literal } = db.Sequelize;
+    let salesIncomeRaw = [];
+    if (dateFilter === "day") {
+      // Group by hour for the day
+      salesIncomeRaw = await db.orders.findAll({
+        where: {
+          restaurantId,
+          createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
+        },
+        attributes: [
+          [fn('HOUR', col('createdAt')), 'hour'],
+          [fn('COUNT', col('id')), 'salesCount'],
+          [fn('SUM', col('total')), 'incomeSum'],
+        ],
+        group: [literal('hour')],
+        order: [[literal('hour'), 'ASC']],
+        raw: true,
+      });
+    } else if (dateFilter === "week") {
+      // Group by day of week
+      salesIncomeRaw = await db.orders.findAll({
+        where: {
+          restaurantId,
+          createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
+        },
+        attributes: [
+          [fn('DAYNAME', col('createdAt')), 'day'],
+          [fn('COUNT', col('id')), 'salesCount'],
+          [fn('SUM', col('total')), 'incomeSum'],
+        ],
+        group: [literal('day')],
+        order: [[literal('day'), 'ASC']],
+        raw: true,
+      });
+    } else if (dateFilter === "month") {
+      // Group by day of month
+      salesIncomeRaw = await db.orders.findAll({
+        where: {
+          restaurantId,
+          createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
+        },
+        attributes: [
+          [fn('DAY', col('createdAt')), 'day'],
+          [fn('COUNT', col('id')), 'salesCount'],
+          [fn('SUM', col('total')), 'incomeSum'],
+        ],
+        group: [literal('day')],
+        order: [[literal('day'), 'ASC']],
+        raw: true,
+      });
+    } else if (dateFilter === "year") {
+      // Group by month
+      salesIncomeRaw = await db.orders.findAll({
+        where: {
+          restaurantId,
+          createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
+        },
+        attributes: [
+          [fn('MONTH', col('createdAt')), 'month'],
+          [fn('COUNT', col('id')), 'salesCount'],
+          [fn('SUM', col('total')), 'incomeSum'],
+        ],
+        group: [literal('month')],
+        order: [[literal('month'), 'ASC']],
+        raw: true,
+      });
+    }
+
+    // Format chart data for frontend
+    let salesData = [];
+    let incomeData = [];
+    if (dateFilter === "day") {
+      // 0-23 hours
+      for (let h = 0; h < 24; h++) {
+        const found = salesIncomeRaw.find(r => Number(r.hour) === h);
+        salesData.push({ label: `${h}:00`, value: found ? Number(found.salesCount) : 0 });
+        incomeData.push({ label: `${h}:00`, value: found ? Number(found.incomeSum) : 0 });
+      }
+    } else if (dateFilter === "week") {
+      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      days.forEach(day => {
+        const found = salesIncomeRaw.find(r => r.day === day);
+        salesData.push({ label: day.slice(0, 3), value: found ? Number(found.salesCount) : 0 });
+        incomeData.push({ label: day.slice(0, 3), value: found ? Number(found.incomeSum) : 0 });
+      });
+    } else if (dateFilter === "month") {
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const found = salesIncomeRaw.find(r => Number(r.day) === d);
+        salesData.push({ label: `${d}`, value: found ? Number(found.salesCount) : 0 });
+        incomeData.push({ label: `${d}`, value: found ? Number(found.incomeSum) : 0 });
+      }
+    } else if (dateFilter === "year") {
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      for (let m = 1; m <= 12; m++) {
+        const found = salesIncomeRaw.find(r => Number(r.month) === m);
+        salesData.push({ label: monthNames[m - 1], value: found ? Number(found.salesCount) : 0 });
+        incomeData.push({ label: monthNames[m - 1], value: found ? Number(found.incomeSum) : 0 });
+      }
+    }
 
     // Date formatting
     const days = [
