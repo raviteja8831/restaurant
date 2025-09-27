@@ -25,10 +25,11 @@ export const loginManager = async (credentials) => {
   }
 };
 
-// Fetch manager dashboard data
-export const fetchManagerDashboard = async (restaurantId) => {
+// Fetch manager dashboard data with dateFilter
+export const fetchManagerDashboard = async (restaurantId, token, dateFilter = "day") => {
   try {
-    const res = await api.get(`${MANAGER_API.DASHBOARD}/${restaurantId}`);
+    const params = dateFilter ? { dateFilter } : {};
+    const res = await api.get(`${MANAGER_API.DASHBOARD}/${restaurantId}`, { params });
     return res.data;
   } catch (error) {
     showApiError(error);

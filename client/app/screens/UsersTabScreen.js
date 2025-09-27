@@ -221,9 +221,9 @@ export default function UsersTabScreen() {
                   styles.userAvatarCircle,
                   selectedUser && selectedUser.id === user.id && styles.userAvatarCircleSelected
                 ]}>
-                  {user.profileImageUrl ? (
+                  {user.userImage ? (
                     <Image
-                      source={{ uri: user.profileImageUrl }}
+                      source={{ uri: user.userImage.startsWith('http') ? user.userImage : `http://localhost:8080${user.userImage}` }}
                       style={styles.userAvatarImage}
                     />
                   ) : (

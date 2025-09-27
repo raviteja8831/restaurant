@@ -28,8 +28,8 @@ export default function ChefProfileScreen() {
     const loadProfile = async () => {
       setLoading(true);
       try {
-        const token = await AsyncStorage.getItem("chef_token");
-        const user = await AsyncStorage.getItem("chef_profile");
+        const token = await AsyncStorage.getItem("auth_token");
+        const user = await AsyncStorage.getItem("user_profile");
 
         if (token) {
           setApiAuthToken(token);
@@ -38,7 +38,7 @@ export default function ChefProfileScreen() {
           user ? JSON.parse(user).id : null
         );
         setStats(statsRes);
-        const chefProfile = await AsyncStorage.getItem("chef_profile");
+        const chefProfile = await AsyncStorage.getItem("user_profile");
         setProfile(chefProfile ? JSON.parse(chefProfile) : null);
       } catch (e) {}
       setLoading(false);

@@ -115,7 +115,6 @@ export default function AddMenuItemModal({
                           key={item.id}
                           style={[styles.dropdownItem, isSelected && styles.selected]}
                           onPress={() => {
-                            if (isAllotted) return;
                             setSelectedMenuItemsByMenu(prev => {
                               const updated = { ...prev };
                               const prevForMenu = updated[selectedMenuId] || [];
@@ -134,9 +133,9 @@ export default function AddMenuItemModal({
                             {isSelected ? (
                               <Ionicons name="checkmark" size={18} color="#4b5cff" style={{ marginLeft: 10, minWidth: 18 }} />
                             ) : null}
-                            {isAllotted ? (
-                              <Text style={{ color: '#888', marginLeft: 4 }}>(already allotted)</Text>
-                            ) : null}
+                            {/* {isAllotted ? (
+                              <Text style={{ color: '#888', marginLeft: 4 }}></Text>
+                            ) : null} */}
                           </View>
                         </TouchableOpacity>
                       );
@@ -152,13 +151,11 @@ export default function AddMenuItemModal({
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
-                // Collect all selected and allotted items from all menus
+                // Collect only currently selected items from all menus
                 let allSelected = [];
                 filteredMenus.forEach(menu => {
-                  const menuItemIdsInMenu = (menu.items || []).map(item => String(item.id));
-                  const allottedForMenu = menuItemIdsInMenu.filter(id => allottedIdsStr.includes(id));
                   const selectedForMenu = selectedMenuItemsByMenu[menu.id] || [];
-                  allSelected = allSelected.concat(Array.from(new Set([...allottedForMenu, ...selectedForMenu])));
+                  allSelected = allSelected.concat(selectedForMenu);
                 });
                 // Remove duplicates
                 allSelected = Array.from(new Set(allSelected));
