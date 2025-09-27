@@ -29,6 +29,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function UsersTabScreen() {
   const periodOptions = [
+        { label: "Today", value: "Today" },
     { label: "Week", value: "week" },
     { label: "Month", value: "month" },
     { label: "Year", value: "year" },
@@ -474,32 +475,45 @@ export default function UsersTabScreen() {
                   <View
                     style={{
                       position: "absolute",
-                      top: 36,
+                      bottom: 36,
                       right: 0,
                       backgroundColor: "#ece9fa",
                       borderRadius: 8,
-                      zIndex: 10,
-                      minWidth: 80,
+                      zIndex: 99999,
+                      minWidth: 120,
+                      paddingVertical: 4,
+                      paddingHorizontal: 2,
+                      elevation: 12,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.22,
+                      shadowRadius: 12,
+                      borderWidth: 2,
+                      borderColor: '#fff',
+                      maxHeight: 180,
                     }}
                   >
-                    {periodOptions.map((opt) => (
-                      <TouchableOpacity
-                        key={opt.value}
-                        style={{
-                          padding: 10,
-                          backgroundColor:
-                            period === opt.value ? "#d1c4e9" : "transparent",
-                        }}
-                        onPress={() => {
-                          setPeriod(opt.value);
-                          setShowPeriodDropdown(false);
-                        }}
-                      >
-                        <Text style={{ color: "#6c63b5", fontWeight: "bold" }}>
-                          {opt.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                    <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false}>
+                      {periodOptions.map((opt) => (
+                        <TouchableOpacity
+                          key={opt.value}
+                          style={{
+                            padding: 12,
+                            backgroundColor:
+                              period === opt.value ? "#d1c4e9" : "transparent",
+                            borderRadius: 6,
+                          }}
+                          onPress={() => {
+                            setPeriod(opt.value);
+                            setShowPeriodDropdown(false);
+                          }}
+                        >
+                          <Text style={{ color: "#6c63b5", fontWeight: "bold", fontSize: 16 }}>
+                            {opt.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
                   </View>
                 )}
               </View>
