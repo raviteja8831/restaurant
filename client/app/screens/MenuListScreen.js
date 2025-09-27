@@ -29,14 +29,14 @@ import { useUserData } from "../services/getUserData";
 
 // Image mapping object
 const categoryImages = {
-  "bevereage.png": require("../../assets/images/bevereage.png"),
-  "soup.png": require("../../assets/images/soup.png"),
-  "breakfast.png": require("../../assets/images/breakfast.png"),
-  "staters.png": require("../../assets/images/staters.png"),
-  "indian-bread.png": require("../../assets/images/indian-bread.png"),
-  "main-course.png": require("../../assets/images/main-course.png"),
-  "salads.png": require("../../assets/images/salads.png"),
-  "ice-cream-sesserts.png": require("../../assets/images/ice-cream-sesserts.png"),
+  bevereage: require("../../assets/images/bevereage.png"),
+  soup: require("../../assets/images/soup.png"),
+  breakfast: require("../../assets/images/breakfast.png"),
+  dinner: require("../../assets/images/staters.png"),
+  lunch: require("../../assets/images/indian-bread.png"),
+  maincourse: require("../../assets/images/main-course.png"),
+  salads: require("../../assets/images/salads.png"),
+  ice: require("../../assets/images/ice-cream-sesserts.png"),
 };
 
 const { width, height } = Dimensions.get("window");
@@ -239,7 +239,7 @@ export default function MenuListScreen() {
                   onPress={() => handleCategoryPress(category)}
                 >
                   <Image
-                    source={categoryImages[category.icon]}
+                    source={categoryImages[category.name.toLowerCase()]}
                     style={menuliststyles.categoryImage}
                     resizeMode="contain"
                   />

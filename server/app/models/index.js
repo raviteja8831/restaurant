@@ -236,6 +236,17 @@ db.restaurant.hasMany(db.buffet, {
   as: "buffets",
 });
 
+// Add associations for BuffetOrder
+db.buffetOrder.belongsTo(db.buffet, {
+  foreignKey: "buffetId",
+  as: "buffet",
+});
+
+db.buffet.hasMany(db.buffetOrder, {
+  foreignKey: "buffetId",
+  as: "orders",
+});
+
 // ChefLogin associations
 db.chefLogin.belongsTo(db.restaurantUser, {
   foreignKey: "chefId",

@@ -9,11 +9,9 @@ import {
   Dimensions,
   ActivityIndicator,
   Alert,
-  Modal,
-  TextInput,
   Platform,
 } from "react-native";
-import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   getOrderItemList,
@@ -24,6 +22,9 @@ import { addReview } from "./api/reviewsApi";
 import CommentModal from "./Modals/CommentModal";
 import { useUserData } from "./services/getUserData";
 import * as Linking from "expo-linking";
+
+// PhonePe SDK import
+import PhonePePaymentSDK from "react-native-phonepe-pg";
 
 const { width, height } = Dimensions.get("window");
 
@@ -39,10 +40,6 @@ export default function OrderSummaryScreen() {
   const [editingItem, setEditingItem] = useState(null);
   const [removedItems, setRemovedItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // UTR modal state
-  const [showUTRModal, setShowUTRModal] = useState(false);
-  const [paymentUTR, setPaymentUTR] = useState("");
   const [paying, setPaying] = useState(false);
 
   const { userId, error } = useUserData();
@@ -126,13 +123,130 @@ export default function OrderSummaryScreen() {
     setIsModalOpen(false);
   };
 
-  // NEW: Build UPI intent and open UPI app
-  const payWithUPI = async () => {
-    // Use UPI ID and name from orderDetails if available; otherwise fallback.
-    const upiId =
-      orderDetails.upiId || orderDetails.restaurantUpi || "receiver@upi";
+  // PhonePe SDK Payment integration
+  const startPhonePePayment = async () => {
+    if (totalAmount <= 0) {
+      Alert.alert(
+        "Invalid amount",
+        "Total amount must be greater than 0 to pay."
+      );
+      return;
+    }
+
+    setPaying(true);
+
+    try {
+      // Initialize PhonePe SDK
+      // Use "SANDBOX" for testing or "PRODUCTION" for live
+      const environment = "SANDBOX";
+
+      // Replace with your actual PhonePe merchantId and appId
+      const merchantId = "PGTESTPAYUAT";
+      const appId = null; // can be null if not available
+
+      // flowId could be user or order specific for tracking
+      const flowId = userId ? userId.toString() : "flow";
+
+      const initResult = await PhonePePaymentSDK.init(
+        environment,
+        merchantId,
+        flowId,
+        true // enable logging
+      );
+
+      console.log("PhonePe SDK Init Result: ", initResult);
+
+      // Prepare transaction request
+      // Generate transaction body and checksum from backend
+      const transactionId = `TXN${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+      const paymentPayload = {
+        merchantId: merchantId,
+        merchantTransactionId: transactionId,
+        merchantUserId: userId?.toString() || "USER001",
+        amount: totalAmount * 100, // PhonePe expects amount in paise
+        mobileNumber: "9999999999", // Replace with actual user mobile
+        callbackUrl: "https://webhook.site/callback-url",
+        paymentInstrument: {
+          type: "PAY_PAGE"
+        }
+      };
+
+      // For testing, create a simple base64 encoded request
+      const base64Payload = btoa(JSON.stringify(paymentPayload));
+      const transactionRequestBody = base64Payload;
+
+      // For testing, use a simple checksum (in production, this should come from your secure backend)
+      const finalChecksum = `${base64Payload}###1`;
+
+      // Call startTransaction on PhonePe SDK
+      const response = await PhonePePaymentSDK.startTransaction(
+        transactionRequestBody,
+        checksum,
+        Platform.OS === "android" ? "com.phonepe.app" : null,
+        "yourapp" // your app schema for callback
+      );
+
+      console.log("Payment Response: ", response);
+
+      if (response.status === "SUCCESS") {
+        // Update order status in backend
+        await updateOrderStatus(params.orderID, {
+          status: "Completed",
+          updatedItems: orderItems.map((item) => ({
+            id: item.id,
+            quantity: item.quantity,
+          })),
+          totalAmount: totalAmount,
+          removedItems: removedItems.map((item) => ({
+            id: item.id,
+          })),
+          payment: {
+            method: "PhonePe",
+            txnId: response.txnId || "",
+          },
+        });
+
+        // Submit review if rated
+        if (userRating > 0) {
+          await addReview({
+            userId: userId,
+            restaurantId: orderDetails.restaurantId,
+            rating: userRating,
+            orderId: params.orderID,
+          });
+        }
+
+        Alert.alert("Payment Successful", "Payment completed successfully!");
+        router.push({ pathname: "/customer-home" });
+      } else if (response.status === "FAILURE") {
+        Alert.alert("Payment Failed", "Payment failed or was declined.");
+      } else if (response.status === "INTERRUPTED") {
+        Alert.alert(
+          "Payment Interrupted",
+          "Payment was interrupted. Please try again."
+        );
+      }
+    } catch (error) {
+      console.error("PhonePe Payment Error:", error);
+      Alert.alert(
+        "Payment Error",
+        "Could not complete payment. Ensure that PhonePe is installed or try again."
+      );
+
+      // As fallback for web or if SDK fails, use existing UPI intent (only on Android/iOS)
+      if (Platform.OS !== "web") {
+        payWithUPIFallback();
+      }
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  // Fallback to existing UPI intent redirect for Android/iOS/web if SDK fails
+  const payWithUPIFallback = async () => {
+    const upiId = "8143575784@ybl"; // Static UPI ID - will be fetched from database later
     const receiverName =
-      orderDetails.restaurantName || orderDetails.restaurant || "Receiver";
+      orderDetails.restaurantName || orderDetails.restaurant || "Restaurant";
     const amount = Number(totalAmount) || 0;
 
     if (amount <= 0) {
@@ -143,10 +257,8 @@ export default function OrderSummaryScreen() {
       return;
     }
 
-    // Create unique transaction reference
     const txnRef = `TXN${Date.now()}`;
 
-    // Build UPI URI (common format)
     const upiUrl = `upi://pay?pa=${encodeURIComponent(
       upiId
     )}&pn=${encodeURIComponent(receiverName)}&tr=${encodeURIComponent(
@@ -156,45 +268,111 @@ export default function OrderSummaryScreen() {
     )}&am=${encodeURIComponent(amount.toString())}&cu=INR`;
 
     try {
-      const supported = await Linking.canOpenURL(upiUrl);
-      if (!supported) {
-        // On iOS canOpenURL might return false for custom schemes if not allowed.
-        // Try fallback of using "https://pay.google.com/..."? But generally we alert the user.
+      if (Platform.OS === "web") {
+        // For web, show UPI details for manual payment
         Alert.alert(
-          "No UPI App",
-          "No UPI app found or cannot open UPI on this device. Please install a UPI app (Google Pay, PhonePe, Paytm) and try again."
+          "Payment Details",
+          `Please pay ₹${amount} to:\n\nUPI ID: ${upiId}\nAmount: ₹${amount}\nReference: ${txnRef}\n\nAfter payment, click 'Payment Completed' below.`,
+          [
+            {
+              text: "Copy UPI ID",
+              onPress: () => {
+                if (navigator.clipboard) {
+                  navigator.clipboard.writeText(upiId);
+                }
+              }
+            },
+            {
+              text: "Payment Completed",
+              onPress: async () => {
+                // Handle payment completion
+                await handleWebPaymentComplete(txnRef, upiId, amount);
+              }
+            },
+            {
+              text: "Cancel",
+              style: "cancel"
+            }
+          ]
         );
         return;
       }
 
-      // Open the UPI URL. This will switch user to their UPI app.
+      const supported = await Linking.canOpenURL(upiUrl);
+      if (!supported) {
+        Alert.alert(
+          "No UPI App",
+          "No UPI app found. Please install a UPI app like PhonePe or Google Pay to continue."
+        );
+        return;
+      }
+
       await Linking.openURL(upiUrl);
 
-      // After opening UPI app, show modal to collect UTR/Txn ID from user (manual verification)
-      setShowUTRModal(true);
-    } catch (err) {
-      console.error("Error launching UPI app:", err);
+      // Show payment initiated message
       Alert.alert(
-        "Payment Error",
-        "Could not open UPI app. Please ensure you have a UPI app installed."
+        "Payment Initiated",
+        "Please complete the payment in your UPI app and return to this screen.",
+        [
+          {
+            text: "Payment Completed",
+            onPress: async () => {
+              try {
+                // Update order status
+                await updateOrderStatus(params.orderID, {
+                  status: "Completed",
+                  updatedItems: orderItems.map((item) => ({
+                    id: item.id,
+                    quantity: item.quantity,
+                  })),
+                  totalAmount: totalAmount,
+                  removedItems: removedItems.map((item) => ({
+                    id: item.id,
+                  })),
+                  payment: {
+                    method: "UPI",
+                    txnId: txnRef,
+                    upiId: upiId,
+                  },
+                });
+
+                // Submit review if rated
+                if (userRating > 0) {
+                  await addReview({
+                    userId: userId,
+                    restaurantId: orderDetails.restaurantId,
+                    rating: userRating,
+                    orderId: params.orderID,
+                  });
+                }
+
+                Alert.alert("Success", "Payment completed successfully!");
+                router.push({ pathname: "/customer-home" });
+              } catch (error) {
+                console.error("Error updating order:", error);
+                Alert.alert("Error", "Failed to update order status.");
+              }
+            }
+          },
+          {
+            text: "Cancel",
+            style: "cancel"
+          }
+        ]
       );
+    } catch (err) {
+      console.error("UPI Intent Error:", err);
+      Alert.alert("Payment Error", "Cannot open UPI app.");
     }
   };
 
-  // NEW: Called when user submits UTR in modal
-  const handleVerifyAndComplete = async () => {
-    if (!paymentUTR || paymentUTR.trim().length === 0) {
-      Alert.alert(
-        "Missing Transaction ID",
-        "Please enter the transaction/UTR ID from your UPI app."
-      );
-      return;
-    }
+  // Handle payment completion for web platform
+  const handleWebPaymentComplete = async (txnRef, upiId, amount) => {
     try {
       setPaying(true);
 
-      // Call your existing updateOrderStatus to mark Completed and pass payments details
-      const response = await updateOrderStatus(params.orderID, {
+      // Update order status
+      await updateOrderStatus(params.orderID, {
         status: "Completed",
         updatedItems: orderItems.map((item) => ({
           id: item.id,
@@ -204,24 +382,14 @@ export default function OrderSummaryScreen() {
         removedItems: removedItems.map((item) => ({
           id: item.id,
         })),
-        // You may pass the txn id so backend can log it
         payment: {
           method: "UPI",
-          txnId: paymentUTR,
+          txnId: txnRef,
+          upiId: upiId,
         },
       });
 
-      // Optionally update client state based on response
-      if (response?.data?.order) {
-        setTotalAmount(response.data.order.totalAmount || totalAmount);
-        const updatedItems = orderItems.map((item) => ({
-          ...item,
-          status: "Completed",
-        }));
-        setOrderItems(updatedItems);
-        initializeData();
-      }
-
+      // Submit review if rated
       if (userRating > 0) {
         await addReview({
           userId: userId,
@@ -231,27 +399,20 @@ export default function OrderSummaryScreen() {
         });
       }
 
-      setShowUTRModal(false);
-      setPaymentUTR("");
-      router.push({
-        pathname: "/customer-home",
-      });
-    } catch (err) {
-      console.error("Failed to verify payment / complete order:", err);
-      Alert.alert("Error", "Failed to complete order. Please try again.");
+      Alert.alert("Success", "Payment completed successfully!");
+      router.push({ pathname: "/customer-home" });
+    } catch (error) {
+      console.error("Error updating order:", error);
+      Alert.alert("Error", "Failed to update order status.");
     } finally {
       setPaying(false);
     }
   };
 
   const handleSubmitAndPay = async () => {
-    // Instead of directly marking order Completed, start UPI flow
-    await payWithUPI();
-  };
-
-  const handleModalClose = () => {
-    setEditingItem(null);
-    initializeData();
+    // For now, use UPI payment for all platforms
+    // PhonePe SDK integration can be added later for native apps
+    await payWithUPIFallback();
   };
 
   const handleQuantityChange = async (itemId, change) => {
@@ -278,6 +439,11 @@ export default function OrderSummaryScreen() {
     if (newTotal === 0) {
       setIsModalOpen(true);
     }
+  };
+
+  const handleModalClose = () => {
+    setEditingItem(null);
+    initializeData();
   };
 
   return (
@@ -375,8 +541,13 @@ export default function OrderSummaryScreen() {
         <TouchableOpacity
           style={[styles.payButton]}
           onPress={handleSubmitAndPay}
+          disabled={paying}
         >
-          <Text style={styles.payText}>Submit & Pay</Text>
+          {paying ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.payText}>Submit & Pay</Text>
+          )}
         </TouchableOpacity>
 
         <CommentModal
@@ -384,60 +555,6 @@ export default function OrderSummaryScreen() {
           onClose={handleModalClose}
           onSubmit={handleModalSubmit}
         />
-
-        {/* UTR / Transaction ID Modal */}
-        <Modal
-          visible={showUTRModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowUTRModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.utrModal}>
-              <Text style={styles.modalTitle}>Enter Transaction ID</Text>
-              <Text style={styles.modalSubtitle}>
-                After completing the payment in your UPI app, paste/type the
-                transaction ID / UTR here to confirm payment.
-              </Text>
-              <TextInput
-                placeholder="Enter UPI Transaction ID (UTR)"
-                value={paymentUTR}
-                onChangeText={setPaymentUTR}
-                style={styles.input}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType={
-                  Platform.OS === "ios" ? "default" : "visible-password"
-                }
-              />
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => {
-                    setShowUTRModal(false);
-                    setPaymentUTR("");
-                  }}
-                  disabled={paying}
-                >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.confirmButton]}
-                  onPress={handleVerifyAndComplete}
-                  disabled={paying}
-                >
-                  {paying ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.modalButtonText}>
-                      Verify & Complete
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
       </SafeAreaView>
     </ScrollView>
   );
@@ -453,14 +570,12 @@ const styles = StyleSheet.create({
   },
   mainScrollViewContent: {
     flexGrow: 1,
-    // paddingBottom: Math.min(height * 0.02, 16), // Reduced bottom padding
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
     paddingTop: 10,
-    // position: "relative",
   },
   backButton: {
     zIndex: 1,
@@ -475,8 +590,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "700",
     textAlign: "center",
-    // alignItems: "center",
-
     color: "#333",
   },
   tableHeader: {
@@ -500,7 +613,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
   },
-  // Column styles for proper alignment
   statusColumn: {
     width: 70,
     textAlign: "left",
@@ -525,37 +637,6 @@ const styles = StyleSheet.create({
     width: 70,
     textAlign: "right",
     paddingRight: 8,
-  },
-  editColumn: {
-    width: 60,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quantityControls: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  quantityButton: {
-    width: 20,
-    height: 20,
-    backgroundColor: "#8C8AEB",
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quantityButtonText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  // Total row styles - matching image
-  totalRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-    backgroundColor: "transparent",
-    marginTop: 5,
   },
   ratingSection: {
     backgroundColor: "transparent",
@@ -585,18 +666,6 @@ const styles = StyleSheet.create({
     marginVertical: 30,
     height: 120,
   },
-  paidStamp: {
-    position: "absolute",
-    fontSize: 48,
-    fontWeight: "bold",
-    color: "#DC143C",
-    transform: [{ rotate: "-15deg" }],
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
-    letterSpacing: 2,
-    zIndex: 2,
-  },
   thankYouText: {
     position: "absolute",
     fontSize: 80,
@@ -623,10 +692,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  tableContainer: {
-    marginTop: 10,
-    backgroundColor: "transparent",
+  payText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
-
-  payText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });
