@@ -12,12 +12,14 @@ import { CustomerHome } from "../Mock/CustomerHome";
 
 const { height } = Dimensions.get("window");
 
-export default function FilterModal({ visible, onClose, onFilterSelect }) {
+export default function FilterModal({ visible, onClose, onFilterSelect, selectedFilters = [], onClearAll }) {
   const filterOptions = CustomerHome;
+
+  const isSelected = (option) => selectedFilters.some(f => f.name === option.name);
 
   const handleFilterOptionPress = (option) => {
     onFilterSelect?.(option);
-    onClose();
+    // Do not close on each select; close only with Done/back
   };
 
   if (!visible) return null;
@@ -29,11 +31,24 @@ export default function FilterModal({ visible, onClose, onFilterSelect }) {
 
       {/* popup */}
       <View style={styles.filterContent}>
-        <View style={styles.filterHeader}>
+        <View style={styles.filterHeaderRow}>
           <Text style={styles.filterTitle}>Filter</Text>
-          <View style={styles.placeholder} />
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <Text style={{ fontWeight: 'bold', color: '#6B4EFF' }}>Done</Text>
+          </TouchableOpacity>
         </View>
-
+        {selectedFilters.length > 0 && (
+          <TouchableOpacity
+            onPress={() => {
+              onClearAll?.();
+              onClose?.();
+            }}
+            style={styles.clearAllTextButton}
+            accessibilityLabel="Clear all filters"
+          >
+            <Text style={{ color: '#6B4EFF', fontWeight: 'bold', fontSize: 14, textAlign: 'right' }}>Clear Filters</Text>
+          </TouchableOpacity>
+        )}
         <ScrollView
           style={styles.filterList}
           showsVerticalScrollIndicator={false}
@@ -41,12 +56,17 @@ export default function FilterModal({ visible, onClose, onFilterSelect }) {
           {filterOptions.map((option, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.filterOption}
+              style={[styles.filterOption, isSelected(option) && { backgroundColor: '#ded7fa', borderRadius: 8 }]}
               onPress={() => handleFilterOptionPress(option)}
             >
-              <Text style={styles.filterOptionText}>
-                {option.name} ({option.count})
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.filterOptionText}>
+                  {option.name} ({option.count})
+                </Text>
+                {isSelected(option) && (
+                  <MaterialIcons name="check" size={18} color="#6B4EFF" style={{ marginLeft: 8 }} />
+                )}
+              </View>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -56,24 +76,23 @@ export default function FilterModal({ visible, onClose, onFilterSelect }) {
 }
 
 const styles = StyleSheet.create({
+  clearAllIconButton: {
+    backgroundColor: '#6B4EFF',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+    marginBottom: 8,
+  },
   overlay: {
     position: "absolute",
     top: 0,
-    left: 0,
     right: 0,
     bottom: 0,
     justifyContent: "flex-start",
     alignItems: "flex-start",
-    zIndex: 2,
-  },
-  overlayTouch: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  filterContent: {
     marginTop: 70,
     backgroundColor: "#BBBAEF",
     borderRadius: 20,
@@ -87,21 +106,26 @@ const styles = StyleSheet.create({
     elevation: 10,
     left: 20,
   },
+  clearAllTextButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
   filterHeader: {
+    flexDirection: "row",
+    padding: 4,
+  },
+  filterHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
   },
-  backButton: {
-    padding: 4,
-  },
-  filterTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#000",
-    textAlign: "center",
-    flex: 1,
+  filterHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   placeholder: {
     width: 28,
@@ -111,8 +135,10 @@ const styles = StyleSheet.create({
   },
   filterOption: {
     paddingVertical: 8,
+    marginRight: 6,
     paddingHorizontal: 12,
-  },
+maxHeight: height * 0.4 - 100,
+},
   filterOptionText: {
     fontSize: 14,
     color: "#000",
