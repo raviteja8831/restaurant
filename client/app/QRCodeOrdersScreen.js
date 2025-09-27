@@ -1,8 +1,14 @@
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import React, { useEffect, useState, useRef, Platform } from 'react';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import QRCode from 'react-native-qrcode-svg';
+import * as FileSystem from 'expo-file-system';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Modal } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { fetchQRCodeOrders } from './services/qrcodeService';
+import { updateTable, deleteTable } from './api/tableApi';
+import { showApiError } from './services/messagingService';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const PERIODS = [
@@ -24,6 +30,151 @@ export default function QRCodeOrdersScreen() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('week');
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editValue, setEditValue] = useState(qrcode.name || '');
+  const [editLoading, setEditLoading] = useState(false);
+  const [actionMenuOrderId, setActionMenuOrderId] = useState(null);
+  const [actionMenuPos, setActionMenuPos] = useState({ x: 0, y: 0 });
+  // Handler for QR code edit
+  const handleEditQRCode = () => {
+    setShowEditModal(true);
+    setEditValue(qrcode.name || '');
+  };
+  // Save edited table name
+  const handleSaveQRCode = async () => {
+    setEditLoading(true);
+    try {
+      await updateTable(qrcode.id, { name: editValue });
+      setShowEditModal(false);
+      Alert.alert('Success', 'Table name updated');
+      // Optionally reload orders or parent QR list
+    } catch (err) {
+      showApiError(err);
+    }
+    setEditLoading(false);
+  };
+  // Download QR code as PNG
+  const handleDownloadQRCode = async () => {
+    try {
+      if (!qrSvgRef.current) {
+        Alert.alert('Error', 'QR code not available');
+        return;
+      }
+      qrSvgRef.current.toDataURL(async (data) => {
+        const base64Data = data.replace('data:image/png;base64,', '');
+        if (Platform.OS === 'web') {
+          // Convert base64 to Blob and trigger download
+          function base64ToBlob(base64, mime) {
+            const byteChars = atob(base64);
+            const byteNumbers = new Array(byteChars.length);
+            for (let i = 0; i < byteChars.length; i++) {
+              byteNumbers[i] = byteChars.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type: mime });
+          }
+          const blob = base64ToBlob(base64Data, 'image/png');
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        } else {
+          // Save to file and share
+          const fileUri = FileSystem.cacheDirectory + `${editValue || 'qrcode'}.png`;
+          await FileSystem.writeAsStringAsync(fileUri, base64Data, { encoding: FileSystem.EncodingType.Base64 });
+          await Sharing.shareAsync(fileUri);
+        }
+      });
+    } catch (_e) {
+      Alert.alert('Failed to download QR code');
+    }
+  };
+  // Delete table (with confirm)
+  const doDeleteTable = async () => {
+    setEditLoading(true);
+    try {
+      await deleteTable(qrcode.id);
+      setShowEditModal(false);
+      Alert.alert('Deleted', 'Table deleted');
+      // Optionally reload parent QR list or navigate away
+    } catch (err) {
+      showApiError(err);
+    }
+    setEditLoading(false);
+  };
+  const handleDeleteQRCode = async () => {
+    Alert.alert('Delete Table', 'Are you sure you want to delete this table?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        setEditLoading(true);
+        try {
+          await deleteTable(qrcode.id);
+          setShowEditModal(false);
+          Alert.alert('Deleted', 'Table deleted');
+          // Optionally reload parent QR list or navigate away
+        } catch (err) {
+          showApiError(err);
+        }
+        setEditLoading(false);
+      }}
+    ]);
+  };
+  // Ref for QR SVG
+  const qrSvgRef = useRef();
+  // Action menu handlers
+  const handleClearOrder = (orderId) => {
+    // TODO: Update order status to cleared
+    setActionMenuOrderId(null);
+  };
+  const handlePrintOrder = async (order) => {
+    setActionMenuOrderId(null);
+    // Compose HTML for PDF
+    const html = `
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; }
+            h2 { color: #6c63b5; }
+            .section { margin-bottom: 18px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ece9fa; padding: 8px 12px; text-align: left; }
+            th { background: #e6e1fa; color: #6c63b5; }
+          </style>
+        </head>
+        <body>
+          <h2>Order Details</h2>
+          <div class="section"><b>Table Name:</b> ${qrcode.name || ''}</div>
+          <div class="section"><b>Restaurant Name:</b> ${order.restaurantName || ''}</div>
+          <div class="section">
+            <table>
+              <tr><th>Name</th><th>Contact</th><th>Time</th><th>Amount</th><th>Status</th></tr>
+              <tr>
+                <td>${order.name}</td>
+                <td>${order.contact}</td>
+                <td>${order.time ? String(order.time).slice(11, 19) : ''}</td>
+                <td>${order.amount}</td>
+                <td>${order.status}</td>
+              </tr>
+            </table>
+          </div>
+        </body>
+      </html>
+    `;
+    try {
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
+      await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Share or Save PDF' });
+    } catch (err) {
+      Alert.alert('Error', 'Failed to generate PDF');
+    }
+  };
+  const handleDownloadOrder = (order) => {
+    // TODO: Download order details logic
+    setActionMenuOrderId(null);
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -43,6 +194,7 @@ export default function QRCodeOrdersScreen() {
 
   return (
     <View style={styles.container}>
+      {/* QR code and edit icon */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 8 }}>
         <TouchableOpacity
           onPress={() => {
@@ -57,6 +209,9 @@ export default function QRCodeOrdersScreen() {
           <MaterialCommunityIcons name="arrow-left" size={28} color="#222" />
         </TouchableOpacity>
         <Text style={styles.tableTitle}>{qrcode.name}</Text>
+        <TouchableOpacity onPress={handleEditQRCode} style={{ marginLeft: 8 }}>
+          <MaterialCommunityIcons name="pencil" size={22} color="#6c63b5" />
+        </TouchableOpacity>
         <View style={{ flex: 1 }} />
         <View style={{ position: 'relative', zIndex: 10000 }}>
           <TouchableOpacity style={styles.periodDropdown} onPress={() => setShowPeriodDropdown(v => !v)}>
@@ -66,7 +221,40 @@ export default function QRCodeOrdersScreen() {
         </View>
       </View>
 
-      {/* Render dropdown absolutely at the top level so it overlays all content */}
+      {/* QR Code Edit Modal */}
+      <Modal visible={showEditModal} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: '#e6e1fa', borderRadius: 16, padding: 18, width: 260, alignItems: 'flex-start', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 12 }}>
+            <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+              <QRCode value={editValue} size={64} getRef={qrSvgRef} />
+              <TouchableOpacity onPress={handleDeleteQRCode} style={{ marginLeft: 8 }}>
+                <MaterialCommunityIcons name="delete-outline" size={28} color="#444" />
+              </TouchableOpacity>
+            </View>
+            <Text style={{ marginTop: 12, fontWeight: 'bold', color: '#222' }}>Name:</Text>
+            <View style={{ width: '100%', marginTop: 4, marginBottom: 12, backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#ccc', flexDirection: 'row', alignItems: 'center' }}>
+              <MaterialCommunityIcons name="table" size={20} color="#bbb" style={{ marginLeft: 8 }} />
+              <Text
+                style={{ flex: 1, paddingVertical: 8, paddingHorizontal: 6, color: '#888', fontStyle: 'italic' }}
+                numberOfLines={1}
+              >
+                {editValue || 'Table No/ Room No'}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', marginTop: 8, width: '100%', justifyContent: 'flex-end' }}>
+              <TouchableOpacity onPress={handleDownloadQRCode} style={{ marginRight: 16 }}>
+                <MaterialCommunityIcons name="download" size={28} color="#6c63b5" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSaveQRCode} disabled={editLoading}>
+                <MaterialCommunityIcons name="content-save" size={28} color={editLoading ? '#aaa' : '#6c63b5'} />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity onPress={() => setShowEditModal(false)} style={{ position: 'absolute', top: 8, right: 8 }}>
+              <MaterialCommunityIcons name="close" size={24} color="#888" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       {showPeriodDropdown && (
         <View style={[styles.periodDropdownMenu, { top: 58, right: 16, position: 'absolute', zIndex: 10000 }]}> 
           {PERIODS.map(p => (
@@ -102,6 +290,60 @@ export default function QRCodeOrdersScreen() {
               <Text style={styles.tableCell}>{item.time ? String(item.time).slice(11, 19) : ''}</Text>
               <Text style={styles.tableCell}>{item.amount}</Text>
               <Text style={styles.tableCell}>{item.status}</Text>
+              <TouchableOpacity
+                onPress={event => {
+                  // Get the position of the pressed icon
+                  event.target.measure((fx, fy, width, height, px, py) => {
+                    setActionMenuPos({ x: px + width, y: py });
+                    setActionMenuOrderId(item.id);
+                  });
+                }}
+                style={{ marginLeft: 4 }}
+              >
+                <MaterialCommunityIcons name="dots-vertical" size={22} color="#6c63b5" />
+              </TouchableOpacity>
+              {/* Action menu for this order */}
+              {actionMenuOrderId === item.id && (
+                <Modal
+                  visible={true}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setActionMenuOrderId(null)}
+                >
+                  <TouchableOpacity
+                    style={{ flex: 1, position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                    activeOpacity={1}
+                    onPressOut={() => setActionMenuOrderId(null)}
+                  >
+                    <View style={{
+                      position: 'absolute',
+                      left: actionMenuPos.x - 140, // adjust for menu width
+                      top: actionMenuPos.y,
+                      backgroundColor: '#fff',
+                      borderRadius: 10,
+                      elevation: 12,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 12,
+                      zIndex: 9999,
+                      minWidth: 120,
+                      borderWidth: 1,
+                      borderColor: '#ece9fa',
+                      paddingVertical: 4
+                    }}>
+                      <TouchableOpacity onPress={() => handleClearOrder(item.id)} style={{ padding: 12, flexDirection: 'row', alignItems: 'center' }}>
+                        <MaterialCommunityIcons name="delete-outline" size={20} color="#c22a2a" />
+                        <Text style={{ marginLeft: 8, color: '#c22a2a' }}>Clear</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handlePrintOrder(item)} style={{ padding: 12, flexDirection: 'row', alignItems: 'center' }}>
+                        <MaterialCommunityIcons name="printer" size={20} color="#6c63b5" />
+                        <Text style={{ marginLeft: 8 }}>Print</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                </Modal>
+              )}
             </View>
           )}
           ListEmptyComponent={<Text style={{ color: '#222', textAlign: 'center', marginTop: 16 }}>No orders found.</Text>}
