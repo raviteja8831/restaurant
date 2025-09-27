@@ -18,7 +18,8 @@ export default function AddMenuItemModal({
   onAdd
 }) {
   const [selectedMenuId, setSelectedMenuId] = useState(null);
-  const [selectedMenuItemIds, setSelectedMenuItemIds] = useState([]); // always string[]
+  // Store selected items per menu: { [menuId]: string[] }
+  const [selectedMenuItemsByMenu, setSelectedMenuItemsByMenu] = useState({});
 
   // Normalize ids
   const allMenuItemIdsStr = (menuItemIds || []).map(String);
@@ -37,23 +38,34 @@ export default function AddMenuItemModal({
     items: allMenuItemIdsStr.length > 0 ? menu.items.filter(item => allMenuItemIdsStr.includes(String(item.id))) : menu.items
   })).filter(menu => menu.items.length > 0);
 
-  // On open, always select first menu and preselect allotted items
+  // On open, always select first menu and preselect allotted items + previously selected for that menu
   useEffect(() => {
     if (visible && filteredMenus.length > 0) {
       const menuToSelect = filteredMenus[0];
       setSelectedMenuId(menuToSelect.id);
-      const menuItemIdsInMenu = (menuToSelect.items || []).map(item => String(item.id));
-      console.log("Menu items in first menu:", menuItemIdsInMenu, "Allotted IDs:", allottedIdsStr);
-      setSelectedMenuItemIds(menuItemIdsInMenu.filter(id => allottedIdsStr.includes(id)));
+      setSelectedMenuItemsByMenu(prev => {
+        const updated = { ...prev };
+        filteredMenus.forEach(menu => {
+          const menuItemIdsInMenu = (menu.items || []).map(item => String(item.id));
+          const prevForMenu = prev[menu.id] || [];
+          // Always include allotted for this menu
+          updated[menu.id] = Array.from(new Set([
+            ...menuItemIdsInMenu.filter(id => allottedIdsStr.includes(id)),
+            ...prevForMenu.filter(id => menuItemIdsInMenu.includes(id))
+          ]));
+        });
+        return updated;
+      });
     } else if (visible) {
       setSelectedMenuId(null);
-      setSelectedMenuItemIds([]);
+      setSelectedMenuItemsByMenu({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, allottedMenuItemIds, menuItemIds, menus]);
 
   const selectedMenu = filteredMenus.find(m => m.id === selectedMenuId);
   const menuItems = selectedMenu ? selectedMenu.items : [];
+  const selectedMenuItemIds = selectedMenuItemsByMenu[selectedMenuId] || [];
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -74,9 +86,16 @@ export default function AddMenuItemModal({
                     style={[styles.dropdownItem, selectedMenuId === menu.id && styles.selected]}
                     onPress={() => {
                       setSelectedMenuId(menu.id);
-                      // On menu switch, preselect allotted items for that menu
-                      const menuItemIdsInMenu = (menu.items || []).map(item => String(item.id));
-                      setSelectedMenuItemIds(menuItemIdsInMenu.filter(id => allottedIdsStr.includes(id)));
+                      setSelectedMenuItemsByMenu(prev => {
+                        const updated = { ...prev };
+                        const menuItemIdsInMenu = (menu.items || []).map(item => String(item.id));
+                        const prevForMenu = prev[menu.id] || [];
+                        updated[menu.id] = Array.from(new Set([
+                          ...menuItemIdsInMenu.filter(id => allottedIdsStr.includes(id)),
+                          ...prevForMenu.filter(id => menuItemIdsInMenu.includes(id))
+                        ]));
+                        return updated;
+                      });
                     }}
                   >
                     <Text>{menu.name}</Text>
@@ -96,13 +115,16 @@ export default function AddMenuItemModal({
                           key={item.id}
                           style={[styles.dropdownItem, isSelected && styles.selected]}
                           onPress={() => {
-                            setSelectedMenuItemIds(prev => {
-                              const prevStr = prev.map(String);
-                              if (!prevStr.includes(itemIdStr)) {
-                                return [...prevStr, itemIdStr];
+                            if (isAllotted) return;
+                            setSelectedMenuItemsByMenu(prev => {
+                              const updated = { ...prev };
+                              const prevForMenu = updated[selectedMenuId] || [];
+                              if (!prevForMenu.includes(itemIdStr)) {
+                                updated[selectedMenuId] = [...prevForMenu, itemIdStr];
                               } else {
-                                return prevStr.filter(id => id !== itemIdStr);
+                                updated[selectedMenuId] = prevForMenu.filter(id => id !== itemIdStr);
                               }
+                              return updated;
                             });
                           }}
                           disabled={false}
@@ -129,7 +151,19 @@ export default function AddMenuItemModal({
               <Ionicons name="close" size={24} color="#333" />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => onAdd(selectedMenuItemIds)}
+              onPress={() => {
+                // Collect all selected and allotted items from all menus
+                let allSelected = [];
+                filteredMenus.forEach(menu => {
+                  const menuItemIdsInMenu = (menu.items || []).map(item => String(item.id));
+                  const allottedForMenu = menuItemIdsInMenu.filter(id => allottedIdsStr.includes(id));
+                  const selectedForMenu = selectedMenuItemsByMenu[menu.id] || [];
+                  allSelected = allSelected.concat(Array.from(new Set([...allottedForMenu, ...selectedForMenu])));
+                });
+                // Remove duplicates
+                allSelected = Array.from(new Set(allSelected));
+                onAdd(allSelected);
+              }}
               style={[
                 styles.addBtn,
                 (filteredMenus.length === 0) && { opacity: 0.5 }

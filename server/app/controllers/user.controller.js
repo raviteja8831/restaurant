@@ -271,19 +271,64 @@ exports.saveUserMenuItems = async (req, res) => {
 // Send a message to a user (simple in-memory, for demo)
 let userMessages = {};
 
+// Send a message to a user (persisted in UserMessage model)
 exports.sendMessageToUser = async (req, res) => {
   const { userId } = req.params;
   const { message, from } = req.body;
   if (!message) return res.status(400).json({ error: "Message required" });
-  if (!userMessages[userId]) userMessages[userId] = [];
-  userMessages[userId].push({ message, from, time: new Date() });
-  res.json({ success: true });
+  // if (!fromUserId || !fromRoleId || !toRoleId) return res.status(400).json({ error: "fromUserId, fromRoleId, toRoleId required" });
+  try {
+    await db.message.create({
+      fromUserId: from,
+      fromRoleId:1,
+      toUserId: userId,
+      toRoleId:2,
+      message
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// Get messages for a user
+// Get messages for a user (from UserMessage model)
 exports.getMessagesForUser = async (req, res) => {
   const { userId } = req.params;
-  res.json({ messages: userMessages[userId] || [] });
+  try {
+    const messages = await db.message.findAll({
+      where: { toUserId: userId },
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: db.restaurantUser,
+          as: 'fromUser',
+          attributes: ['id', 'firstname', 'lastname', 'phone', 'role_id', 'restaurantId'],
+          include: [
+            {
+              model: db.roles,
+              as: 'role',
+              attributes: ['id', 'name']
+            }
+          ]
+        },
+        {
+          model: db.restaurantUser,
+          as: 'toUser',
+          attributes: ['id', 'firstname', 'lastname', 'phone', 'role_id', 'restaurantId'],
+          include: [
+            {
+              model: db.roles,
+              as: 'role',
+              attributes: ['id', 'name']
+            }
+          ]
+        }
+      ]
+    });
+    res.json({ messages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 // Get dashboard data for a user (profile, allotted menu, stats, top orders, today's orders)
 exports.getDashboardData = async (req, res) => {
