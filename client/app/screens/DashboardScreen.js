@@ -27,29 +27,9 @@ import TabBar from "./TabBarScreen";
 
 export default function ManagerDashboardScreenNew() {
   // Tab state management
-  const [activeTab, setActiveTab] = useState("Dashboard");
-  const [showOrdersDropdown, setShowOrdersDropdown] = useState(false);
-  const [ordersPeriodLabel, setOrdersPeriodLabel] = useState("Year");
 
   // QR Code states
-  const [showNewQRModal, setShowNewQRModal] = useState(false);
-  const [showTableDetail, setShowTableDetail] = useState(false);
-  const [selectedTable, setSelectedTable] = useState(null);
   const [showPayModal, setShowPayModal] = useState(false);
-  const [qrFormData, setQrFormData] = useState({
-    name: "",
-  });
-
-  // Demo values for each period (replace with real data as needed)
-  const yearOrders = "365/345";
-  const monthOrders = "34/12";
-  const weekOrders = "7/2";
-  const ordersPeriodValue =
-    ordersPeriodLabel === "Year"
-      ? yearOrders
-      : ordersPeriodLabel === "Month"
-      ? monthOrders
-      : weekOrders;
 
   // State for API data
   const [dashboard, setDashboard] = useState(null);
@@ -124,14 +104,11 @@ export default function ManagerDashboardScreenNew() {
         });
         setSalesData(dash.salesData || []);
         setIncomeData(dash.incomeData || []);
-        // Chef stats
-        //const chefStats = await fetchChefStats();
-        const chefStats = "";
+     
         setChefLogins(dash.currentlyLoggedIn || 0);
         setChefLogouts(dash.chefLogouts || 0);
         setTotalChefLogins(dash.chefLogins || 0);
-        const response = await getRestaurantById(restaurantId);
-        console.log("Restaurant data by ID:", response);
+        // const response = await getRestaurantById(restaurantId);
       } catch (e) {
         // fallback to static if needed
       }
@@ -140,57 +117,6 @@ export default function ManagerDashboardScreenNew() {
     fetchData();
   }, []);
 
-  // Add User Modal state and config
-  const [addUserModal, setAddUserModal] = useState(false);
-  const [addUserForm, setAddUserForm] = useState({
-    name: "",
-    password: "",
-    role: "Chef",
-    phone: "",
-    showRoleDropdown: false,
-  });
-  const [addUserLoading, setAddUserLoading] = useState(false);
-  const addUserFormConfig = [
-    // Not used anymore, form fields are now custom below
-  ];
-
-
-  // Mock transaction data for tables
-  const tableTransactions = [
-    {
-      name: "Prakash",
-      contact: "8660435235",
-      time: "07:12:00 AM",
-      amount: "600",
-      status: "Pending",
-    },
-    {
-      name: "Abhishek",
-      contact: "9660435235",
-      time: "07:12:00 AM",
-      amount: "350",
-      status: "Paid",
-    },
-    {
-      name: "Karthick",
-      contact: "7676869534",
-      time: "07:12:00 AM",
-      amount: "800",
-      status: "Paid",
-    },
-    {
-      name: "Amruth",
-      contact: "9868785564",
-      time: "07:12:00 AM",
-      amount: "1200",
-      status: "Paid",
-    },
-  ];
-
-  const handleTableClick = (tableNum) => {
-    setSelectedTable(tableNum);
-    setShowTableDetail(true);
-  };
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem("auth_token");
@@ -198,6 +124,7 @@ export default function ManagerDashboardScreenNew() {
       router.replace("/login");
     } catch (e) {
       // Optionally handle error
+      console.log(e, "error in logout");
     }
   };
 
@@ -329,7 +256,7 @@ export default function ManagerDashboardScreenNew() {
               <Text style={styles.buffetTitle}>Buffet</Text>
               <View style={{ position: "relative" }}>
                 <TouchableOpacity
-                  onPress={() => setBuffetMenuVisible(!buffetMenuVisible)}
+                  // onPress={() => setBuffetMenuVisible(!buffetMenuVisible)}
                   style={styles.buffetMenuIcon}
                 >
                   <MaterialCommunityIcons

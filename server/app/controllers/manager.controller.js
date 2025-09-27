@@ -169,30 +169,37 @@ exports.dashboard = async (req, res) => {
     const buffetItems = "Poori, All types of Dosa, Chow Chow Bath, Rice Bath";
     const buffetPrice = "800 Rs";
 
-    // Sales data (mocked, or aggregate from orders)
-    const salesData = [
-      { label: "Oct", value: 20 },
-      { label: "Nov", value: 45 },
-      { label: "Dec", value: 28 },
-      { label: "Jan", value: 80 },
-      { label: "Feb", value: 99 },
-      { label: "Mar", value: 43 },
-      { label: "Apr", value: 50 },
-      { label: "May", value: 60 },
-      { label: "Jun", value: 70 },
+    // Sales data and income data from orders (last 12 months)
+    const { fn, col, literal } = db.Sequelize;
+    // Get sales count and income sum grouped by month for last 12 months
+    // MySQL: use DATE_FORMAT for grouping by month and year
+    const salesIncomeRaw = await db.orders.findAll({
+      where: { restaurantId },
+      attributes: [
+        [fn('DATE_FORMAT', col('createdAt'), '%m'), 'month'],
+        [fn('DATE_FORMAT', col('createdAt'), '%Y'), 'year'],
+        [fn('COUNT', col('id')), 'salesCount'],
+        [fn('SUM', col('total')), 'incomeSum'],
+      ],
+      group: [literal('year'), literal('month')],
+      order: [[literal('year'), 'DESC'], [literal('month'), 'DESC']],
+      limit: 12,
+      raw: true,
+    });
+
+    // Format to [{label: 'Jan', value: ...}] for both sales and income, sorted oldest to newest
+    const monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    // Income data (mocked, or aggregate from orders)
-    const incomeData = [
-      { label: "Feb", value: 10 },
-      { label: "Mar", value: 20 },
-      { label: "Apr", value: 15 },
-      { label: "May", value: 30 },
-      { label: "Jun", value: 40 },
-      { label: "Jul", value: 50 },
-      { label: "Aug", value: 60 },
-      { label: "Sep", value: 55 },
-      { label: "Oct", value: 65 },
-    ];
+    const salesData = [];
+    const incomeData = [];
+    salesIncomeRaw.reverse().forEach(row => {
+      const monthIdx = parseInt(row.month, 10) - 1;
+      const label = monthNames[monthIdx];
+      salesData.push({ label, value: Number(row.salesCount) });
+      incomeData.push({ label, value: Number(row.incomeSum) });
+    });
 
     // Date formatting
     const days = [

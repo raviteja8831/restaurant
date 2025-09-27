@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Image,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TabBar from "./TabBarScreen";
@@ -206,23 +207,30 @@ export default function UsersTabScreen() {
                 key={user.id}
                 style={[
                   styles.userAvatarCol,
-                  selectedUser &&
-                    selectedUser.id === user.id && {
-                      // borderColor: "#6c63b5",
-                      // borderWidth: 2,
-                    },
+                  selectedUser && selectedUser.id === user.id && styles.userAvatarColSelected
                 ]}
                 onPress={() => setSelectedUser(user)}
+                activeOpacity={0.8}
               >
-                <Text style={styles.userAvatarName}>{user.name}</Text>
-                <View style={styles.userAvatarCircle}>
-                  <MaterialCommunityIcons
-                    name="account"
-                    size={32}
-                    color="#6c63b5"
-                  />
+                                <Text style={styles.userAvatarRole} >{user.firstname}</Text>
+
+                <View style={[
+                  styles.userAvatarCircle,
+                  selectedUser && selectedUser.id === user.id && styles.userAvatarCircleSelected
+                ]}>
+                  {user.profileImageUrl ? (
+                    <Image
+                      source={{ uri: user.profileImageUrl }}
+                      style={styles.userAvatarImage}
+                    />
+                  ) : (
+                    <Image
+                      source={require("../../assets/images/default-user.png")}
+                      style={styles.userAvatarImage}
+                    />
+                  )}
                 </View>
-                <Text style={styles.userAvatarRole}>{user.role?.name}</Text>
+                <Text style={styles.userAvatarRole}>{user.role ? user.role.toUpperCase() : "CHEF"}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -694,29 +702,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginBottom: 16,
   },
-  userAvatarCol: {
-    alignItems: "center",
-    marginRight: 16,
-  },
-  userAvatarCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#ece9fa",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  userAvatarName: {
-    fontSize: 13,
-    color: "#222",
-    fontWeight: "bold",
-  },
-  userAvatarRole: {
-    fontSize: 11,
-    color: "#6c63b5",
-    marginBottom: 2,
-  },
+
   userAddCol: {
     alignItems: "center",
     marginRight: 8,
@@ -884,4 +870,66 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 12,
   },
+     userAvatarCol: {
+                alignItems: "center",
+                marginRight: 18,
+                paddingVertical: 12,
+                paddingHorizontal: 10,
+                borderRadius: 24,
+                backgroundColor: "#a99cff22", // subtle match to main bg
+                minWidth: 80,
+                maxWidth: 100,
+                shadowColor: '#b0aee7',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.12,
+                shadowRadius: 4,
+                elevation: 2,
+              },
+              userAvatarColSelected: {
+                borderColor: '#fff',
+                borderWidth: 2,
+                shadowColor: '#a99cff',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 8,
+                elevation: 8,
+              },
+              userAvatarCircle: {
+                width: 60,
+                height: 60,
+                borderRadius: 30,
+                backgroundColor: "#ece9fa",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 7,
+                overflow: 'hidden',
+                borderWidth: 2,
+                borderColor: 'transparent',
+              },
+              userAvatarCircleSelected: {
+                borderColor: '#fff',
+              },
+              userAvatarImage: {
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                resizeMode: 'cover',
+              },
+              userAvatarName: {
+                fontSize: 14,
+                color: '#fff',
+                fontWeight: 'bold',
+                marginBottom: 1,
+                textAlign: 'center',
+                maxWidth: 80,
+              },
+              userAvatarRole: {
+                fontSize: 12,
+                color: '#ece9fa',
+                fontWeight: '600',
+                textAlign: 'center',
+                letterSpacing: 0.5,
+                marginBottom: 0,
+              },
+
 });

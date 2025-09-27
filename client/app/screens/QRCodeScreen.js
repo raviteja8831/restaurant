@@ -1,21 +1,13 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  FlatList,
-  Alert,
-  Modal,
-} from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import TabBar from "../screens/TabBarScreen";
-import QRCodeModal from "../components/QRCodeModal";
-import { fetchQRCodes, createQRCode } from "../services/qrcodeService";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Alert, Modal } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import TabBar from '../screens/TabBarScreen';
+import QRCodeModal from '../components/QRCodeModal';
+import { fetchQRCodes, createQRCode } from '../services/qrcodeService';
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function QRCodeScreen() {
   const router = useRouter();
@@ -26,6 +18,16 @@ export default function QRCodeScreen() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [restaurantId, setRestaurantId] = useState(null);
+ const loadQRCodes = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await fetchQRCodes(restaurantId);
+      setQRCodes(data);
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to load QR codes');
+    }
+    setLoading(false);
+  }, [restaurantId]);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -33,31 +35,25 @@ export default function QRCodeScreen() {
         const userStr = await AsyncStorage.getItem("user_profile");
         if (userStr) {
           const user = JSON.parse(userStr);
-          const rid = user?.restaurant.id || user?.restaurant_id || user?.id;
+          console.log('User data:', user);
+          const rid = user?.restaurant?.id;
+          console.log('Extracted restaurantId:', rid);
           setRestaurantId(rid);
         }
       } catch (err) {
-        Alert.alert("Error", "Failed to load user data");
+        Alert.alert('Error', 'Failed to load user data', err);
       }
     };
     getUserData();
   }, []);
 
+  // Load QR codes only when restaurantId is set
   useEffect(() => {
-    loadQRCodes();
-  }, []);
-
-  const loadQRCodes = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchQRCodes(restaurantId);
-      setQRCodes(data);
-    } catch (err) {
-      Alert.alert("Error", err.message || "Failed to load QR codes");
+    if (restaurantId) {
+      loadQRCodes();
     }
-    setLoading(false);
-  };
-
+  }, [restaurantId, loadQRCodes]);
+ 
   const handleAddQRCode = async ({ name }) => {
     setSaving(true);
     try {
