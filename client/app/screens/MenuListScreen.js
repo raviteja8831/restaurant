@@ -29,14 +29,15 @@ import { useUserData } from "../services/getUserData";
 
 // Image mapping object
 const categoryImages = {
-  bevereage: require("../../assets/images/bevereage.png"),
-  soup: require("../../assets/images/soup.png"),
-  breakfast: require("../../assets/images/breakfast.png"),
-  dinner: require("../../assets/images/staters.png"),
-  lunch: require("../../assets/images/indian-bread.png"),
-  maincourse: require("../../assets/images/main-course.png"),
-  salads: require("../../assets/images/salads.png"),
-  ice: require("../../assets/images/ice-cream-sesserts.png"),
+  "Hot & Cold beverages": require("../../assets/images/bevereage.png"),
+  Soups: require("../../assets/images/soup.png"),
+  Breakfast: require("../../assets/images/breakfast.png"),
+  Starters: require("../../assets/images/staters.png"),
+  "Indian Breads": require("../../assets/images/indian-bread.png"),
+  "Main Course": require("../../assets/images/main-course.png"),
+  Salads: require("../../assets/images/salads.png"),
+  "Ice creams & Desserts": require("../../assets/images/ice-cream-sesserts.png"),
+  Liquor: require("../../assets/images/liquor.jpg"),
 };
 
 const { width, height } = Dimensions.get("window");
@@ -116,7 +117,7 @@ export default function MenuListScreen() {
         category: category.id,
         categoryName: category.name,
         restaurantId: params.restaurantId || params.hotelId,
-        // userId: params.userId || 1,
+        tableId: params.tableId || 1,
         orderID: orderSummary.orderId || null,
         ishotel: ishotel,
       },
@@ -239,7 +240,7 @@ export default function MenuListScreen() {
                   onPress={() => handleCategoryPress(category)}
                 >
                   <Image
-                    source={categoryImages[category.name.toLowerCase()]}
+                    source={categoryImages[category.name]}
                     style={menuliststyles.categoryImage}
                     resizeMode="contain"
                   />

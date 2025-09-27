@@ -13,6 +13,19 @@ function getBaseURL(): string {
     return "http://localhost:8080/api";
   }
 }
+export const IMG_BASE_URL = getImgBaseURL();
+function getImgBaseURL(): string {
+  if (Platform.OS === "android") {
+    // For Android emulator use 10.0.2.2
+    return "http://10.0.2.2:8080";
+  } else if (Platform.OS === "ios") {
+    // For iOS simulator use localhost
+    return "http://localhost:8080";
+  } else {
+    // For web/laptop browser
+    return "http://localhost:8080";
+  }
+}
 
 export const API_ENDPOINTS = {
   REVIEWS: {

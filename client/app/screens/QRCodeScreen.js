@@ -1,13 +1,21 @@
-
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList, Alert, Modal } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import TabBar from '../screens/TabBarScreen';
-import QRCodeModal from '../components/QRCodeModal';
-import { fetchQRCodes, createQRCode } from '../services/qrcodeService';
-import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  FlatList,
+  Alert,
+  Modal,
+} from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import TabBar from "../screens/TabBarScreen";
+import QRCodeModal from "../components/QRCodeModal";
+import { fetchQRCodes, createQRCode } from "../services/qrcodeService";
+import { useFocusEffect, useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function QRCodeScreen() {
   const router = useRouter();
@@ -18,42 +26,46 @@ export default function QRCodeScreen() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [restaurantId, setRestaurantId] = useState(null);
- const loadQRCodes = useCallback(async () => {
+  const loadQRCodes = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchQRCodes(restaurantId);
       setQRCodes(data);
     } catch (err) {
-      Alert.alert('Error', err.message || 'Failed to load QR codes');
+      Alert.alert("Error", err.message || "Failed to load QR codes");
     }
     setLoading(false);
   }, [restaurantId]);
 
-  useEffect(() => {
-    const getUserData = async () => {
-      try {
-        const userStr = await AsyncStorage.getItem("user_profile");
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          console.log('User data:', user);
-          const rid = user?.restaurant?.id;
-          console.log('Extracted restaurantId:', rid);
-          setRestaurantId(rid);
+  useFocusEffect(
+    useCallback(() => {
+      const getUserData = async () => {
+        try {
+          const userStr = await AsyncStorage.getItem("user_profile");
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            console.log("User data:", user);
+            const rid = user?.restaurant?.id;
+            console.log("Extracted restaurantId:", rid);
+            setRestaurantId(rid);
+          }
+        } catch (err) {
+          Alert.alert("Error", "Failed to load user data", err);
         }
-      } catch (err) {
-        Alert.alert('Error', 'Failed to load user data', err);
-      }
-    };
-    getUserData();
-  }, []);
+      };
+      getUserData();
+    }, [])
+  );
 
   // Load QR codes only when restaurantId is set
-  useEffect(() => {
-    if (restaurantId) {
-      loadQRCodes();
-    }
-  }, [restaurantId, loadQRCodes]);
- 
+  useFocusEffect(
+    useCallback(() => {
+      if (restaurantId) {
+        loadQRCodes();
+      }
+    }, [restaurantId, loadQRCodes])
+  );
+
   const handleAddQRCode = async ({ name }) => {
     setSaving(true);
     try {

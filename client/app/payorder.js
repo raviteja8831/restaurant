@@ -25,6 +25,9 @@ import * as Linking from "expo-linking";
 
 // PhonePe SDK import
 import PhonePePaymentSDK from "react-native-phonepe-pg";
+import UpiService from "./services/UpiService";
+import { setApiAuthToken } from "./api/api";
+import { getRestaurantById } from "./api/restaurantApi";
 
 const { width, height } = Dimensions.get("window");
 
@@ -41,6 +44,7 @@ export default function OrderSummaryScreen() {
   const [removedItems, setRemovedItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [restaurantDetails, setRestaurantDetails] = useState({});
 
   const { userId, error } = useUserData();
 
@@ -82,6 +86,10 @@ export default function OrderSummaryScreen() {
       const menuItems = await getOrderItemList(params.orderID, userId);
       setOrderItems(menuItems.orderItems || []);
       setOrderDetails(menuItems.order_details || {});
+      /*  const response = await getRestaurantById(params.restaurantId);
+      if (response) {
+        setRestaurantDetails(response);
+      } */
     } catch (error) {
       console.error("Error initializing data:", error);
     } finally {
@@ -158,7 +166,9 @@ export default function OrderSummaryScreen() {
 
       // Prepare transaction request
       // Generate transaction body and checksum from backend
-      const transactionId = `TXN${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+      const transactionId = `TXN${Date.now()}${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
       const paymentPayload = {
         merchantId: merchantId,
         merchantTransactionId: transactionId,
@@ -167,8 +177,8 @@ export default function OrderSummaryScreen() {
         mobileNumber: "9999999999", // Replace with actual user mobile
         callbackUrl: "https://webhook.site/callback-url",
         paymentInstrument: {
-          type: "PAY_PAGE"
-        }
+          type: "PAY_PAGE",
+        },
       };
 
       // For testing, create a simple base64 encoded request
@@ -280,19 +290,19 @@ export default function OrderSummaryScreen() {
                 if (navigator.clipboard) {
                   navigator.clipboard.writeText(upiId);
                 }
-              }
+              },
             },
             {
               text: "Payment Completed",
               onPress: async () => {
                 // Handle payment completion
                 await handleWebPaymentComplete(txnRef, upiId, amount);
-              }
+              },
             },
             {
               text: "Cancel",
-              style: "cancel"
-            }
+              style: "cancel",
+            },
           ]
         );
         return;
@@ -352,12 +362,12 @@ export default function OrderSummaryScreen() {
                 console.error("Error updating order:", error);
                 Alert.alert("Error", "Failed to update order status.");
               }
-            }
+            },
           },
           {
             text: "Cancel",
-            style: "cancel"
-          }
+            style: "cancel",
+          },
         ]
       );
     } catch (err) {
@@ -410,9 +420,26 @@ export default function OrderSummaryScreen() {
   };
 
   const handleSubmitAndPay = async () => {
-    // For now, use UPI payment for all platforms
-    // PhonePe SDK integration can be added later for native apps
-    await payWithUPIFallback();
+    i;
+    if (totalAmount <= 0) {
+      Alert.alert(
+        "Invalid amount",
+        "Total amount must be greater than 0 to pay."
+      );
+      return;
+    }
+    if (totalAmount <= 30) {
+      setTotalAmount(totalAmount + 1); // Minimum order amount is 30
+    } else if (totalAmount > 30) {
+      setTotalAmount(totalAmount + 3); // Minimum order amount is 30
+    }
+    const result = await UpiService.initiatePayment({
+      restaurantId: params.restaurantId,
+      name: "Menutha Payment",
+      amount: totalAmount,
+      transactionRef: "",
+    });
+    console.log("UPI Payment Result:", result);
   };
 
   const handleQuantityChange = async (itemId, change) => {

@@ -29,14 +29,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useUserData } from "./services/getUserData";
 // import { deleteOrderItems } from "../../server/app/controllers/order.controller";
 const categoryImages = {
-  "bevereage.png": require("../assets/images/bevereage.png"),
-  "soup.png": require("../assets/images/soup.png"),
-  "breakfast.png": require("../assets/images/breakfast.png"),
-  "staters.png": require("../assets/images/staters.png"),
-  "indian-bread.png": require("../assets/images/indian-bread.png"),
-  "main-course.png": require("../assets/images/main-course.png"),
-  "salads.png": require("../assets/images/salads.png"),
-  "ice-cream-sesserts.png": require("../assets/images/ice-cream-sesserts.png"),
+  "Hot & Cold beverages": require("../assets/images/bevereage.png"),
+  Soups: require("../assets/images/soup.png"),
+  Breakfast: require("../assets/images/breakfast.png"),
+  Starters: require("../assets/images/staters.png"),
+  "Indian Breads": require("../assets/images/indian-bread.png"),
+  "Main Course": require("../assets/images/main-course.png"),
+  Salads: require("../assets/images/salads.png"),
+  "Ice creams & Desserts": require("../assets/images/ice-cream-sesserts.png"),
+  Liquor: require("../assets/images/liquor.jpg"),
 };
 export default function ItemsListScreen() {
   const router = useRouter();
@@ -94,8 +95,9 @@ export default function ItemsListScreen() {
   //   initializeProfile();
   // }, []);
   useEffect(() => {
-    initializeData();
     getMenu();
+    initializeData();
+    // getMenu();
   }, [params.category, params.orderID, userId]);
   const initializeData = async () => {
     try {
@@ -120,7 +122,7 @@ export default function ItemsListScreen() {
       // Combine menu items with order data
       const combinedItems = menuItems.map((item) => ({
         ...item,
-        selected: !!orderItems[item.id],
+        selected: orderItems[item.id],
         quantity: orderItems[item.id]?.quantity || 0,
         comments: orderItems[item.id]?.comments || "",
         orderItemId: orderItems[item.id]?.id || null,
@@ -139,7 +141,9 @@ export default function ItemsListScreen() {
       setLoading(true);
       const menu = await getSpecificMenu(params.category);
       setMenuData(menu);
+      console.log("menu", menu);
     } catch (error) {
+      alert("Error fetching menu");
       AlertService.error(error);
     } finally {
       setLoading(false);
@@ -151,7 +155,7 @@ export default function ItemsListScreen() {
       userId: userId,
       restaurantId: params.restaurantId,
       total: totalCost,
-      // status: "1",
+      tableId: params.tableId,
       orderItems: selectedItems || [],
       orderID: params.orderID || null,
       removedItems: remove_list,
@@ -171,6 +175,7 @@ export default function ItemsListScreen() {
       params: {
         // hotelId: params.ishotel == "true" ? params.restaurantId : null,
         restaurantId: params.restaurantId,
+        tableId: params.tableId,
       },
     });
     // }
@@ -263,15 +268,15 @@ export default function ItemsListScreen() {
     setItems((prevSections) =>
       prevSections.map((section) => ({
         ...section,
-        comments: section.id === selectedItem ? comment : section.comment,
+        ...(section.id === selectedItem && { comments: comment }),
         /*  items: items.map((item) =>
           item.id === selectedItem ? { ...item, comments: comment } : item
         ), */
       }))
     );
     setSelectedItems((prev) =>
-      prev.map((item) =>
-        item.id === selectedItem ? { ...item, comments: comment } : item
+      prev.map(
+        (item) => item.id === selectedItem && { ...item, comments: comment }
       )
     );
     setIsModalOpen(false);
@@ -371,7 +376,7 @@ export default function ItemsListScreen() {
           ]}
         >
           <Image
-            source={categoryImages[menuData.icon]}
+            source={categoryImages[menuData.name]}
             resizeMode="contain"
             style={
               orderitemsstyle.categoryImage //,

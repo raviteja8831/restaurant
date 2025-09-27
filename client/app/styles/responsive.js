@@ -757,12 +757,13 @@ export const hoteldetailsstyles = {
     top: 30,
     left: 15,
     right: 15,
+    zIndex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   backButton: {
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     borderRadius: 20,
     padding: 6,
     elevation: 3,
@@ -772,7 +773,7 @@ export const hoteldetailsstyles = {
     gap: 15,
   },
   iconCircle: {
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     borderRadius: 20,
     padding: 6,
     elevation: 3,
