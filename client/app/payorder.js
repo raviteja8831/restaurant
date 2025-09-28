@@ -25,6 +25,7 @@ import { useUserData } from "./services/getUserData";
 
 // PhonePe SDK import
 import UpiService from "./services/UpiService";
+import QRCode from "react-native-qrcode-svg";
 // import { setApiAuthToken } from "./api/api"; (unused)
 // import { getRestaurantById } from "./api/restaurantApi"; (unused)
 
@@ -43,6 +44,7 @@ export default function OrderSummaryScreen() {
   // const [removedItems, setRemovedItems] = useState([]); (unused)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [paying] = useState(false); // Only 'paying' is used
+  const [upiUrl, setUpiUrl] = useState("");
   // const [restaurantDetails, setRestaurantDetails] = useState({}); (unused)
 
   const { userId, error } = useUserData();
@@ -138,18 +140,23 @@ export default function OrderSummaryScreen() {
       );
       return;
     }
-    if (totalAmount <= 30) {
-      setTotalAmount(totalAmount + 1); // Minimum order amount is 30
-    } else if (totalAmount > 30) {
-      setTotalAmount(totalAmount + 3); // Minimum order amount is 30
+    let payAmount = totalAmount;
+    if (payAmount <= 30) {
+      payAmount += 1; // Minimum order amount is 30
+    } else if (payAmount > 30) {
+      payAmount += 3;
     }
-    const result = await UpiService.initiatePayment({
+    // Generate UPI URL for QR code
+    const response = await UpiService.initiatePayment({
       restaurantId: params.restaurantId,
       name: "Menutha Payment",
-      amount: totalAmount,
+      amount: payAmount,
       transactionRef: "",
     });
-    console.log("UPI Payment Result:", result);
+    if (response && response.url) {
+      setUpiUrl(response.url);
+    }
+    console.log("UPI Payment Result:", response);
   };
 
   // const handleQuantityChange = async (itemId, change) => {}; (unused)
@@ -259,6 +266,7 @@ export default function OrderSummaryScreen() {
           <Text style={styles.thankYouText}>Thank you!</Text>
         </View>
 
+
         <TouchableOpacity
           style={[styles.payButton]}
           onPress={handleSubmitAndPay}
@@ -270,6 +278,14 @@ export default function OrderSummaryScreen() {
             <Text style={styles.payText}>Submit & Pay</Text>
           )}
         </TouchableOpacity>
+
+        {/* Show QR code for UPI payment as backup */}
+        {upiUrl ? (
+          <View style={{ alignItems: "center", marginVertical: 20 }}>
+            <Text style={{ marginBottom: 10, fontWeight: "bold" }}>Or scan to pay with any UPI app:</Text>
+            <QRCode value={upiUrl} size={180} />
+          </View>
+        ) : null}
 
         <CommentModal
           visible={isModalOpen}
