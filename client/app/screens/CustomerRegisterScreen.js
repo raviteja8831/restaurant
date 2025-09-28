@@ -72,10 +72,10 @@ export default function CustomerRegisterScreen() {
 
         {/* Form */}
         <Image
-                        source={require("../../assets/images/logo.png")}
-                        style={styles.logo}
-                        resizeMode="contain"
-                      />
+          source={require("../../assets/images/logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <View style={styles.formContainer}>
           <TextInput
             style={styles.input}
@@ -99,7 +99,11 @@ export default function CustomerRegisterScreen() {
             keyboardType="numeric"
             maxLength={10}
             value={phone}
-            onChangeText={setPhone}
+            // onChangeText={setPhone}
+            onChangeText={(value) => {
+              const numericValue = value.replace(/\D/g, "");
+              setPhone(numericValue);
+            }}
             mode="outlined"
             theme={{ colors: { primary: "#6B4EFF" } }}
           />

@@ -51,6 +51,7 @@ export default function CustomerLoginScreen() {
       //   setLoading(true);
       const response = await getCustomerLogin({
         phone: phone.trim(),
+        otp: otp.join(""),
       });
 
       if (response) {
@@ -62,13 +63,11 @@ export default function CustomerLoginScreen() {
         // Navigate to customer home
         router.push("/customer-home");
       }
-    } finally {
-      // catch (error) {
-      //   AlertServiceice.error(error);
-      // }
-      //   setLoading(false);
+    } catch (err) {
+      Alert.alert("Login Failed", err?.message || "Invalid credentials");
     }
   };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -86,7 +85,11 @@ export default function CustomerLoginScreen() {
           // keyboardType="phone-pad"
           keyboardType="numeric"
           value={phone}
-          onChangeText={setPhone}
+          // onChangeText={setPhone}
+          onChangeText={(value) => {
+            const numericValue = value.replace(/\D/g, "");
+            setPhone(numericValue);
+          }}
           maxLength={10}
           mode="flat"
           underlineColor="#fff"
