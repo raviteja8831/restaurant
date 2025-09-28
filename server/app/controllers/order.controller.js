@@ -190,7 +190,7 @@ exports.getPendingOrders = async (req, res) => {
           COUNT(DISTINCT op.id) as totalOrders,
           COALESCE(SUM(op.quantity * mi.price), 0) as totalOrdersAmount
         FROM \`order\` o
-        LEFT JOIN OrdersProduct op ON o.id = op.orderId
+        LEFT JOIN ordersproduct op ON o.id = op.orderId
         LEFT JOIN menuitem mi ON op.menuItemId = mi.id
         WHERE o.restaurantId = :restaurantId 
         AND o.userId = :userId
