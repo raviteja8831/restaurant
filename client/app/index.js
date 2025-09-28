@@ -11,7 +11,11 @@ export default function IndexScreen() {
     // Use env/config for landing page, fallback to /login
     const envLanding = Constants.expoConfig?.extra?.DEFAULT_LANDING_PAGE;
     const landing = envLanding || DEFAULT_LANDING_PAGE;
-    router.replace(landing);
+    // Delay navigation to ensure router/layout is mounted
+    const timeout = setTimeout(() => {
+      router.replace(landing);
+    }, 0);
+    return () => clearTimeout(timeout);
   }, [router]);
 
   return null; // Don't render anything since we're redirecting
