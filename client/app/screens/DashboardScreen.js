@@ -25,6 +25,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Appbar, Surface } from "react-native-paper";
 import TabBar from "./TabBarScreen";
+import { API_BASE_URL } from "../constants/api.constants";
 
 export default function ManagerDashboardScreenNew() {
   const [salesDateFilter, setSalesDateFilter] = useState("day");
@@ -386,8 +387,9 @@ export default function ManagerDashboardScreenNew() {
                     const user = userStr ? JSON.parse(userStr) : {};
                     const restaurantId =
                       user?.restaurantId || user?.restaurant_id || user?.id;
+
                     await axios.post(
-                      "http://localhost:8080/api/buffetdetails/all-status",
+                      API_BASE_URL+ "/buffetdetails/all-status",
                       {
                         restaurantId,
                         isActive: val,
