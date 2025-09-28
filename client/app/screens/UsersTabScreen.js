@@ -14,6 +14,8 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TabBar from "./TabBarScreen";
 import AddMenuItemModal from "../Modals/AddMenuItemModal";
+import { API_BASE_URL } from "../constants/api.constants";
+
 import {
   getUserDashboard,
   sendMessageToUser,
@@ -224,7 +226,7 @@ export default function UsersTabScreen() {
                 ]}>
                   {user.userImage ? (
                     <Image
-                      source={{ uri: user.userImage.startsWith('http') ? user.userImage : `http://localhost:8080${user.userImage}` }}
+                      source={{ uri: user.userImage.startsWith('http') ? user.userImage : `${API_BASE_URL}${user.userImage}` }}
                       style={styles.userAvatarImage}
                     />
                   ) : (
