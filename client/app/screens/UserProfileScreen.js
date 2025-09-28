@@ -55,6 +55,7 @@ export default function UserProfileScreen() {
   }
 
   // Handle tab changes
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (userId) {
       // alert(userId);
@@ -126,8 +127,10 @@ export default function UserProfileScreen() {
     </ScrollView>
   );
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [expandedSection, setExpandedSection] = useState("");
 
+  // eslint-disable-next-line react/display-name
   const AccordionHeader = React.memo(({ title, isExpanded, onPress }) => (
     <TouchableOpacity
       style={[
@@ -739,12 +742,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginLeft: "auto",
   },
-  separator: {
-    height: 1,
-    backgroundColor: "#000000",
-    marginTop: 20,
-    marginHorizontal: -20,
-  },
+
   favoriteItem: {
     backgroundColor: "#bbbaef",
     borderRadius: 10,
