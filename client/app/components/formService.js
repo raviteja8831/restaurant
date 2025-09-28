@@ -58,7 +58,14 @@ export default function FormService({
           <FormInput
             {...field}
             value={values[field.name]}
-            onChange={handleChange}
+            onChange={(name, value) => {
+              if ((field.type == "number" || field.type == "phone") && value) {
+                const numericValue = value.replace(/[^0-9]/g, "");
+                handleChange(name, numericValue);
+              } else {
+                handleChange(name, value);
+              }
+            }}
             onBlur={handleBlur}
             error={errors[field.name]}
             touched={touched[field.name]}

@@ -112,7 +112,12 @@ export default function UserManagementScreen() {
               placeholder="Phone No"
               keyboardType="phone-pad"
               value={form.phone}
-              onChangeText={(phone) => setForm({ ...form, phone })}
+              // onChangeText={(phone) => setForm({ ...form, phone })}
+              onChangeText={(value) => {
+                const numericValue = value.replace(/\D/g, "");
+                // setPhone(numericValue);
+                setForm({ ...form, phone: numericValue });
+              }}
             />
             <Button
               mode="contained"

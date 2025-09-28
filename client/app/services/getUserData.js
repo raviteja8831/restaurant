@@ -21,7 +21,7 @@ export function useUserData() {
           setUserId(user.id);
         } else {
           //console.log("No user profile found");
-          router.replace("/Customer-Login");
+          router.replace("/");
         }
       } catch (error) {
         //console.error("Error initializing profile:", error);
