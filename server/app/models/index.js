@@ -33,10 +33,6 @@ db.restaurantReview = require("./restaurantreview.model.js")(
   Sequelize
 );
 
-db.restaurantRating = require("./restaurantrating.model.js")(
-  sequelize,
-  Sequelize
-);
 db.userFavorite = require("./user.favourite.model.js")(sequelize, Sequelize);
 db.restaurantReview = require("./restaurantreview.model.js")(
   sequelize,
@@ -192,15 +188,6 @@ db.restaurant.hasMany(db.orders, {
   as: "orders",
 });
 
-// User ratings/favorites association
-db.users.hasMany(db.restaurantRating, {
-  foreignKey: "userId",
-  as: "ratings",
-});
-db.restaurantRating.belongsTo(db.users, {
-  foreignKey: "userId",
-  as: "user",
-});
 
 db.roles.hasMany(db.users, {
   foreignKey: "role_id",
