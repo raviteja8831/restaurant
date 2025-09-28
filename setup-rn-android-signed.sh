@@ -3,34 +3,34 @@
 
 # echo "🚀 Setting up React Native Android build environment with signed APK/AAB on Amazon Linux..."
 
-# # # --- Update system ---
-# # sudo yum update -y
+# # --- Update system ---
+# sudo yum update -y
 
-# # --- Install dependencies ---
-# echo "📦 Installing dependencies..."
-# sudo yum install -y git wget unzip tar bash curl
+# --- Install dependencies ---
+echo "📦 Installing dependencies..."
+sudo yum install -y git wget unzip tar bash curl
 
-# # Install Node.js (LTS 18)
-# echo "📦 Installing Node.js..."
-# curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-# sudo yum install -y nodejs
-# npm install --global yarn
+# Install Node.js (LTS 18)
+echo "📦 Installing Node.js..."
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo yum install -y nodejs
+npm install --global yarn
 
-# # Install OpenJDK 17
-# echo "☕ Installing OpenJDK 17..."
-# sudo amazon-linux-extras enable corretto17
-# sudo yum install -y java-17-amazon-corretto-devel
+# Install OpenJDK 17
+echo "☕ Installing OpenJDK 17..."
+sudo amazon-linux-extras enable corretto17
+sudo yum install -y java-17-amazon-corretto-devel
 
-# # --- Setup Android SDK ---
-# ANDROID_SDK_ROOT=$HOME/android-sdk
-# mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+# --- Setup Android SDK ---
+ANDROID_SDK_ROOT=$HOME/android-sdk
+mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
 
-# echo "📥 Downloading Android Command Line Tools..."
-# cd /tmp
-# wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-# unzip cmdline-tools.zip
-# rm cmdline-tools.zip
-# mv cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+echo "📥 Downloading Android Command Line Tools..."
+cd /tmp
+wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+unzip cmdline-tools.zip
+rm cmdline-tools.zip
+mv cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
 
 # --- Add environment variables ---
 echo "⚙️ Configuring environment variables..."
