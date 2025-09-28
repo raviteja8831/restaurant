@@ -47,6 +47,9 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "DEFAULT_LANDING_PAGE": "/login"
     }
   }
 }
