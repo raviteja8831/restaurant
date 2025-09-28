@@ -8,6 +8,7 @@ import {
   Dimensions,
   ScrollView,
   useWindowDimensions,
+  Image,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -15,18 +16,31 @@ import AddMenuItemScreen from "./screens/AddMenuItemScreen";
 import { addMenuItem, updateMenuItemsStatus } from "./api/menuApi";
 import { useAlert } from "./services/alertService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-const menuCategories = [
-  { label: "Hot & Cold beverages", icon: "bevereage" },
-  { label: "Soups", icon: "soup" },
-  { label: "Breakfast", icon: "breakfast" },
-  { label: "Starters", icon: "staters" },
-  { label: "Indian Breads", icon: "indian-bread" },
-  { label: "Main Course", icon: "main-course" },
-  { label: "Salads", icon: "salads" },
-  { label: "Ice creams & Desserts", icon: "ice-cream-sesserts" },
-  { label: "Liquor", icon: "liquor" },
-];
+
 export default function MenuScreen() {
+  const { width, height } = useWindowDimensions();
+  const menuCategories = [
+    { label: "Hot & Cold beverages", icon: "coffee" },
+    { label: "Soups", icon: "bowl-mix" },
+    { label: "Breakfast", icon: "bread-slice" },
+    { label: "Starters", icon: "silverware-variant" },
+    { label: "Indian Breads", icon: "food-variant" },
+    { label: "Main Course", icon: "food" },
+    { label: "Salads", icon: "leaf" },
+    { label: "Ice creams & Desserts", icon: "ice-cream" },
+    { label: "Liquor", icon: "liquor" },
+  ];
+  const categoryImages = {
+    "Hot & Cold beverages": require("../assets/images/bevereage.png"),
+    Soups: require("../assets/images/soup.png"),
+    Breakfast: require("../assets/images/breakfast.png"),
+    Starters: require("../assets/images/staters.png"),
+    "Indian Breads": require("../assets/images/indian-bread.png"),
+    "Main Course": require("../assets/images/main-course.png"),
+    Salads: require("../assets/images/salads.png"),
+    "Ice creams & Desserts": require("../assets/images/ice-cream-sesserts.png"),
+    Liquor: require("../assets/images/liquor.jpg"),
+  };
   const [enableAll, setEnableAll] = useState(false);
   // Placeholder: Replace with real menu item IDs from state/store
   const [menuItemIds, setMenuItemIds] = useState([1, 2, 3]);
@@ -75,7 +89,6 @@ export default function MenuScreen() {
     }
   };
 
-  const { width, height } = useWindowDimensions();
   const isSmallScreen = width < 300;
   const iconSize = isSmallScreen ? 28 : 36;
   const cardWidth = Math.min(width / 2 - 32, 200);
@@ -106,11 +119,19 @@ export default function MenuScreen() {
                 key={cat.label}
                 style={[styles.menuCard, { width: cardWidth }]}
               >
-                <MaterialCommunityIcons
+                {/*   <MaterialCommunityIcons
                   name={cat.icon}
                   size={iconSize}
                   color="#222"
                   style={{ marginBottom: 8 }}
+                /> */}
+                <Image
+                  source={categoryImages[cat.label]}
+                  resizeMode="contain"
+                  style={
+                    styles.categoryImage //,
+                    // { width: "100px", height: "100px" }
+                  }
                 />
                 <Text
                   style={[styles.menuLabel, isSmallScreen && { fontSize: 12 }]}
@@ -237,5 +258,10 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 22,
     fontWeight: "bold",
+  },
+  categoryImage: {
+    width: "200px",
+    height: "48px",
+    marginBottom: "8px",
   },
 });
