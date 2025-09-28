@@ -13,11 +13,11 @@ rm -rf $TMPDIR/react-*
 rm -rf $TMPDIR/metro-*
 rm -rf $TMPDIR/haste-*
 watchman watch-del-all || true
-yarn cache clean --all
+npm cache clean --all
 
 # Step 2: Install dependencies
 echo "📦 Installing dependencies..."
-yarn install
+npm install
 
 # Step 3: Ensure gradlew permissions + fix line endings
 echo "⚙️ Fixing gradlew permissions..."
