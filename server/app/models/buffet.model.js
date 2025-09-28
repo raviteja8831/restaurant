@@ -35,6 +35,8 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       defaultValue: true,
     },
+  } ,{
+    tableName: 'buffet'
   });
   return Buffet;
 };

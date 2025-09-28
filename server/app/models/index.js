@@ -17,34 +17,39 @@ const db = {};
 
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
-db.message = require("./message.model.js")(sequelize, Sequelize);
+db.roles = require("./role.model.js")(sequelize, Sequelize);
 
 db.users = require("./user.model.js")(sequelize, Sequelize);
 db.customer = require("./customer.model.js")(sequelize, Sequelize);
-db.roles = require("./role.model.js")(sequelize, Sequelize);
-db.orderStatus = require("./orderStatus.model.js")(sequelize, Sequelize);
 db.restaurant = require("./restaurant.model.js")(sequelize, Sequelize);
 db.restaurantUser = require("./restaurantuser.model.js")(sequelize, Sequelize);
-db.buffetOrder = require("./buffetOrder.model.js")(sequelize, Sequelize);
-db.tableBooking = require("./tablebooking.model.js")(sequelize, Sequelize);
-
-db.restaurantReview = require("./restaurantreview.model.js")(
-  sequelize,
-  Sequelize
-);
-
-db.userFavorite = require("./user.favourite.model.js")(sequelize, Sequelize);
-db.restaurantReview = require("./restaurantreview.model.js")(
-  sequelize,
-  Sequelize
-);
-db.orders = require("./order.model.js")(sequelize, Sequelize);
 db.menu = require("./menu.model.js")(sequelize, Sequelize);
 db.menuItem = require("./menuitem.model.js")(sequelize, Sequelize);
 db.restaurantTable = require("./restauranttable.model.js")(
   sequelize,
   Sequelize
 );
+db.restaurantReview = require("./restaurantreview.model.js")(
+  sequelize,
+  Sequelize
+);
+db.buffet = require("./buffet.model.js")(sequelize, Sequelize);
+
+db.orders = require("./order.model.js")(sequelize, Sequelize);
+db.orderStatus = require("./orderStatus.model.js")(sequelize, Sequelize);
+
+
+db.buffetOrder = require("./buffetOrder.model.js")(sequelize, Sequelize);
+db.tableBooking = require("./tablebooking.model.js")(sequelize, Sequelize);
+db.message = require("./message.model.js")(sequelize, Sequelize);
+
+db.userFavorite = require("./user.favourite.model.js")(sequelize, Sequelize);
+db.restaurantReview = require("./restaurantreview.model.js")(
+  sequelize,
+  Sequelize
+);
+
+
 db.announcement = require("./announcement.model.js")(sequelize, Sequelize);
 db.orderProducts = require("./orderproducts.model.js")(sequelize, Sequelize);
 db.userMenuItem = require("./user_menuitem.model.js")(sequelize, Sequelize);
@@ -209,24 +214,11 @@ db.users.hasOne(db.customer, {
   foreignKey: "userId",
   as: "customerProfile",
 });
-db.buffet = require("./buffet.model.js")(sequelize, Sequelize);
 db.chefLogin = require("./chefLogin.model.js")(sequelize, Sequelize);
 
 db.buffet.belongsTo(db.restaurant, {
   foreignKey: "restaurantId",
   as: "restaurant",
-});
-
-// Add the reciprocal hasMany association from Restaurant to Buffet
-db.restaurant.hasMany(db.buffet, {
-  foreignKey: "restaurantId",
-  as: "buffets",
-});
-
-// Add associations for BuffetOrder
-db.buffetOrder.belongsTo(db.buffet, {
-  foreignKey: "buffetId",
-  as: "buffet",
 });
 
 db.buffet.hasMany(db.buffetOrder, {
