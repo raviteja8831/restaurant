@@ -17,19 +17,7 @@ export default function RootLayout() {
   });
 
 
-  useEffect(() => {
-    if (!loaded) return;
-    if (typeof window !== 'undefined' && (window.location.pathname === '/' || window.location.pathname === '/index')) {
-      // Delay navigation to ensure layout is mounted
-      setTimeout(() => {
-        window.location.href = '/Customer-Login';
-      }, 0);
-    }
-  }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
 
   return (
     <ReduxProvider store={store}>
