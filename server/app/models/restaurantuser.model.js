@@ -44,7 +44,7 @@ module.exports = (sequelize, Sequelize) => {
       },
     }
   }, {
-    tableName: 'restaurantUser'
+    tableName: 'restaurantuser'
   });
   return RestaurantUser;
 };
