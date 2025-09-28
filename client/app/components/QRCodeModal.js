@@ -72,22 +72,22 @@ export default function QRCodeModal({ visible, onClose, onSave, loading, restaur
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.card}>
-                      {showQR && (
-
-          <View style={styles.qrRow}>
-            {/* Top right icons */}
-            <View style={styles.topRightIcons}>
-            
+          {/* Always show close icon at top right */}
+          <View style={styles.topRightIcons}>
+            <TouchableOpacity style={styles.iconBtn} onPress={handleClose}>
+              <MaterialCommunityIcons name="close" size={30} color="#19171d" />
+            </TouchableOpacity>
+            {showQR && (
               <TouchableOpacity style={styles.iconBtn} onPress={handleDownload} disabled={!showQR || !qrValue}>
                 <MaterialCommunityIcons name="download" size={30} color={showQR && qrValue ? "#19171d" : "#bbb"} />
               </TouchableOpacity>
-                <TouchableOpacity style={styles.iconBtn} onPress={handleClose}>
-                <MaterialCommunityIcons name="close" size={30} color="#19171d" />
-              </TouchableOpacity>
-            </View>
-            {showQR && qrValue ? (
-              <View style={styles.qrImgBox}>
-                <QRCode
+            )}
+          </View>
+          {showQR && (
+            <View style={styles.qrRow}>
+              {showQR && qrValue ? (
+                <View style={styles.qrImgBox}>
+                  <QRCode
                   value={qrValue}
                   size={120}
                   getRef={qrRef}
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     marginBottom: 18,
-    marginTop: 8,
+    marginTop: 50,
   },
   inputLabel: {
     color: '#19171d',
