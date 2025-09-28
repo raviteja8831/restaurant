@@ -6,55 +6,48 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
+  // Dimensions, (unused)
   ActivityIndicator,
   Alert,
-  Platform,
+  // Platform, (unused)
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   getOrderItemList,
   deleteOrder,
-  updateOrderStatus,
+  // updateOrderStatus, (unused)
 } from "./api/orderApi";
-import { addReview } from "./api/reviewsApi";
+// import { addReview } from "./api/reviewsApi"; (unused)
 import CommentModal from "./Modals/CommentModal";
 import { useUserData } from "./services/getUserData";
-import * as Linking from "expo-linking";
+// import * as Linking from "expo-linking"; (unused)
 
 // PhonePe SDK import
-import PhonePePaymentSDK from "react-native-phonepe-pg";
 import UpiService from "./services/UpiService";
-import { setApiAuthToken } from "./api/api";
-import { getRestaurantById } from "./api/restaurantApi";
+// import { setApiAuthToken } from "./api/api"; (unused)
+// import { getRestaurantById } from "./api/restaurantApi"; (unused)
 
-const { width, height } = Dimensions.get("window");
+// const { width, height } = Dimensions.get("window"); (unused)
 
 export default function OrderSummaryScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [orderItems, setOrderItems] = useState([]);
-  const [orderDetails, setOrderDetails] = useState({});
-  const [loading, setLoading] = useState(false);
+  // const [orderDetails, setOrderDetails] = useState({}); (unused)
+  const [loading, setLoading] = useState(false); // loading is used
   const [totalAmount, setTotalAmount] = useState(0);
   const [userRating, setUserRating] = useState(0);
-  const [hasRated, setHasRated] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [removedItems, setRemovedItems] = useState([]);
+  // const [hasRated, setHasRated] = useState(false); (unused)
+  // const [editingItem, setEditingItem] = useState(null); (unused)
+  // const [removedItems, setRemovedItems] = useState([]); (unused)
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [paying, setPaying] = useState(false);
-  const [restaurantDetails, setRestaurantDetails] = useState({});
+  const [paying] = useState(false); // Only 'paying' is used
+  // const [restaurantDetails, setRestaurantDetails] = useState({}); (unused)
 
   const { userId, error } = useUserData();
 
-  if (error) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text>Error loading user data. Please try again.</Text>
-      </View>
-    );
-  }
+  // Always call hooks at the top level. Render error UI below if needed.
 
   function router_call() {
     router.push({
@@ -77,15 +70,19 @@ export default function OrderSummaryScreen() {
   };
 
   useEffect(() => {
-    initializeData();
-  }, [params.orderID, userId]);
+    if (!error) {
+      initializeData();
+    }
+    // Only run initializeData if no error
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.orderID, userId, error]);
 
   const initializeData = async () => {
     try {
       setLoading(true);
       const menuItems = await getOrderItemList(params.orderID, userId);
       setOrderItems(menuItems.orderItems || []);
-      setOrderDetails(menuItems.order_details || {});
+  // setOrderDetails(menuItems.order_details || {}); (unused)
       /*  const response = await getRestaurantById(params.restaurantId);
       if (response) {
         setRestaurantDetails(response);
@@ -105,6 +102,7 @@ export default function OrderSummaryScreen() {
         return sum + qty * price;
       }, 0)
     );
+
   }, [orderItems]);
 
   const handleBackPress = () => {
@@ -117,12 +115,9 @@ export default function OrderSummaryScreen() {
 
   const handleStarPress = (rating) => {
     setUserRating(rating);
-    setHasRated(true);
   };
 
-  const handleEditPress = (itemId) => {
-    setEditingItem(editingItem === itemId ? null : itemId);
-  };
+
 
   const handleModalSubmit = async () => {
     if (params.orderID) {
@@ -131,296 +126,11 @@ export default function OrderSummaryScreen() {
     setIsModalOpen(false);
   };
 
-  // PhonePe SDK Payment integration
-  const startPhonePePayment = async () => {
-    if (totalAmount <= 0) {
-      Alert.alert(
-        "Invalid amount",
-        "Total amount must be greater than 0 to pay."
-      );
-      return;
-    }
+  
 
-    setPaying(true);
-
-    try {
-      // Initialize PhonePe SDK
-      // Use "SANDBOX" for testing or "PRODUCTION" for live
-      const environment = "SANDBOX";
-
-      // Replace with your actual PhonePe merchantId and appId
-      const merchantId = "PGTESTPAYUAT";
-      const appId = null; // can be null if not available
-
-      // flowId could be user or order specific for tracking
-      const flowId = userId ? userId.toString() : "flow";
-
-      const initResult = await PhonePePaymentSDK.init(
-        environment,
-        merchantId,
-        flowId,
-        true // enable logging
-      );
-
-      console.log("PhonePe SDK Init Result: ", initResult);
-
-      // Prepare transaction request
-      // Generate transaction body and checksum from backend
-      const transactionId = `TXN${Date.now()}${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-      const paymentPayload = {
-        merchantId: merchantId,
-        merchantTransactionId: transactionId,
-        merchantUserId: userId?.toString() || "USER001",
-        amount: totalAmount * 100, // PhonePe expects amount in paise
-        mobileNumber: "9999999999", // Replace with actual user mobile
-        callbackUrl: "https://webhook.site/callback-url",
-        paymentInstrument: {
-          type: "PAY_PAGE",
-        },
-      };
-
-      // For testing, create a simple base64 encoded request
-      const base64Payload = btoa(JSON.stringify(paymentPayload));
-      const transactionRequestBody = base64Payload;
-
-      // For testing, use a simple checksum (in production, this should come from your secure backend)
-      const finalChecksum = `${base64Payload}###1`;
-
-      // Call startTransaction on PhonePe SDK
-      const response = await PhonePePaymentSDK.startTransaction(
-        transactionRequestBody,
-        checksum,
-        Platform.OS === "android" ? "com.phonepe.app" : null,
-        "yourapp" // your app schema for callback
-      );
-
-      console.log("Payment Response: ", response);
-
-      if (response.status === "SUCCESS") {
-        // Update order status in backend
-        await updateOrderStatus(params.orderID, {
-          status: "Completed",
-          updatedItems: orderItems.map((item) => ({
-            id: item.id,
-            quantity: item.quantity,
-          })),
-          totalAmount: totalAmount,
-          removedItems: removedItems.map((item) => ({
-            id: item.id,
-          })),
-          payment: {
-            method: "PhonePe",
-            txnId: response.txnId || "",
-          },
-        });
-
-        // Submit review if rated
-        if (userRating > 0) {
-          await addReview({
-            userId: userId,
-            restaurantId: orderDetails.restaurantId,
-            rating: userRating,
-            orderId: params.orderID,
-          });
-        }
-
-        Alert.alert("Payment Successful", "Payment completed successfully!");
-        router.push({ pathname: "/customer-home" });
-      } else if (response.status === "FAILURE") {
-        Alert.alert("Payment Failed", "Payment failed or was declined.");
-      } else if (response.status === "INTERRUPTED") {
-        Alert.alert(
-          "Payment Interrupted",
-          "Payment was interrupted. Please try again."
-        );
-      }
-    } catch (error) {
-      console.error("PhonePe Payment Error:", error);
-      Alert.alert(
-        "Payment Error",
-        "Could not complete payment. Ensure that PhonePe is installed or try again."
-      );
-
-      // As fallback for web or if SDK fails, use existing UPI intent (only on Android/iOS)
-      if (Platform.OS !== "web") {
-        payWithUPIFallback();
-      }
-    } finally {
-      setPaying(false);
-    }
-  };
-
-  // Fallback to existing UPI intent redirect for Android/iOS/web if SDK fails
-  const payWithUPIFallback = async () => {
-    const upiId = "8143575784@ybl"; // Static UPI ID - will be fetched from database later
-    const receiverName =
-      orderDetails.restaurantName || orderDetails.restaurant || "Restaurant";
-    const amount = Number(totalAmount) || 0;
-
-    if (amount <= 0) {
-      Alert.alert(
-        "Invalid amount",
-        "Total amount must be greater than 0 to pay."
-      );
-      return;
-    }
-
-    const txnRef = `TXN${Date.now()}`;
-
-    const upiUrl = `upi://pay?pa=${encodeURIComponent(
-      upiId
-    )}&pn=${encodeURIComponent(receiverName)}&tr=${encodeURIComponent(
-      txnRef
-    )}&tn=${encodeURIComponent(
-      "Payment for order " + (params.orderID || "")
-    )}&am=${encodeURIComponent(amount.toString())}&cu=INR`;
-
-    try {
-      if (Platform.OS === "web") {
-        // For web, show UPI details for manual payment
-        Alert.alert(
-          "Payment Details",
-          `Please pay ₹${amount} to:\n\nUPI ID: ${upiId}\nAmount: ₹${amount}\nReference: ${txnRef}\n\nAfter payment, click 'Payment Completed' below.`,
-          [
-            {
-              text: "Copy UPI ID",
-              onPress: () => {
-                if (navigator.clipboard) {
-                  navigator.clipboard.writeText(upiId);
-                }
-              },
-            },
-            {
-              text: "Payment Completed",
-              onPress: async () => {
-                // Handle payment completion
-                await handleWebPaymentComplete(txnRef, upiId, amount);
-              },
-            },
-            {
-              text: "Cancel",
-              style: "cancel",
-            },
-          ]
-        );
-        return;
-      }
-
-      const supported = await Linking.canOpenURL(upiUrl);
-      if (!supported) {
-        Alert.alert(
-          "No UPI App",
-          "No UPI app found. Please install a UPI app like PhonePe or Google Pay to continue."
-        );
-        return;
-      }
-
-      await Linking.openURL(upiUrl);
-
-      // Show payment initiated message
-      Alert.alert(
-        "Payment Initiated",
-        "Please complete the payment in your UPI app and return to this screen.",
-        [
-          {
-            text: "Payment Completed",
-            onPress: async () => {
-              try {
-                // Update order status
-                await updateOrderStatus(params.orderID, {
-                  status: "Completed",
-                  updatedItems: orderItems.map((item) => ({
-                    id: item.id,
-                    quantity: item.quantity,
-                  })),
-                  totalAmount: totalAmount,
-                  removedItems: removedItems.map((item) => ({
-                    id: item.id,
-                  })),
-                  payment: {
-                    method: "UPI",
-                    txnId: txnRef,
-                    upiId: upiId,
-                  },
-                });
-
-                // Submit review if rated
-                if (userRating > 0) {
-                  await addReview({
-                    userId: userId,
-                    restaurantId: orderDetails.restaurantId,
-                    rating: userRating,
-                    orderId: params.orderID,
-                  });
-                }
-
-                Alert.alert("Success", "Payment completed successfully!");
-                router.push({ pathname: "/customer-home" });
-              } catch (error) {
-                console.error("Error updating order:", error);
-                Alert.alert("Error", "Failed to update order status.");
-              }
-            },
-          },
-          {
-            text: "Cancel",
-            style: "cancel",
-          },
-        ]
-      );
-    } catch (err) {
-      console.error("UPI Intent Error:", err);
-      Alert.alert("Payment Error", "Cannot open UPI app.");
-    }
-  };
-
-  // Handle payment completion for web platform
-  const handleWebPaymentComplete = async (txnRef, upiId, amount) => {
-    try {
-      setPaying(true);
-
-      // Update order status
-      await updateOrderStatus(params.orderID, {
-        status: "Completed",
-        updatedItems: orderItems.map((item) => ({
-          id: item.id,
-          quantity: item.quantity,
-        })),
-        totalAmount: totalAmount,
-        removedItems: removedItems.map((item) => ({
-          id: item.id,
-        })),
-        payment: {
-          method: "UPI",
-          txnId: txnRef,
-          upiId: upiId,
-        },
-      });
-
-      // Submit review if rated
-      if (userRating > 0) {
-        await addReview({
-          userId: userId,
-          restaurantId: orderDetails.restaurantId,
-          rating: userRating,
-          orderId: params.orderID,
-        });
-      }
-
-      Alert.alert("Success", "Payment completed successfully!");
-      router.push({ pathname: "/customer-home" });
-    } catch (error) {
-      console.error("Error updating order:", error);
-      Alert.alert("Error", "Failed to update order status.");
-    } finally {
-      setPaying(false);
-    }
-  };
+  // const handleWebPaymentComplete = async (txnRef, upiId, amount) => {}; (unused)
 
   const handleSubmitAndPay = async () => {
-    i;
     if (totalAmount <= 0) {
       Alert.alert(
         "Invalid amount",
@@ -442,36 +152,20 @@ export default function OrderSummaryScreen() {
     console.log("UPI Payment Result:", result);
   };
 
-  const handleQuantityChange = async (itemId, change) => {
-    const updatedItems = orderItems.map((item) =>
-      item.id === itemId
-        ? { ...item, quantity: Math.max(0, item.quantity + change) }
-        : item
-    );
-
-    const itemsToRemove = updatedItems.filter((item) => item.quantity === 0);
-    if (itemsToRemove.length > 0) {
-      setRemovedItems((prev) => [...prev, ...itemsToRemove]);
-    }
-
-    const filteredItems = updatedItems.filter((item) => item.quantity > 0);
-
-    const newTotal = filteredItems.reduce(
-      (sum, item) => sum + item.quantity * item.price,
-      0
-    );
-
-    setOrderItems(filteredItems);
-
-    if (newTotal === 0) {
-      setIsModalOpen(true);
-    }
-  };
+  // const handleQuantityChange = async (itemId, change) => {}; (unused)
 
   const handleModalClose = () => {
-    setEditingItem(null);
     initializeData();
   };
+
+  // Render error UI if error exists
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text>Error loading user data. Please try again.</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -492,7 +186,7 @@ export default function OrderSummaryScreen() {
         <TouchableOpacity
           style={styles.tableContainer}
           activeOpacity={1}
-          onPress={() => setEditingItem(null)}
+          // onPress={() => setEditingItem(null)} (editingItem unused)
         >
           <View style={styles.tableHeader}>
             <Text style={[styles.hcell, styles.statusColumn]}>Status</Text>
@@ -508,10 +202,10 @@ export default function OrderSummaryScreen() {
                 style={[
                   styles.cell,
                   styles.statusColumn,
-                  order.status == 1 && { color: "#F4962A" },
-                  order.status == 2 && { color: "#F4EE2A" },
-                  order.status == 3 && { color: "#2AF441" },
-                  order.status == 4 && { color: "#809782" },
+                  order.status === 1 && { color: "#F4962A" },
+                  order.status === 2 && { color: "#F4EE2A" },
+                  order.status === 3 && { color: "#2AF441" },
+                  order.status === 4 && { color: "#809782" },
                 ]}
               >
                 {order.statusText}
