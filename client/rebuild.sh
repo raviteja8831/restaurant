@@ -12,8 +12,7 @@ rm -rf $PROJECT_ROOT/node_modules
 rm -rf $TMPDIR/react-*
 rm -rf $TMPDIR/metro-*
 rm -rf $TMPDIR/haste-*
-watchman watch-del-all || true
-npm cache clean --all
+npm cache clean --force
 
 # Step 2: Install dependencies
 echo "📦 Installing dependencies..."
