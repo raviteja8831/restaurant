@@ -40,7 +40,7 @@ npm install
 
 # # Step 4: Build Android app only (no emulator)
 # echo "🏗 Building Android app (no emulator)..."
-# npx expo prebuild --platform android
+ npx expo prebuild --platform android
 cd android
 chmod +x gradlew
 

@@ -18,9 +18,7 @@ export default function RootLayout() {
       <PaperProvider>
         <AlertProvider>
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Slot />
-            </Stack>
+            <Stack screenOptions={{ headerShown: false }} />
           </ThemeProvider>
         </AlertProvider>
       </PaperProvider>
