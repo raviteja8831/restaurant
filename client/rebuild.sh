@@ -38,6 +38,9 @@ EOF
 # Step 4a: Add network security config to AndroidManifest
 sed -i 's/android:usesCleartextTraffic="true"/android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml\/network_security_config"/g' android/app/src/main/AndroidManifest.xml
 
+# Step 4b: Disable Hermes to fix Symbol error
+sed -i 's/hermesEnabled=true/hermesEnabled=false/g' android/gradle.properties
+
 # Step 5: Navigate to android folder
 cd android
 chmod +x gradlew
