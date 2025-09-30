@@ -47,18 +47,25 @@ export default function LoginScreen() {
       return;
     }
     try {
+      console.log("Logging in with phone:", phoneValue);
       const response = await axios.post(`${API_BASE_URL}/users/login`, {
         phone: phoneValue,
         otp: otpValue.join(""),
       });
+      console.log("Login response:", response.data);
       const user = response.data;
       const role = user?.role?.name?.toLowerCase();
+      console.log("User role:", role);
+
       // Save token and user details using AsyncStorage (same as chef-login)
       if (user.token) {
-        await AsyncStorage.setItem("auth_token", user.token);
+        await AsyncStorage.setItem("auth_token", String(user.token));
       }
       // Save user profile (manager/chef details and restaurant details)
       await AsyncStorage.setItem("user_profile", JSON.stringify(user));
+
+      console.log("Navigating to:", role === "manager" ? "/dashboard" : "/chef-home");
+
       if (role === "manager") {
         router.push("/dashboard");
       } else if (role === "chef") {
@@ -70,7 +77,8 @@ export default function LoginScreen() {
         );
       }
     } catch (err) {
-      Alert.alert("Login Failed", err?.message || "Invalid credentials");
+      console.error("Login error:", err);
+      Alert.alert("Login Failed", err?.response?.data?.message || err?.message || "Invalid credentials");
     }
   };
 
@@ -120,8 +128,11 @@ export default function LoginScreen() {
 
       {/* Register Link */}
       <View style={styles.registerContainer}>
-        <Text style={styles.registerText}>Don’t have an account? </Text>
-        <TouchableOpacity onPress={() => router.replace("/manager-register")}>
+        <Text style={styles.registerText}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => {
+          console.log("Register button pressed");
+          router.replace("/manager-register");
+        }}>
           <Text style={styles.registerLink}>Register</Text>
         </TouchableOpacity>
       </View>
