@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   SafeAreaView,
   Alert,
   Image,
@@ -124,9 +124,9 @@ const TableDiningScreen = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <Pressable style={styles.backButton} onPress={handleBack}>
           <Ionicons name="chevron-back" size={34} color="#000" />
-        </TouchableOpacity>
+        </Pressable>
         <Text style={styles.headerTitle}>Table Dining</Text>
         <View style={{ width: 24 }} />
       </View>
@@ -139,7 +139,7 @@ const TableDiningScreen = () => {
 
       <View style={styles.counterContainer}>
         {/* Left Arrow */}
-        <TouchableOpacity
+        <Pressable
           style={styles.counterButton}
           onPress={() => {
             if (tableCount > 0) {
@@ -161,7 +161,7 @@ const TableDiningScreen = () => {
             source={require("../assets/images/left-arrow.png")}
             style={styles.arrowImage}
           />
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Number + Label */}
         <View style={styles.counterTextContainer}>
@@ -172,7 +172,7 @@ const TableDiningScreen = () => {
         </View>
 
         {/* Right Arrow */}
-        <TouchableOpacity
+        <Pressable
           style={styles.counterButton}
           onPress={() => {
             if (
@@ -193,7 +193,7 @@ const TableDiningScreen = () => {
             source={require("../assets/images/left-arrow.png")}
             style={[styles.arrowImage, styles.rightArrow]}
           />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Card Section */}
@@ -234,7 +234,7 @@ const TableDiningScreen = () => {
         </View>
 
         {/* Pay Button */}
-        <TouchableOpacity
+        <Pressable
           style={[
             styles.payButton,
             tableorderlength == 0 && tableCount == 0 && styles.disabledButton,
@@ -247,7 +247,7 @@ const TableDiningScreen = () => {
               ? "No Tables Available"
               : `Pay ${tableCount > 0 ? "₹" + tableCount * 50 : ""}`}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </SafeAreaView>
   );

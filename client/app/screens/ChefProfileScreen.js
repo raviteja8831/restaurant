@@ -4,7 +4,7 @@ import {
   View,
   Text,
   Image,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
@@ -50,9 +50,9 @@ export default function ChefProfileScreen() {
     <View style={styles.container}>
       {/* Top Row: Back, Profile, Send */}
       <View style={styles.topRow}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <Pressable onPress={() => router.back()}>
           <MaterialCommunityIcons name="arrow-left" size={28} color="#222" />
-        </TouchableOpacity>
+        </Pressable>
         <Image
           source={RocketImg}
           style={{ width: 32, height: 32 }}

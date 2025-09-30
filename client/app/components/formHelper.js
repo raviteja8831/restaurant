@@ -7,7 +7,7 @@ import {
   View,
   StyleSheet,
   Switch,
-  TouchableOpacity,
+  Pressable,
   Platform,
 } from "react-native";
 import {

@@ -14,7 +14,7 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   Modal,
   ScrollView,
   TextInput,
@@ -138,23 +138,23 @@ export default function ManagerDashboardScreenNew() {
       >
         <Appbar.Header style={styles.appbar}>
           {/* Food menu icon at top left instead of logout */}
-          <TouchableOpacity
+          <Pressable
             style={{ marginLeft: 8 }}
             onPress={() => router.replace("/menu")}
           >
             <MaterialCommunityIcons name="food" size={28} color="#6c63b5" />
-          </TouchableOpacity>
+          </Pressable>
           <Appbar.Content
             // title={restaurantName}
             title={profile.restaurant?.name || restaurantName}
             titleStyle={styles.appbarTitle}
           />
-          <TouchableOpacity
+          <Pressable
             style={{ marginRight: 16 }}
             onPress={() => setShowPayModal(true)}
           >
             <Text style={styles.payBtnText}>Pay</Text>
-          </TouchableOpacity>
+          </Pressable>
         </Appbar.Header>
 
           {/* Pay Modal */}
@@ -166,12 +166,12 @@ export default function ManagerDashboardScreenNew() {
           >
             <View style={styles.modalOverlay}>
               <View style={[styles.profileCard, { alignItems: "center" }]}> 
-                <TouchableOpacity
+                <Pressable
                   style={{ position: "absolute", top: 10, right: 10, zIndex: 20 }}
                   onPress={() => setShowPayModal(false)}
                 >
                   <MaterialCommunityIcons name="close" size={28} color="#222" />
-                </TouchableOpacity>
+                </Pressable>
                 <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 12, color: "#6c63b5" }}>
                   Payment
                 </Text>
@@ -201,7 +201,7 @@ export default function ManagerDashboardScreenNew() {
                 )}
                 <View style={{ flexDirection: "row", gap: 12 }}>
                   {upiEdit ? (
-                    <TouchableOpacity
+                    <Pressable
                       style={styles.profileCloseBtn}
                       disabled={upiLoading}
                       onPress={async () => {
@@ -219,16 +219,16 @@ export default function ManagerDashboardScreenNew() {
                       }}
                     >
                       <Text style={styles.logoutText}>{upiLoading ? "Saving..." : "Save"}</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ) : (
-                    <TouchableOpacity
+                    <Pressable
                       style={styles.profileCloseBtn}
                       onPress={() => setUpiEdit(true)}
                     >
                       <Text style={styles.logoutText}>Edit</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   )}
-                  <TouchableOpacity
+                  <Pressable
                     style={styles.profileCloseBtn}
                     onPress={() => {
                       setShowPayModal(false);
@@ -236,7 +236,7 @@ export default function ManagerDashboardScreenNew() {
                     }}
                   >
                     <Text style={styles.logoutText}>Close</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             </View>
@@ -249,7 +249,7 @@ export default function ManagerDashboardScreenNew() {
               <Text style={styles.dateText}>{date}</Text>
               <Text style={styles.greetText}>Welcome {managerName}</Text>
             </View>
-            <TouchableOpacity
+            <Pressable
               style={styles.profileImg}
               onPress={() => setProfileVisible(true)}
             >
@@ -258,7 +258,7 @@ export default function ManagerDashboardScreenNew() {
                 size={60}
                 color="#7b6eea"
               />
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
         <View style={styles.infoBuffetRow}>
@@ -309,7 +309,7 @@ export default function ManagerDashboardScreenNew() {
             >
               <Text style={styles.buffetTitle}>Buffet</Text>
               <View style={{ position: "relative" }}>
-                <TouchableOpacity
+                <Pressable
                    onPress={() => setBuffetMenuVisible(!buffetMenuVisible)}
                   style={styles.buffetMenuIcon}
                 >
@@ -318,7 +318,7 @@ export default function ManagerDashboardScreenNew() {
                     size={28}
                     color="#222"
                   />
-                </TouchableOpacity>
+                </Pressable>
                 {buffetMenuVisible && (
                   <View
                     style={[
@@ -326,7 +326,7 @@ export default function ManagerDashboardScreenNew() {
                       { position: "absolute", top: -132, right: 0, zIndex: 100 },
                     ]}
                   >
-                    <TouchableOpacity
+                    <Pressable
                       style={styles.buffetMenuItemNew}
                       onPress={() => {
                         setBuffetMenuVisible(false);
@@ -337,8 +337,8 @@ export default function ManagerDashboardScreenNew() {
                       <Text style={styles.buffetMenuTextNew}>
                         Complimentary
                       </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
+                    </Pressable>
+                    <Pressable
                       style={styles.buffetMenuItemNew}
                       onPress={() => {
                         setBuffetMenuVisible(false);
@@ -349,12 +349,12 @@ export default function ManagerDashboardScreenNew() {
                       <Text style={styles.buffetMenuTextNew}>
                         Pay the Price
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 )}
               </View>
             </View>
-            <TouchableOpacity
+            <Pressable
               style={styles.buffetIcon}
               // onPress={() => setBuffetVisible(true)
 
@@ -365,9 +365,9 @@ export default function ManagerDashboardScreenNew() {
                 style={styles.buffetImg}
                 resizeMode="contain"
               />
-            </TouchableOpacity>
+            </Pressable>
             {/* Make buffet type clickable to open modal */}
-            <TouchableOpacity
+            <Pressable
               // onPress={() => setBuffetVisible(true)}
               style={{ marginTop: 8, alignItems: "center", width: "100%" }}
             >
@@ -376,7 +376,7 @@ export default function ManagerDashboardScreenNew() {
               >
                 {buffet.type || "Buffet Type"}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
             <View style={{ marginTop: 8, alignItems: "center", width: "100%" }}>
               <Switch
                 value={buffetEnabled}
@@ -443,12 +443,12 @@ export default function ManagerDashboardScreenNew() {
                 shadowRadius: 10,
               }}
             >
-              <TouchableOpacity
+              <Pressable
                 style={{ position: "absolute", top: 10, right: 10, zIndex: 20 }}
                 onPress={() => setBuffetVisible(false)}
               >
                 <MaterialCommunityIcons name="close" size={28} color="#222" />
-              </TouchableOpacity>
+              </Pressable>
               <Text
                 style={{
                   fontWeight: "bold",
@@ -516,7 +516,7 @@ export default function ManagerDashboardScreenNew() {
         <Surface style={styles.chartCard}>
           <View style={{ ...styles.chartHeader, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={styles.chartTitle}>Produce Sales</Text>
-            <TouchableOpacity
+            <Pressable
               style={styles.weekDropdown}
               onPress={() => setShowSalesDropdown(true)}
               activeOpacity={0.7}
@@ -525,7 +525,7 @@ export default function ManagerDashboardScreenNew() {
                 {salesDateFilter === 'day' ? 'Today' : salesDateFilter.charAt(0).toUpperCase() + salesDateFilter.slice(1)}
               </Text>
               <MaterialCommunityIcons name="chevron-down" size={20} color="#fff" style={{ marginLeft: 4 }} />
-            </TouchableOpacity>
+            </Pressable>
             {/* Modal for sales dropdown */}
             <Modal
               visible={showSalesDropdown}
@@ -533,7 +533,7 @@ export default function ManagerDashboardScreenNew() {
               animationType="fade"
               onRequestClose={() => setShowSalesDropdown(false)}
             >
-              <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)' }} onPress={() => setShowSalesDropdown(false)}>
+              <Pressable style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)' }} onPress={() => setShowSalesDropdown(false)}>
                 <View style={{ borderRadius: 10, padding: 8, width: 180 }}>
                   <Picker
                     selectedValue={salesDateFilter}
@@ -545,7 +545,7 @@ export default function ManagerDashboardScreenNew() {
                     <Picker.Item label="Year" value="year" />
                   </Picker>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             </Modal>
           </View>
           <LineChart
@@ -581,7 +581,7 @@ export default function ManagerDashboardScreenNew() {
         <Surface style={styles.chartCard}>
           <View style={{ ...styles.chartHeader, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={styles.chartTitle}>Income Graph</Text>
-            <TouchableOpacity
+            <Pressable
               style={styles.weekDropdown}
               onPress={() => setShowIncomeDropdown(true)}
               activeOpacity={0.7}
@@ -590,7 +590,7 @@ export default function ManagerDashboardScreenNew() {
                 {incomeDateFilter === 'day' ? 'Today' : incomeDateFilter.charAt(0).toUpperCase() + incomeDateFilter.slice(1)}
               </Text>
               <MaterialCommunityIcons name="chevron-down" size={20} color="#fff" style={{ marginLeft: 4 }} />
-            </TouchableOpacity>
+            </Pressable>
             {/* Modal for income dropdown */}
             <Modal
               visible={showIncomeDropdown}
@@ -598,7 +598,7 @@ export default function ManagerDashboardScreenNew() {
               animationType="fade"
               onRequestClose={() => setShowIncomeDropdown(false)}
             >
-              <TouchableOpacity style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)' }} onPress={() => setShowIncomeDropdown(false)}>
+              <Pressable style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.2)' }} onPress={() => setShowIncomeDropdown(false)}>
                 <View style={{ borderRadius: 10, padding: 8, width: 180 }}>
                   <Picker
                     selectedValue={incomeDateFilter}
@@ -610,7 +610,7 @@ export default function ManagerDashboardScreenNew() {
                     <Picker.Item label="Year" value="year" />
                   </Picker>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             </Modal>
           </View>
           <LineChart
@@ -654,7 +654,7 @@ export default function ManagerDashboardScreenNew() {
           <View style={styles.modalOverlay}>
             <View style={styles.profileCard}>
               {/* Close cross icon */}
-              <TouchableOpacity
+              <Pressable
                 style={{
                   position: "absolute",
                   top: 10,
@@ -664,7 +664,7 @@ export default function ManagerDashboardScreenNew() {
                 onPress={() => setProfileVisible(false)}
               >
                 <MaterialCommunityIcons name="close" size={28} color="#222" />
-              </TouchableOpacity>
+              </Pressable>
               <View style={styles.profileCircle}>
                 <MaterialCommunityIcons
                   name="account-circle"
@@ -674,7 +674,7 @@ export default function ManagerDashboardScreenNew() {
               </View>
               <Text style={styles.profileName}>{managerName}</Text>
               <Text style={styles.profilePhone}>Ph no: {profile.phone}</Text>
-              <TouchableOpacity
+              <Pressable
                 style={styles.profileCloseBtn}
                 onPress={() => setProfileVisible(false)}
               >
@@ -686,7 +686,7 @@ export default function ManagerDashboardScreenNew() {
                 <Text style={styles.logoutText} onPress={() => handleLogout()}>
                   Logout
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </Modal>

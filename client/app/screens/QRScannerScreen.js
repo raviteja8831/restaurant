@@ -4,7 +4,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   Dimensions,
   SafeAreaView,
   Platform
@@ -105,9 +105,9 @@ export default function QRScannerScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>No access to camera</Text>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <Pressable style={styles.backButton} onPress={handleBackPress}>
             <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </SafeAreaView>
     );
@@ -117,9 +117,9 @@ export default function QRScannerScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+        <Pressable style={styles.backButton} onPress={handleBackPress}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
 
@@ -172,9 +172,9 @@ export default function QRScannerScreen() {
           <View style={{ marginTop: 20, backgroundColor: '#fff', padding: 16, borderRadius: 8, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 }}>
             <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 8 }}>QR Code Scanned!</Text>
             <Text style={{ color: '#333', marginBottom: 8 }}>{scannedData}</Text>
-            <TouchableOpacity onPress={() => router.push('/menu-list')} style={{ backgroundColor: '#4A90E2', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}>
+            <Pressable onPress={() => router.push('/menu-list')} style={{ backgroundColor: '#4A90E2', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}>
               <Text style={{ color: '#fff', fontWeight: 'bold' }}>Continue</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
 

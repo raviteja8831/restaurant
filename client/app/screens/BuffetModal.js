@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, Modal, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Modal, Pressable, StyleSheet } from 'react-native';
 import { Surface } from 'react-native-paper';
 import { BUFFET_TYPES } from '../constants/buffetTypes';
 import { saveBuffetDetails, getBuffetDetails } from '../api/buffetApi';
@@ -124,32 +124,32 @@ export default function BuffetModal({ visible, onClose, buffet, setBuffet, initi
           <View style={styles.row}><Text style={styles.label}>Buffet Menu :</Text><TextInput style={[styles.input, styles.menuInput]} value={menu} onChangeText={setMenu} multiline /></View>
           <View style={styles.row}><Text style={styles.label}>Type :</Text>
             {BUFFET_TYPES.map((t) => (
-              <TouchableOpacity
+              <Pressable
                 key={t.value}
                 style={[styles.typeBtn, { backgroundColor: type === t.value ? '#bcb3f7' : '#fff', marginRight: 8 }]}
                 onPress={() => setType(t.value)}
               >
                 <Text style={{ color: type === t.value ? '#6c63b5' : '#222', fontWeight: type === t.value ? 'bold' : 'normal' }}>{t.label}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
           <View style={styles.row}><Text style={styles.label}>Price :</Text><TextInput style={[styles.input, styles.priceInput]} value={price} onChangeText={setPrice} keyboardType="numeric" /></View>
           <View style={styles.row}><Text style={styles.label}>Status :</Text>
-            <TouchableOpacity
+            <Pressable
               style={[styles.toggleBtn, status ? styles.toggleOn : styles.toggleOff]}
               onPress={() => setStatus(v => !v)}
             >
               <View style={[styles.toggleCircle, status ? styles.toggleCircleOn : styles.toggleCircleOff]} />
-            </TouchableOpacity>
+            </Pressable>
             <Text style={{ marginLeft: 8, color: status ? '#43a047' : '#aaa', fontWeight: 'bold' }}>{status ? 'Enabled' : 'Disabled'}</Text>
           </View>
           <View style={styles.btnRow}>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
+            <Pressable style={styles.saveBtn} onPress={handleSave} disabled={saving}>
               <Text style={styles.saveBtnText}>{saving ? 'Saving...' : 'Save'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={saving}>
+            </Pressable>
+            <Pressable style={styles.cancelBtn} onPress={onClose} disabled={saving}>
               <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </Surface>
       </View>

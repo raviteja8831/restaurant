@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   View,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
 } from "react-native";
 import { Button, Text, Surface } from "react-native-paper";
@@ -439,7 +439,7 @@ export default function ManagerRegisterScreen() {
                         </Text>
                         <View style={styles.typeFoodGridRow}>
                           <View style={styles.typeFoodGridCol}>
-                            <TouchableOpacity
+                            <Pressable
                               style={[
                                 styles.typeBoxStep2,
                                 tableService && styles.typeBoxActiveStep2,
@@ -456,10 +456,10 @@ export default function ManagerRegisterScreen() {
                               <Text style={styles.typeLabelStep2Small}>
                                 Table Service
                               </Text>
-                            </TouchableOpacity>
+                            </Pressable>
                           </View>
                           <View style={styles.typeFoodGridCol}>
-                            <TouchableOpacity
+                            <Pressable
                               style={[
                                 styles.typeBoxStep2,
                                 selfService && styles.typeBoxActiveStep2,
@@ -476,11 +476,11 @@ export default function ManagerRegisterScreen() {
                               <Text style={styles.typeLabelStep2Small}>
                                 Self Service
                               </Text>
-                            </TouchableOpacity>
+                            </Pressable>
                           </View>
                         </View>
                         <View style={styles.enableBothRowCenter}>
-                          <TouchableOpacity
+                          <Pressable
                             style={styles.checkboxRowStep2Grid}
                             onPress={() => {
                               if (!enableBoth) {
@@ -501,11 +501,11 @@ export default function ManagerRegisterScreen() {
                             <Text style={styles.enableTextStep2Grid}>
                               Enable Both
                             </Text>
-                          </TouchableOpacity>
+                          </Pressable>
                         </View>
                         <View style={styles.typeFoodGridRow}>
                           <View style={styles.typeFoodGridCol}>
-                            <TouchableOpacity
+                            <Pressable
                               style={[
                                 styles.foodTypeBoxStep2,
                                 styles.foodTypeBoxVeg,
@@ -519,10 +519,10 @@ export default function ManagerRegisterScreen() {
                                 style={styles.foodCircleVegStep2}
                               />
                               <Text style={styles.foodLabelStep2}>Pure Veg</Text>
-                            </TouchableOpacity>
+                            </Pressable>
                           </View>
                           <View style={styles.typeFoodGridCol}>
-                            <TouchableOpacity
+                            <Pressable
                               style={[
                                 styles.foodTypeBoxStep2,
                                 styles.foodTypeBoxNonVeg,
@@ -536,11 +536,11 @@ export default function ManagerRegisterScreen() {
                                 style={styles.foodCircleNonVegStep2}
                               />
                               <Text style={styles.foodLabelStep2}>Non Veg</Text>
-                            </TouchableOpacity>
+                            </Pressable>
                           </View>
                         </View>
                         <View style={styles.buffetRowGrid}>
-                          <TouchableOpacity
+                          <Pressable
                             style={styles.checkboxRowStep2Grid}
                             onPress={() => setEnableBuffet(!enableBuffet)}
                           >
@@ -553,12 +553,12 @@ export default function ManagerRegisterScreen() {
                             <Text style={styles.checkboxLabelStep2Grid}>
                               Enable Buffet
                             </Text>
-                          </TouchableOpacity>
+                          </Pressable>
                         </View>
                         <Text style={styles.sectionTitleStep2Grid}>
                           Upload Ambiance Photo
                         </Text>
-                        <TouchableOpacity
+                        <Pressable
                           style={styles.photoUploadBoxStep2}
                           onPress={pickImage}
                         >
@@ -578,7 +578,7 @@ export default function ManagerRegisterScreen() {
                               style={styles.cameraIconStep2}
                             />
                           )}
-                        </TouchableOpacity>
+                        </Pressable>
                       </View>
                     </View>
                   </View>
@@ -677,7 +677,7 @@ export default function ManagerRegisterScreen() {
   //                   </Text>
   //                   <View style={styles.typeFoodGridRow}>
   //                     <View style={styles.typeFoodGridCol}>
-  //                       <TouchableOpacity
+  //                       <Pressable
   //                         style={[
   //                           styles.typeBoxStep2,
   //                           tableService && styles.typeBoxActiveStep2,
@@ -694,10 +694,10 @@ export default function ManagerRegisterScreen() {
   //                         <Text style={styles.typeLabelStep2Small}>
   //                           Table Service
   //                         </Text>
-  //                       </TouchableOpacity>
+  //                       </Pressable>
   //                     </View>
   //                     <View style={styles.typeFoodGridCol}>
-  //                       <TouchableOpacity
+  //                       <Pressable
   //                         style={[
   //                           styles.typeBoxStep2,
   //                           selfService && styles.typeBoxActiveStep2,
@@ -714,11 +714,11 @@ export default function ManagerRegisterScreen() {
   //                         <Text style={styles.typeLabelStep2Small}>
   //                           Self Service
   //                         </Text>
-  //                       </TouchableOpacity>
+  //                       </Pressable>
   //                     </View>
   //                   </View>
   //                   <View style={styles.enableBothRowCenter}>
-  //                     <TouchableOpacity
+  //                     <Pressable
   //                       style={styles.checkboxRowStep2Grid}
   //                       onPress={() => {
   //                         if (!enableBoth) {
@@ -739,11 +739,11 @@ export default function ManagerRegisterScreen() {
   //                       <Text style={styles.enableTextStep2Grid}>
   //                         Enable Both
   //                       </Text>
-  //                     </TouchableOpacity>
+  //                     </Pressable>
   //                   </View>
   //                   <View style={styles.typeFoodGridRow}>
   //                     <View style={styles.typeFoodGridCol}>
-  //                       <TouchableOpacity
+  //                       <Pressable
   //                         style={[
   //                           styles.foodTypeBoxStep2,
   //                           styles.foodTypeBoxVeg,
@@ -757,10 +757,10 @@ export default function ManagerRegisterScreen() {
   //                           style={styles.foodCircleVegStep2}
   //                         />
   //                         <Text style={styles.foodLabelStep2}>Pure Veg</Text>
-  //                       </TouchableOpacity>
+  //                       </Pressable>
   //                     </View>
   //                     <View style={styles.typeFoodGridCol}>
-  //                       <TouchableOpacity
+  //                       <Pressable
   //                         style={[
   //                           styles.foodTypeBoxStep2,
   //                           styles.foodTypeBoxNonVeg,
@@ -774,11 +774,11 @@ export default function ManagerRegisterScreen() {
   //                           style={styles.foodCircleNonVegStep2}
   //                         />
   //                         <Text style={styles.foodLabelStep2}>Non Veg</Text>
-  //                       </TouchableOpacity>
+  //                       </Pressable>
   //                     </View>
   //                   </View>
   //                   <View style={styles.buffetRowGrid}>
-  //                     <TouchableOpacity
+  //                     <Pressable
   //                       style={styles.checkboxRowStep2Grid}
   //                       onPress={() => setEnableBuffet(!enableBuffet)}
   //                     >
@@ -791,12 +791,12 @@ export default function ManagerRegisterScreen() {
   //                       <Text style={styles.checkboxLabelStep2Grid}>
   //                         Enable Buffet
   //                       </Text>
-  //                     </TouchableOpacity>
+  //                     </Pressable>
   //                   </View>
   //                   <Text style={styles.sectionTitleStep2Grid}>
   //                     Upload Ambiance Photo
   //                   </Text>
-  //                   <TouchableOpacity
+  //                   <Pressable
   //                     style={styles.photoUploadBoxStep2}
   //                     onPress={pickImage}
   //                   >
@@ -816,7 +816,7 @@ export default function ManagerRegisterScreen() {
   //                         style={styles.cameraIconStep2}
   //                       />
   //                     )}
-  //                   </TouchableOpacity>
+  //                   </Pressable>
   //                 </View>
   //               </View>
   //             </View>

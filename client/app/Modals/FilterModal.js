@@ -2,7 +2,7 @@ import React from "react";
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   Text,
   ScrollView,
   Dimensions,
@@ -27,18 +27,18 @@ export default function FilterModal({ visible, onClose, onFilterSelect, selected
   return (
     <View style={styles.overlay}>
       {/* full background click area */}
-      <TouchableOpacity style={styles.overlayTouch} onPress={onClose} />
+      <Pressable style={styles.overlayTouch} onPress={onClose} />
 
       {/* popup */}
       <View style={styles.filterContent}>
         <View style={styles.filterHeaderRow}>
           <Text style={styles.filterTitle}>Filter</Text>
-          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+          <Pressable onPress={onClose} style={styles.backButton}>
             <Text style={{ fontWeight: 'bold', color: '#6B4EFF' }}>Done</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
         {selectedFilters.length > 0 && (
-          <TouchableOpacity
+          <Pressable
             onPress={() => {
               onClearAll?.();
               onClose?.();
@@ -47,14 +47,14 @@ export default function FilterModal({ visible, onClose, onFilterSelect, selected
             accessibilityLabel="Clear all filters"
           >
             <Text style={{ color: '#6B4EFF', fontWeight: 'bold', fontSize: 14, textAlign: 'right' }}>Clear Filters</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
         <ScrollView
           style={styles.filterList}
           showsVerticalScrollIndicator={false}
         >
           {filterOptions.map((option, index) => (
-            <TouchableOpacity
+            <Pressable
               key={index}
               style={[styles.filterOption, isSelected(option) && { backgroundColor: '#ded7fa', borderRadius: 8 }]}
               onPress={() => handleFilterOptionPress(option)}
@@ -67,7 +67,7 @@ export default function FilterModal({ visible, onClose, onFilterSelect, selected
                   <MaterialIcons name="check" size={18} color="#6B4EFF" style={{ marginLeft: 8 }} />
                 )}
               </View>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </ScrollView>
       </View>

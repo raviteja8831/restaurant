@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 
 export default function RestaurantPromoScreen() {
   const [promo, setPromo] = useState('');
@@ -21,9 +21,9 @@ export default function RestaurantPromoScreen() {
         value={announcement}
         onChangeText={setAnnouncement}
       />
-      <TouchableOpacity style={styles.button}>
+      <Pressable style={styles.button}>
         <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 }

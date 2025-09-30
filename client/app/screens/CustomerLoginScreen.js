@@ -6,7 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  TouchableOpacity,
+  Pressable,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TextInput, Text } from "react-native-paper";
@@ -120,9 +120,9 @@ export default function CustomerLoginScreen() {
       {/* Register Link */}
       <View style={styles.registerContainer}>
         <Text style={styles.registerText}>Don’t have an account? </Text>
-        <TouchableOpacity onPress={() => router.push("/customer-register")}>
+        <Pressable onPress={() => router.push("/customer-register")}>
           <Text style={styles.registerLink}>Register</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );

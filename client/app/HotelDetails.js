@@ -5,7 +5,7 @@ import {
   Image,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Alert,
 } from "react-native";
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
@@ -100,19 +100,19 @@ const HotelDetails = () => {
             // { position: "absolute", top: 0, left: 0, right: 0, zIndex: 1 },
           ]}
         >
-          <TouchableOpacity
+          <Pressable
             style={hoteldetailsstyles.backButton}
             onPress={handleBackPress}
           >
             <Ionicons name="chevron-back" size={34} color="black" />
-          </TouchableOpacity>
+          </Pressable>
           <View style={hoteldetailsstyles.topIcons}>
-            <TouchableOpacity style={hoteldetailsstyles.iconCircle}>
+            <Pressable style={hoteldetailsstyles.iconCircle}>
               <Ionicons name="heart-outline" size={24} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity style={hoteldetailsstyles.iconCircle}>
+            </Pressable>
+            <Pressable style={hoteldetailsstyles.iconCircle}>
               <Ionicons name="share-social-outline" size={24} color="black" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
@@ -126,14 +126,14 @@ const HotelDetails = () => {
           {/* Options */}
           <View style={hoteldetailsstyles.optionsRow}>
             {options?.map((opt, i) => (
-              <TouchableOpacity
+              <Pressable
                 key={i}
                 style={hoteldetailsstyles.option}
                 onPress={() => handleOptionPress(opt)}
               >
                 <Ionicons name={opt.icon} size={28} color="black" />
                 <Text style={hoteldetailsstyles.optionText}>{opt.label}</Text>
-              </TouchableOpacity>
+              </Pressable>
             )) || []}
           </View>
 

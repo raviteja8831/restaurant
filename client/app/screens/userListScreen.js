@@ -4,7 +4,7 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   Modal,
   ScrollView,
   TextInput,
@@ -108,12 +108,12 @@ export default function UserListScreen() {
               </View>
             ))}
             <View style={styles.userAddCol}>
-              <TouchableOpacity
+              <Pressable
                 style={styles.userAddBtn}
                 onPress={() => setAddUserModal(true)}
               >
                 <MaterialCommunityIcons name="plus" size={32} color="#222" />
-              </TouchableOpacity>
+              </Pressable>
               <Text style={styles.userAddText}>Add</Text>
             </View>
           </ScrollView>
@@ -134,7 +134,7 @@ export default function UserListScreen() {
             {" "}
             {/* purple background */}
             {/* Close cross icon */}
-            <TouchableOpacity
+            <Pressable
               style={{
                 position: "absolute",
                 top: 10,
@@ -144,7 +144,7 @@ export default function UserListScreen() {
               onPress={() => setAddUserModal(false)}
             >
               <MaterialCommunityIcons name="close" size={28} color="#222" />
-            </TouchableOpacity>
+            </Pressable>
             <Text
               style={[
                 styles.addUserModalTitle,
@@ -227,7 +227,7 @@ export default function UserListScreen() {
                     justifyContent: "center",
                   }}
                 >
-                  <TouchableOpacity
+                  <Pressable
                     style={{
                       paddingHorizontal: 10,
                       height: 40,
@@ -250,7 +250,7 @@ export default function UserListScreen() {
                       size={20}
                       color="#222"
                     />
-                  </TouchableOpacity>
+                  </Pressable>
                   {addUserForm.showRoleDropdown && (
                     <View
                       style={{
@@ -265,7 +265,7 @@ export default function UserListScreen() {
                       }}
                     >
                       {["Chef", "Manager"].map((role) => (
-                        <TouchableOpacity
+                        <Pressable
                           key={role}
                           style={{ padding: 10 }}
                           onPress={() =>
@@ -279,7 +279,7 @@ export default function UserListScreen() {
                           <Text style={{ color: "#222", fontSize: 15 }}>
                             {role}
                           </Text>
-                        </TouchableOpacity>
+                        </Pressable>
                       ))}
                     </View>
                   )}
@@ -312,7 +312,7 @@ export default function UserListScreen() {
               />
             </View>
             {/* Save Button */}
-            <TouchableOpacity
+            <Pressable
               style={[
                 styles.addUserSaveBtn,
                 {
@@ -357,7 +357,7 @@ export default function UserListScreen() {
               <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 15 }}>
                 {addUserLoading ? "Saving..." : "Save"}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -376,9 +376,9 @@ export default function UserListScreen() {
             <Text style={styles.usersProfileRole}>{selectedUser.role}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.usersProfileSettingsBtn}>
+        <Pressable style={styles.usersProfileSettingsBtn}>
           <MaterialCommunityIcons name="cog" size={28} color="#222" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <Text style={styles.usersLoginTime}>
@@ -428,7 +428,7 @@ export default function UserListScreen() {
                   {ordersPeriodValue}
                 </Text>
                 <View style={{ position: "relative", marginLeft: 8 }}>
-                  <TouchableOpacity
+                  <Pressable
                     style={[
                       styles.usersOrdersDropdownBtn,
                       { backgroundColor: "#e8e8e8", minWidth: 70 },
@@ -441,11 +441,11 @@ export default function UserListScreen() {
                     >
                       {ordersPeriodLabel}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                   {showOrdersDropdown && (
                     <View style={styles.usersOrdersDropdownMenuPopupFixed}>
                       {["Year", "Month", "Week"].map((label) => (
-                        <TouchableOpacity
+                        <Pressable
                           key={label}
                           style={styles.usersOrdersDropdownItem}
                           onPress={() => {
@@ -456,7 +456,7 @@ export default function UserListScreen() {
                           <Text style={styles.usersOrdersDropdownItemText}>
                             {label}
                           </Text>
-                        </TouchableOpacity>
+                        </Pressable>
                       ))}
                     </View>
                   )}

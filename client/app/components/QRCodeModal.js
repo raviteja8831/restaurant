@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { Modal, View, Text, TextInput, Pressable, StyleSheet, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import * as FileSystem from 'expo-file-system';
@@ -74,13 +74,13 @@ export default function QRCodeModal({ visible, onClose, onSave, loading, restaur
         <View style={styles.card}>
           {/* Always show close icon at top right */}
           <View style={styles.topRightIcons}>
-            <TouchableOpacity style={styles.iconBtn} onPress={handleClose}>
+            <Pressable style={styles.iconBtn} onPress={handleClose}>
               <MaterialCommunityIcons name="close" size={30} color="#19171d" />
-            </TouchableOpacity>
+            </Pressable>
             {showQR && (
-              <TouchableOpacity style={styles.iconBtn} onPress={handleDownload} disabled={!showQR || !qrValue}>
+              <Pressable style={styles.iconBtn} onPress={handleDownload} disabled={!showQR || !qrValue}>
                 <MaterialCommunityIcons name="download" size={30} color={showQR && qrValue ? "#19171d" : "#bbb"} />
-              </TouchableOpacity>
+              </Pressable>
             )}
           </View>
           {showQR && (
@@ -110,9 +110,9 @@ export default function QRCodeModal({ visible, onClose, onSave, loading, restaur
           </View>
           <View style={styles.btnRow}>
             {!showQR && (
-              <TouchableOpacity style={styles.plusBtn} onPress={handleSave} disabled={loading}>
+              <Pressable style={styles.plusBtn} onPress={handleSave} disabled={loading}>
                 <Text style={styles.plusBtnText}>+</Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
           
           </View>

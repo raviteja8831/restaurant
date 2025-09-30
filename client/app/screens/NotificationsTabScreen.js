@@ -4,7 +4,7 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -33,13 +33,13 @@ export default function NotificationsTabScreen() {
       >
         <View style={styles.reviewsContainer}>
           <View style={styles.reviewsHeader}>
-            <TouchableOpacity style={styles.filterIcon}>
+            <Pressable style={styles.filterIcon}>
               <MaterialCommunityIcons
                 name="filter-variant"
                 size={24}
                 color="#6c63b5"
               />
-            </TouchableOpacity>
+            </Pressable>
             <Text style={styles.reviewsTitle}>Reviews and Ratings</Text>
           </View>
 

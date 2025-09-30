@@ -4,7 +4,7 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
+  Pressable,
   Modal,
   TextInput,
   Alert,
@@ -66,7 +66,7 @@ export default function UserManagementScreen() {
           </View>
         )}
         ListFooterComponent={
-          <TouchableOpacity
+          <Pressable
             style={styles.addBtn}
             onPress={() => setModalVisible(true)}
           >
@@ -76,7 +76,7 @@ export default function UserManagementScreen() {
               color="#7b6eea"
             />
             <Text style={styles.addText}>Add</Text>
-          </TouchableOpacity>
+          </Pressable>
         }
       />
       <Modal

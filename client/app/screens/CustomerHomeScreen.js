@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   Text,
   Image,
   ActivityIndicator,
@@ -450,7 +450,7 @@ function CustomerHomeScreen() {
     >
       {/* Top Controls */}
       <View style={styles.topControls}>
-        <TouchableOpacity
+        <Pressable
           style={styles.gpsIndicator}
           onPress={handleFilterPress}
         >
@@ -458,13 +458,13 @@ function CustomerHomeScreen() {
             source={require("../../assets/images/filter-image.png")}
             style={styles.filterImage}
           />
-        </TouchableOpacity>
+        </Pressable>
         {/* Animated Search Bar */}
         <View style={styles.animatedSearchBarContainer}>
           {!searchOpen ? (
-            <TouchableOpacity style={styles.searchIconButton} onPress={handleOpenSearch}>
+            <Pressable style={styles.searchIconButton} onPress={handleOpenSearch}>
               <MaterialIcons name="search" size={28} color="#6B4EFF" />
-            </TouchableOpacity>
+            </Pressable>
           ) : (
             <View style={[styles.animatedSearchBar, searchOpen && styles.animatedSearchBarOpen]}>
               <MaterialIcons name="search" size={22} color="#6B4EFF" style={{ marginLeft: 10, marginRight: 4 }} />
@@ -480,17 +480,17 @@ function CustomerHomeScreen() {
                 underlineColorAndroid="transparent"
               />
               {searchQuery.length > 0 ? (
-                <TouchableOpacity
+                <Pressable
                   onPress={() => setSearchQuery("")}
                   style={styles.animatedSearchClear}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <MaterialIcons name="close" size={20} color="#888" />
-                </TouchableOpacity>
+                </Pressable>
               ) : (
-                <TouchableOpacity onPress={handleCloseSearch} style={styles.animatedSearchClose}>
+                <Pressable onPress={handleCloseSearch} style={styles.animatedSearchClose}>
                   <MaterialIcons name="close" size={24} color="#6B4EFF" />
-                </TouchableOpacity>
+                </Pressable>
               )}
             </View>
           )}
@@ -513,23 +513,23 @@ function CustomerHomeScreen() {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNavigation}>
-        <TouchableOpacity
+        <Pressable
           style={styles.navButton}
           onPress={handlePersonTabPress}
         >
           <MaterialIcons name="person" size={24} color="white" />
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           style={[styles.navButton, styles.scanButton]}
           onPress={handleScanPress}
         >
           <MaterialCommunityIcons name="qrcode-scan" size={28} color="white" />
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity style={styles.navButton} onPress={handleNavigationPress}>
+        <Pressable style={styles.navButton} onPress={handleNavigationPress}>
           <MaterialIcons name="navigation" size={24} color="white" />
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Navigation Modal for multiple restaurants */}
         <Modal
@@ -551,9 +551,9 @@ function CustomerHomeScreen() {
                   </Pressable>
                 )}
               />
-              <TouchableOpacity onPress={() => setShowNavModal(false)} style={{ marginTop:16, alignSelf:'flex-end' }}>
+              <Pressable onPress={() => setShowNavModal(false)} style={{ marginTop:16, alignSelf:'flex-end' }}>
                 <Text style={{ color:'#6B4EFF', fontWeight:'bold' }}>Cancel</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </Modal>
