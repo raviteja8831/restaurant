@@ -43,7 +43,7 @@ export default function LoginScreen() {
 
   const handleLogin = async (phoneValue, otpValue) => {
     if (!phoneValue || otpValue.some((d) => d.length !== 1)) {
-      Alert.alert("Error", "Please enter a valid phone and OTP");
+     // Alert.alert("Error", "Please enter a valid phone and OTP");
       return;
     }
     try {
@@ -71,14 +71,14 @@ export default function LoginScreen() {
       } else if (role === "chef") {
         router.push("/chef-home");
       } else {
-        Alert.alert(
-          "Login Failed",
-          "Unknown user role: " + (user?.role || "none")
-        );
+        // Alert.alert(
+        //   "Login Failed",
+        //   "Unknown user role: " + (user?.role || "none")
+        // );
       }
     } catch (err) {
       console.error("Login error:", err);
-      Alert.alert("Login Failed", err?.response?.data?.message || err?.message || "Invalid credentials");
+     // Alert.alert("Login Failed", err?.response?.data?.message || err?.message || "Invalid credentials");
     }
   };
 
