@@ -1,72 +1,66 @@
 #!/bin/bash
 set -euo pipefail
 
-#!/bin/bash
-set -euo pipefail
+echo "🚀 Starting full clean build for Android..."
 
-echo "🚀 FULL CLEAN: Removing node_modules and android folder for a fresh start..."
-
-# Go to project root (where script is placed)
-PROJECT_ROOT=$(pwd)
-
-# Step 1: Remove node_modules and android folder
-rm -rf $PROJECT_ROOT/node_modules
-rm -rf $TMPDIR/react-*
-rm -rf $TMPDIR/metro-*
-rm -rf $TMPDIR/haste-*
+# Step 1: Clean everything
+echo "🧹 Removing old build artifacts..."
+rm -rf node_modules
+rm -rf android
+rm -rf /tmp/react-* 2>/dev/null || true
+rm -rf /tmp/metro-* 2>/dev/null || true
+rm -rf /tmp/haste-* 2>/dev/null || true
+rm -rf .expo
 npm cache clean --force
 
 # Step 2: Install dependencies
 echo "📦 Installing dependencies..."
 npm install
 
+# Step 3: Regenerate android folder using Expo prebuild
+echo "🔄 Regenerating android folder with expo prebuild..."
+npx expo prebuild --platform android --clean
 
-# Step 3: Prompt for app name and update app.json
-# read -p "Enter the app name to use (default: Menutha): " APPNAME
-# APPNAME=${APPNAME:-Menutha}
-# echo "Updating app.json with app name: $APPNAME"
-# if [ -f "$PROJECT_ROOT/app.json" ]; then
-# 	# Use jq if available, else fallback to sed
-# 	if command -v jq &> /dev/null; then
-# 		cat $PROJECT_ROOT/app.json | jq --arg name "$APPNAME" '.expo.name = $name' > $PROJECT_ROOT/app.tmp.json && mv $PROJECT_ROOT/app.tmp.json $PROJECT_ROOT/app.json
-# 	else
-# 		sed -i.bak "s/\("name"\): ".*"/\1: \"$APPNAME\"/" $PROJECT_ROOT/app.json
-# 	fi
-# fi
+# Step 4: Generate production bundle with latest code
+echo "📦 Generating production bundle..."
+mkdir -p android/app/src/main/assets
+npx react-native bundle \
+  --platform android \
+  --dev false \
+  --entry-file index.js \
+  --bundle-output android/app/src/main/assets/index.android.bundle \
+  --assets-dest android/app/src/main/res
 
-# Step 4: Regenerate android folder using Expo prebuild
-# echo "🔄 Regenerating android folder with expo prebuild..."
-# npx expo prebuild
-
-# # Step 4: Build Android app only (no emulator)
-# echo "🏗 Building Android app (no emulator)..."
- npx expo prebuild --platform android
+# Step 5: Navigate to android folder
 cd android
 chmod +x gradlew
 
-# Step 4: Clean Android build
+# Step 6: Clean Android build
 echo "🧹 Cleaning Android build..."
 ./gradlew clean
-rm -rf .gradle app/build build .cxx
+rm -rf .gradle app/build build .cxx 2>/dev/null || true
 
-# Step 5: Refresh Gradle dependencies
+# Step 7: Refresh Gradle dependencies
 echo "🔄 Refreshing Gradle dependencies..."
 ./gradlew --refresh-dependencies
 
-# Step 6: Build Debug APK
+# Step 8: Build Debug APK
 echo "🏗 Building Debug APK..."
 ./gradlew assembleDebug
 
-# Step 7: Build Release APK + AAB
-echo "🔑 Building Release APK and AAB..."
-# ./gradlew assembleRelease
-#./gradlew bundleRelease
+# Step 9: Build Release APK
+echo "🔑 Building Release APK..."
+./gradlew assembleRelease
 
-# Step 8: Show output paths
+# Step 10: Build Release AAB (optional - uncomment if needed)
+# echo "📦 Building Release AAB..."
+# ./gradlew bundleRelease
+
+# Step 11: Show output paths
 echo ""
 echo "✅ Build complete!"
-echo "📂 Debug APK:   app/build/outputs/apk/debug/app-debug.apk"
-echo "📂 Release APK: app/build/outputs/apk/release/app-release.apk"
-echo "📂 Release AAB: app/build/outputs/bundle/release/app-release.aab"
-
-
+echo "📂 Debug APK:   android/app/build/outputs/apk/debug/app-debug.apk"
+echo "📂 Release APK: android/app/build/outputs/apk/release/app-release.apk"
+echo "📂 Release AAB: android/app/build/outputs/bundle/release/app-release.aab"
+echo ""
+echo "To install debug APK on device: adb install android/app/build/outputs/apk/debug/app-debug.apk"
