@@ -1,23 +1,20 @@
-import React, { use, useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Provider as PaperProvider } from 'react-native-paper';
 import store from './store';
-import { useRouter, Stack, Slot } from 'expo-router';
+import {  Stack } from 'expo-router';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { AlertProvider } from './services/alertService';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
 
 
   return (
     <ReduxProvider store={store}>
       <PaperProvider>
         <AlertProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <ThemeProvider value={false? DarkTheme : DefaultTheme}>
             <Stack screenOptions={{ headerShown: false }} />
           </ThemeProvider>
         </AlertProvider>
