@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
 
@@ -12,7 +12,7 @@ const BuffetConfirm = () => {
       <Text style={styles.message}>
         Your buffet reservation has been confirmed!
       </Text>
-      <TouchableOpacity
+      <Pressable
         style={styles.backButton}
         onPress={() =>
           router.push({
@@ -26,7 +26,7 @@ const BuffetConfirm = () => {
         }
       >
         <Text style={styles.buttonText}>Back</Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };

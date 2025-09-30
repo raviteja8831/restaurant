@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   Text,
   TextInput,
   ScrollView,
@@ -87,7 +87,7 @@ export default function SearchModal({ visible, onClose, onSearch }) {
   return (
     <View style={styles.overlay}>
       {/* Background overlay */}
-      <TouchableOpacity style={styles.overlayTouch} onPress={onClose} />
+      <Pressable style={styles.overlayTouch} onPress={onClose} />
 
       {/* Search Modal */}
       <View style={[styles.searchContent, { height: modalHeight }]}>
@@ -108,9 +108,9 @@ export default function SearchModal({ visible, onClose, onSearch }) {
             autoFocus={true}
           />
           {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearchTextChange("")}>
+            <Pressable onPress={() => handleSearchTextChange("")}>
               <MaterialIcons name="clear" size={20} color="#666" />
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
 
@@ -123,14 +123,14 @@ export default function SearchModal({ visible, onClose, onSearch }) {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Recent Searches</Text>
               {recentSearches.map((search, index) => (
-                <TouchableOpacity
+                <Pressable
                   key={index}
                   style={styles.searchItem}
                   onPress={() => handleRecentSearchPress(search)}
                 >
                   <MaterialIcons name="history" size={20} color="#666" />
                   <Text style={styles.searchItemText}>{search}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}
@@ -139,14 +139,14 @@ export default function SearchModal({ visible, onClose, onSearch }) {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Popular</Text>
               {popularSearches.map((search, index) => (
-                <TouchableOpacity
+                <Pressable
                   key={index}
                   style={styles.searchItem}
                   onPress={() => handleRecentSearchPress(search)}
                 >
                   <MaterialIcons name="trending-up" size={20} color="#666" />
                   <Text style={styles.searchItemText}>{search}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )} */}
@@ -155,7 +155,7 @@ export default function SearchModal({ visible, onClose, onSearch }) {
           {searchText.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Search Results</Text>
-              <TouchableOpacity
+              <Pressable
                 style={styles.searchItem}
                 onPress={handleSearch}
               >
@@ -163,7 +163,7 @@ export default function SearchModal({ visible, onClose, onSearch }) {
                 <Text style={styles.searchItemText}>
                   Search for "{searchText}"
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           )}
         </ScrollView>

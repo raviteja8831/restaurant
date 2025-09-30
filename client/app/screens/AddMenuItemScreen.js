@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Modal } from 'react-native';
+import { View, Text, Pressable, TextInput, StyleSheet, Modal } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const categories = [
@@ -24,23 +24,23 @@ export default function AddMenuItemScreen({ visible, onClose, onSave, menuId }) 
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalCard}>
-          <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+          <Pressable style={styles.closeBtn} onPress={onClose}>
             <MaterialCommunityIcons name="close" size={28} color="#222" />
-          </TouchableOpacity>
+          </Pressable>
           <Text style={styles.modalTitle}>Add Menu Item</Text>
           {/* Category Dropdown */}
           <Text style={styles.label}>Menu</Text>
-          <TouchableOpacity style={styles.dropdown} onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}>
+          <Pressable style={styles.dropdown} onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}>
             <Text style={styles.dropdownText}>{menu || 'Select menu'}</Text>
             <MaterialCommunityIcons name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={24} color="#222" />
-          </TouchableOpacity>
+          </Pressable>
           {showCategoryDropdown && (
             <View style={styles.dropdownMenu}>
               <Text style={styles.dropdownMenuTitle}>Menu</Text>
               {categories.map((cat) => (
-                <TouchableOpacity key={cat} style={styles.dropdownMenuItem} onPress={() => { setMenu(cat); setShowCategoryDropdown(false); }}>
+                <Pressable key={cat} style={styles.dropdownMenuItem} onPress={() => { setMenu(cat); setShowCategoryDropdown(false); }}>
                   <Text style={styles.dropdownMenuItemText}>• {cat}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}
@@ -72,9 +72,9 @@ export default function AddMenuItemScreen({ visible, onClose, onSave, menuId }) 
             keyboardType="numeric"
             placeholderTextColor="#888"
           />
-          <TouchableOpacity style={styles.saveBtn} onPress={() => { onSave && onSave({ menu, type, name, price, menuId }); onClose && onClose(); }}>
+          <Pressable style={styles.saveBtn} onPress={() => { onSave && onSave({ menu, type, name, price, menuId }); onClose && onClose(); }}>
             <Text style={styles.saveBtnText}>Save</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </Modal>

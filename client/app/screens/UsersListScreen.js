@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { fetchManagedUsers } from '../api/managerApi';
 import { showApiError } from '../services/messagingService';
 
@@ -25,9 +25,9 @@ export default function UsersListScreen({ navigation }) {
         {users.map((u, i) => (
           <View key={i} style={styles.avatar} />
         ))}
-        <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('AddUser')}>
+        <Pressable style={styles.addBtn} onPress={() => navigation.navigate('AddUser')}>
           <Text style={styles.addText}>+</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
       {users.map((u, i) => (
         <View key={i} style={styles.userCard}>

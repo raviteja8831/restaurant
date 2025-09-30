@@ -2,7 +2,7 @@
 
 
 import React, { useState, useEffect } from "react";
-import { View, Modal, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Modal, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
 // menus: [{ id, name, items: [{id, name}] }]
@@ -81,7 +81,7 @@ export default function AddMenuItemModal({
               <Text style={styles.label}>Menu</Text>
               <ScrollView style={styles.dropdown}>
                 {filteredMenus.map(menu => (
-                  <TouchableOpacity
+                  <Pressable
                     key={menu.id}
                     style={[styles.dropdownItem, selectedMenuId === menu.id && styles.selected]}
                     onPress={() => {
@@ -99,7 +99,7 @@ export default function AddMenuItemModal({
                     }}
                   >
                     <Text>{menu.name}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </ScrollView>
               {selectedMenu && (
@@ -111,7 +111,7 @@ export default function AddMenuItemModal({
                       const isSelected = selectedMenuItemIds.includes(itemIdStr);
                       const isAllotted = allottedIdsStr.includes(itemIdStr);
                       return (
-                        <TouchableOpacity
+                        <Pressable
                           key={item.id}
                           style={[styles.dropdownItem, isSelected && styles.selected]}
                           onPress={() => {
@@ -137,7 +137,7 @@ export default function AddMenuItemModal({
                               <Text style={{ color: '#888', marginLeft: 4 }}></Text>
                             ) : null} */}
                           </View>
-                        </TouchableOpacity>
+                        </Pressable>
                       );
                     })}
                   </ScrollView>
@@ -146,10 +146,10 @@ export default function AddMenuItemModal({
             </>
           )}
           <View style={styles.actions}>
-            <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+            <Pressable onPress={onClose} style={styles.cancelBtn}>
               <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Pressable>
+            <Pressable
               onPress={() => {
                 // Collect only currently selected items from all menus
                 let allSelected = [];
@@ -168,7 +168,7 @@ export default function AddMenuItemModal({
               disabled={filteredMenus.length === 0}
             >
               <Ionicons name="checkmark" size={24} color="#fff" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>

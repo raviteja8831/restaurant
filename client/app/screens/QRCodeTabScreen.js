@@ -7,7 +7,7 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   Modal,
   ScrollView,
   Dimensions,
@@ -43,7 +43,7 @@ export default function QRCodeTabScreen() {
           </View>
 
           {/* New QR Code Button */}
-          <TouchableOpacity
+          <Pressable
             style={styles.newQRButton}
             onPress={() => setShowNewQRModal(true)}
           >
@@ -54,19 +54,19 @@ export default function QRCodeTabScreen() {
               style={{ marginRight: 8 }}
             />
             <Text style={styles.newQRButtonText}>New QR Code</Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Customer Statistics Section */}
           <View style={styles.qrStatsContainer}>
             <View style={styles.qrStatsRow}>
-              <TouchableOpacity style={styles.qrPeriodButton}>
+              <Pressable style={styles.qrPeriodButton}>
                 <Text style={styles.qrPeriodButtonText}>Today</Text>
                 <MaterialCommunityIcons
                   name="chevron-down"
                   size={16}
                   color="#000"
                 />
-              </TouchableOpacity>
+              </Pressable>
               <View style={styles.qrCustomerCountContainer}>
                 <Text style={styles.qrCustomerCountText}>
                   No of Customers today : 50
@@ -77,13 +77,13 @@ export default function QRCodeTabScreen() {
             {/* Table Buttons */}
             <View style={styles.qrTableButtons}>
               {[1, 2, 3, 4, 5, 6].map((num) => (
-                <TouchableOpacity
+                <Pressable
                   key={num}
                   style={styles.qrTableButton}
                   onPress={() => handleTableClick(num)}
                 >
                   <Text style={styles.qrTableButtonText}>Table {num}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </View>

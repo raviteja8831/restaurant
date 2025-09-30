@@ -4,7 +4,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
 } from "react-native";
 
@@ -36,12 +36,12 @@ export default function CommentModal({
             multiline
           />
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+            <Pressable style={styles.cancelButton} onPress={onClose}>
               <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
+            </Pressable>
+            <Pressable style={styles.submitButton} onPress={onSubmit}>
               <Text style={styles.submitText}>Submit</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>

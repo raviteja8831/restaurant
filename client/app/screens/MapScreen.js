@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, Platform } from "react-native";
+import { View, StyleSheet, ActivityIndicator, Pressable, Text, Platform } from "react-native";
 import * as Location from "expo-location";
 
 // let MapView, Marker;
@@ -98,15 +98,15 @@ export default function MapScreen({ navigation }) {
         </View>
       )}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Filter')}>
+        <Pressable style={styles.iconBtn} onPress={() => navigation.navigate('Filter')}>
           Filter
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('OrderSummary')}>
+        </Pressable>
+        <Pressable style={styles.iconBtn} onPress={() => navigation.navigate('OrderSummary')}>
           Order Summary
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Profile')}>
+        </Pressable>
+        <Pressable style={styles.iconBtn} onPress={() => navigation.navigate('Profile')}>
           Profile
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

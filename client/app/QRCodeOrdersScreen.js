@@ -7,7 +7,7 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   ActivityIndicator,
   Alert,
@@ -235,7 +235,7 @@ export default function QRCodeOrdersScreen() {
           marginBottom: 8,
         }}
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => {
             if (router.canGoBack && router.canGoBack()) {
               router.back();
@@ -246,14 +246,14 @@ export default function QRCodeOrdersScreen() {
           style={{ marginRight: 8 }}
         >
           <MaterialCommunityIcons name="arrow-left" size={28} color="#222" />
-        </TouchableOpacity>
+        </Pressable>
         <Text style={styles.tableTitle}>{editValue}</Text>
-        <TouchableOpacity onPress={handleEditQRCode} style={{ marginLeft: 8 }}>
+        <Pressable onPress={handleEditQRCode} style={{ marginLeft: 8 }}>
           <MaterialCommunityIcons name="pencil" size={22} color="#6c63b5" />
-        </TouchableOpacity>
+        </Pressable>
         <View style={{ flex: 1 }} />
         <View style={{ position: "relative", zIndex: 10000 }}>
-          <TouchableOpacity
+          <Pressable
             style={styles.periodDropdown}
             onPress={() => setShowPeriodDropdown((v) => !v)}
           >
@@ -265,7 +265,7 @@ export default function QRCodeOrdersScreen() {
               size={20}
               color="#7b6eea"
             />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -300,7 +300,7 @@ export default function QRCodeOrdersScreen() {
               }}
             >
               <QRCode value={editValue} size={64} getRef={qrSvgRef} />
-              <TouchableOpacity
+              <Pressable
                 onPress={handleDeleteQRCode}
                 style={{ marginLeft: 8 }}
               >
@@ -309,7 +309,7 @@ export default function QRCodeOrdersScreen() {
                   size={28}
                   color="#444"
                 />
-              </TouchableOpacity>
+              </Pressable>
             </View>
             <Text style={{ marginTop: 12, fontWeight: "bold", color: "#222" }}>
               Name:
@@ -355,7 +355,7 @@ export default function QRCodeOrdersScreen() {
                 justifyContent: "flex-end",
               }}
             >
-              <TouchableOpacity
+              <Pressable
                 onPress={handleDownloadQRCode}
                 style={{ marginRight: 16 }}
               >
@@ -364,8 +364,8 @@ export default function QRCodeOrdersScreen() {
                   size={28}
                   color="#6c63b5"
                 />
-              </TouchableOpacity>
-              <TouchableOpacity
+              </Pressable>
+              <Pressable
                 onPress={handleSaveQRCode}
                 disabled={editLoading}
               >
@@ -374,14 +374,14 @@ export default function QRCodeOrdersScreen() {
                   size={28}
                   color={editLoading ? "#aaa" : "#6c63b5"}
                 />
-              </TouchableOpacity>
+              </Pressable>
             </View>
-            <TouchableOpacity
+            <Pressable
               onPress={() => setShowEditModal(false)}
               style={{ position: "absolute", top: 8, right: 8 }}
             >
               <MaterialCommunityIcons name="close" size={24} color="#888" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -393,7 +393,7 @@ export default function QRCodeOrdersScreen() {
           ]}
         >
           {PERIODS.map((p) => (
-            <TouchableOpacity
+            <Pressable
               key={p.value}
               style={styles.periodDropdownItem}
               onPress={() => {
@@ -409,7 +409,7 @@ export default function QRCodeOrdersScreen() {
               >
                 {p.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
       )}
@@ -441,7 +441,7 @@ export default function QRCodeOrdersScreen() {
               </Text>
               <Text style={styles.tableCell}>{item.amount}</Text>
               <Text style={styles.tableCell}>{item.status}</Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={(event) => {
                   // Get the position of the pressed icon
                   event.target.measure((fx, fy, width, height, px, py) => {
@@ -456,7 +456,7 @@ export default function QRCodeOrdersScreen() {
                   size={22}
                   color="#6c63b5"
                 />
-              </TouchableOpacity>
+              </Pressable>
               {/* Action menu for this order */}
               {actionMenuOrderId === item.id && (
                 <Modal
@@ -465,7 +465,7 @@ export default function QRCodeOrdersScreen() {
                   animationType="fade"
                   onRequestClose={() => setActionMenuOrderId(null)}
                 >
-                  <TouchableOpacity
+                  <Pressable
                     style={{
                       flex: 1,
                       position: "absolute",
@@ -496,7 +496,7 @@ export default function QRCodeOrdersScreen() {
                         paddingVertical: 4,
                       }}
                     >
-                      <TouchableOpacity
+                      <Pressable
                         onPress={() => handleClearOrder(item.id)}
                         style={{
                           padding: 12,
@@ -512,8 +512,8 @@ export default function QRCodeOrdersScreen() {
                         <Text style={{ marginLeft: 8, color: "#c22a2a" }}>
                           Clear
                         </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
+                      </Pressable>
+                      <Pressable
                         onPress={() => handlePrintOrder(item)}
                         style={{
                           padding: 12,
@@ -527,9 +527,9 @@ export default function QRCodeOrdersScreen() {
                           color="#6c63b5"
                         />
                         <Text style={{ marginLeft: 8 }}>Print</Text>
-                      </TouchableOpacity>
+                      </Pressable>
                     </View>
-                  </TouchableOpacity>
+                  </Pressable>
                 </Modal>
               )}
             </View>

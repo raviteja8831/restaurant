@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   Switch,
   Dimensions,
@@ -98,12 +98,12 @@ export default function MenuScreen() {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
+          <Pressable
             style={styles.backBtn}
             onPress={() => router.replace("/dashboard")}
           >
             <MaterialCommunityIcons name="arrow-left" size={28} color="#222" />
-          </TouchableOpacity>
+          </Pressable>
           <Text style={styles.title}>Menu</Text>
         </View>
 
@@ -115,7 +115,7 @@ export default function MenuScreen() {
           {/* Menu Grid */}
           <View style={styles.gridContainer}>
             {menuCategories.map((cat, idx) => (
-              <TouchableOpacity
+              <Pressable
                 key={cat.label}
                 style={[styles.menuCard, { width: cardWidth }]}
               >
@@ -138,7 +138,7 @@ export default function MenuScreen() {
                 >
                   {cat.label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
 
@@ -150,12 +150,12 @@ export default function MenuScreen() {
         </ScrollView>
 
         {/* Add Button */}
-        <TouchableOpacity
+        <Pressable
           style={[styles.addBtn, { width: width - 60 }]}
           onPress={() => setShowAddModal(true)}
         >
           <Text style={styles.addBtnText}>+Add</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
       <AddMenuItemScreen
         visible={showAddModal}

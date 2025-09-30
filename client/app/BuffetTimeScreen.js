@@ -4,7 +4,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   SafeAreaView,
   Image,
   ScrollView,
@@ -185,12 +185,12 @@ const BuffetTimeScreen = () => {
 
   return (
     <SafeAreaView style={buffetsimescreenstyles.container}>
-      <TouchableOpacity
+      <Pressable
         style={buffetsimescreenstyles.backButton}
         onPress={handleBack}
       >
         <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-      </TouchableOpacity>
+      </Pressable>
       <ScrollView
         contentContainerStyle={buffetsimescreenstyles.scrollContainer}
       >
@@ -222,7 +222,7 @@ const BuffetTimeScreen = () => {
 
           {/* Buffet Cards */}
           {currentBuffet.map((buffet, index) => (
-            <TouchableOpacity
+            <Pressable
               key={buffet.id}
               style={[
                 buffetsimescreenstyles.buffetCard,
@@ -270,19 +270,19 @@ const BuffetTimeScreen = () => {
                   </Text>
                 </View>
               </View>
-            </TouchableOpacity>
+            </Pressable>
           ))}
 
           <Text style={buffetsimescreenstyles.personsLabel}>
             No. of Persons
           </Text>
           <View style={buffetsimescreenstyles.personsInputContainer}>
-            <TouchableOpacity
+            <Pressable
               style={buffetsimescreenstyles.personButton}
               onPress={() => setPersons(Math.max(0, persons - 1))}
             >
               <Text style={buffetsimescreenstyles.personButtonText}>-</Text>
-            </TouchableOpacity>
+            </Pressable>
             <TextInput
               style={buffetsimescreenstyles.personsInput}
               value={persons.toString()}
@@ -292,12 +292,12 @@ const BuffetTimeScreen = () => {
                 setPersons(Math.max(0, value));
               }}
             />
-            <TouchableOpacity
+            <Pressable
               style={buffetsimescreenstyles.personButton}
               onPress={() => setPersons(persons + 1)}
             >
               <Text style={buffetsimescreenstyles.personButtonText}>+</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
           <Text style={buffetsimescreenstyles.buffetItems}>
             {currentBuffet.buffetitems}
@@ -318,7 +318,7 @@ const BuffetTimeScreen = () => {
             </Text>
           </View>
 
-          <TouchableOpacity
+          <Pressable
             style={[
               buffetsimescreenstyles.payButton,
               persons === 0 && buffetsimescreenstyles.payButtonDisabled,
@@ -327,7 +327,7 @@ const BuffetTimeScreen = () => {
             disabled={persons === 0}
           >
             <Text style={buffetsimescreenstyles.payText}>Pay</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>

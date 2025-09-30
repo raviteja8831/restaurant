@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, Alert, Image } from 'react-native';
 import { chefLogin } from '../api/chefApi';
 import { showApiError } from '../services/messagingService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,9 +30,9 @@ export default function ChefLoginScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {/* Top right language icon */}
-      <TouchableOpacity style={styles.languageIcon}>
+      <Pressable style={styles.languageIcon}>
         <Image source={require('../../assets/images/localize.png')} style={{ width: 36, height: 36 }} />
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Phone input */}
       <View style={styles.formContainer}>
@@ -68,10 +68,10 @@ export default function ChefLoginScreen({ navigation }) {
 </View>
       {/* Fingerprint icon at bottom center */}
       <View style={styles.loginbutton}>
-        <TouchableOpacity  onPress={handleLogin}>
+        <Pressable  onPress={handleLogin}>
           {/* <Image source={require('../../assets/images/login.png')} style={styles.fingerprintIcon} /> */}
           <Text style={styles.buttonTextStep}>Login</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );

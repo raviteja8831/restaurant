@@ -7,7 +7,7 @@ import {
   Platform,
   Image,
 } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { Pressable } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TextInput, Text } from "react-native-paper";
 import axios from "axios";
@@ -128,13 +128,13 @@ export default function LoginScreen() {
 
       {/* Register Link */}
       <View style={styles.registerContainer}>
-        <Text style={styles.registerText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => {
+        <Text style={styles.registerText}>Dont have an account? </Text>
+        <Pressable onPress={() => {
           console.log("Register button pressed");
           router.replace("/manager-register");
         }}>
           <Text style={styles.registerLink}>Register</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );

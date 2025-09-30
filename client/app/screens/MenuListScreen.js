@@ -2,7 +2,7 @@ import React, { useState, useEffect, use } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   Dimensions,
   SafeAreaView,
@@ -198,7 +198,7 @@ export default function MenuListScreen() {
       <View style={menuliststyles.container}>
         <SafeAreaView style={menuliststyles.safeArea}>
           {/* Back Button - Outside ScrollView */}
-          <TouchableOpacity
+          <Pressable
             style={menuliststyles.backButton}
             onPress={() => handleBackPress(ishotel)}
           >
@@ -207,7 +207,7 @@ export default function MenuListScreen() {
               size={44}
               color="#000"
             />
-          </TouchableOpacity>
+          </Pressable>
 
           <ScrollView
             style={menuliststyles.mainScrollView}
@@ -234,7 +234,7 @@ export default function MenuListScreen() {
             {/* Menu Grid */}
             <View style={menuliststyles.gridContainer}>
               {menuCategories?.map((category, index) => (
-                <TouchableOpacity
+                <Pressable
                   key={category.id}
                   style={menuliststyles.menuCard}
                   onPress={() => handleCategoryPress(category)}
@@ -248,14 +248,14 @@ export default function MenuListScreen() {
                   <Text style={menuliststyles.itemCount}>
                     ({category.menuItems.length} items)
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
 
             {/* {isbuffet} */}
             {ishotel == "true" && isbuffet && (
               <View style={menuliststyles.buffetSection}>
-                <TouchableOpacity
+                <Pressable
                   style={[menuliststyles.buffetButton, responsiveStyles.bg1]}
                   onPress={() => {
                     router.push({
@@ -271,7 +271,7 @@ export default function MenuListScreen() {
                   <Text style={menuliststyles.buffetText}>
                     Buffet Available
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
             {/* Total Amount */}
@@ -283,7 +283,7 @@ export default function MenuListScreen() {
                     <Text style={menuliststyles.totalText}>
                       Total Amount = ₹{orderSummary.totalCost}/-
                     </Text>
-                    <TouchableOpacity
+                    <Pressable
                       style={[
                         menuliststyles.finalOrderButton,
                         responsiveStyles.bg1,
@@ -293,7 +293,7 @@ export default function MenuListScreen() {
                       <Text style={menuliststyles.finalOrderButtonText}>
                         Final Order
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 </View>
               )}

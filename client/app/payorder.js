@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   // Dimensions, (unused)
   ActivityIndicator,
@@ -182,15 +182,15 @@ export default function OrderSummaryScreen() {
     >
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <Pressable style={styles.backButton} onPress={handleBackPress}>
             <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
-          </TouchableOpacity>
+          </Pressable>
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Your Order</Text>
           </View>
         </View>
 
-        <TouchableOpacity
+        <Pressable
           style={styles.tableContainer}
           activeOpacity={1}
           // onPress={() => setEditingItem(null)} (editingItem unused)
@@ -231,7 +231,7 @@ export default function OrderSummaryScreen() {
               </Text>
             </View>
           ))}
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={styles.totalRow}>
           <Text style={[styles.cell, styles.statusColumn]} />
@@ -247,7 +247,7 @@ export default function OrderSummaryScreen() {
           </Text>
           <View style={styles.stars}>
             {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity
+              <Pressable
                 key={star}
                 onPress={() => handleStarPress(star)}
                 style={styles.starButton}
@@ -257,7 +257,7 @@ export default function OrderSummaryScreen() {
                   size={28}
                   color={star <= userRating ? "#FFD700" : "#240d0dff"}
                 />
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -267,7 +267,7 @@ export default function OrderSummaryScreen() {
         </View>
 
 
-        <TouchableOpacity
+        <Pressable
           style={[styles.payButton]}
           onPress={handleSubmitAndPay}
           disabled={paying}
@@ -277,7 +277,7 @@ export default function OrderSummaryScreen() {
           ) : (
             <Text style={styles.payText}>Submit & Pay</Text>
           )}
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Show QR code for UPI payment as backup */}
         {upiUrl ? (

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
@@ -101,16 +101,16 @@ export default function QRCodeScreen() {
           style={styles.qrIcon}
         />
       </View>
-      <TouchableOpacity
+      <Pressable
         style={styles.addBtn}
         activeOpacity={0.8}
         onPress={() => setShowModal(true)}
       >
         <Text style={styles.addBtnText}>+</Text>
         <Text style={styles.addBtnLabel}>New QR Code</Text>
-      </TouchableOpacity>
+      </Pressable>
       <View style={styles.statsRow}>
-        <TouchableOpacity
+        <Pressable
           style={styles.dropdownFake}
           onPress={() => setDropdownVisible(true)}
           activeOpacity={0.7}
@@ -121,7 +121,7 @@ export default function QRCodeScreen() {
             size={20}
             color="#7b6eea"
           />
-        </TouchableOpacity>
+        </Pressable>
         {/* <Text style={styles.statsText}>No of Customers today : <Text style={styles.statsNum}>50</Text></Text> */}
       </View>
       <Modal
@@ -130,14 +130,14 @@ export default function QRCodeScreen() {
         animationType="fade"
         onRequestClose={() => setDropdownVisible(false)}
       >
-        <TouchableOpacity
+        <Pressable
           style={styles.modalOverlay}
           activeOpacity={1}
           onPressOut={() => setDropdownVisible(false)}
         >
           <View style={styles.dropdownModal}>
             {["Today", "Week", "Month"].map((option) => (
-              <TouchableOpacity
+              <Pressable
                 key={option}
                 style={[
                   styles.dropdownOption,
@@ -156,10 +156,10 @@ export default function QRCodeScreen() {
                 >
                   {option}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
-        </TouchableOpacity>
+        </Pressable>
       </Modal>
       <Text
         style={{
@@ -180,12 +180,12 @@ export default function QRCodeScreen() {
           keyExtractor={(item) => item.id?.toString() || item.name}
           contentContainerStyle={styles.tablesRow}
           renderItem={({ item }) => (
-            <TouchableOpacity
+            <Pressable
               style={styles.tableBtn}
               onPress={() => handleQRCodePress(item)}
             >
               <Text style={styles.tableBtnText}>{item.name}</Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
           ListEmptyComponent={
             <Text style={{ color: "#fff", textAlign: "center", marginTop: 16 }}>

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 
 export default function EditUserScreen({ user, onSave, onClose }) {
   const [firstname, setFirstname] = useState('');
@@ -60,34 +60,34 @@ export default function EditUserScreen({ user, onSave, onClose }) {
         <TextInput style={styles.input} placeholder="New Password (leave blank to keep)" value={password} onChangeText={setPassword} secureTextEntry />
         {/* Role Dropdown */}
         <View style={{ width: '100%', marginBottom: 15 }}>
-          <TouchableOpacity
+          <Pressable
             style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
             onPress={() => setShowRoleDropdown(v => !v)}
           >
             <Text style={{ color: '#fff' }}>{roleOptions.find(r => r.value === role)?.label || 'Select Role'}</Text>
             <Text style={{ color: '#fff' }}>{showRoleDropdown ? '\u25B2' : '\u25BC'}</Text>
-          </TouchableOpacity>
+          </Pressable>
           {showRoleDropdown && (
             <View style={{ backgroundColor: '#a18cd1', borderRadius: 8, marginTop: 4 }}>
               {roleOptions.map(opt => (
-                <TouchableOpacity
+                <Pressable
                   key={opt.value}
                   style={{ padding: 10 }}
                   onPress={() => { setRole(opt.value); setShowRoleDropdown(false); }}
                 >
                   <Text style={{ color: '#fff' }}>{opt.label}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
-          <TouchableOpacity style={[styles.button, { backgroundColor: '#aaa' }]} onPress={onClose} disabled={loading}>
+          <Pressable style={[styles.button, { backgroundColor: '#aaa' }]} onPress={onClose} disabled={loading}>
             <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={handleSave} disabled={loading}>
+          </Pressable>
+          <Pressable style={styles.button} onPress={handleSave} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Save</Text>}
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </View>

@@ -3,7 +3,7 @@ import {
   View,
   Text,
   Image,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   ScrollView,
   SafeAreaView,
@@ -363,12 +363,12 @@ export default function ItemsListScreen() {
         resizeMode="repeat"
       />
       <View style={orderitemsstyle.header}>
-        <TouchableOpacity
+        <Pressable
           style={orderitemsstyle.backButton}
           onPress={handleBackPress}
         >
           <MaterialCommunityIcons name="chevron-left" size={44} color="#000" />
-        </TouchableOpacity>
+        </Pressable>
         <View
           style={[
             orderitemsstyle.headerContent, //,
@@ -395,7 +395,7 @@ export default function ItemsListScreen() {
         {items.map((item) => (
           <View key={item.id} style={orderitemsstyle.itemRow}>
             {params.ishotel == "false" && (
-              <TouchableOpacity
+              <Pressable
                 style={orderitemsstyle.checkboxContainer}
                 onPress={() => handleItemSelect(item.id)}
               >
@@ -409,7 +409,7 @@ export default function ItemsListScreen() {
                     <MaterialIcons name="check" size={16} color="#fff" />
                   )}
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             )}
 
             {/* Item Info */}
@@ -423,29 +423,29 @@ export default function ItemsListScreen() {
               (item.selected ? (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <View style={orderitemsstyle.quantityContainer}>
-                    <TouchableOpacity
+                    <Pressable
                       style={orderitemsstyle.quantityButton}
                       onPress={() => handleQuantityChange(item.id, -1)}
                     >
                       <Text style={orderitemsstyle.quantityButtonText}>-</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                     <Text style={orderitemsstyle.quantityText}>
                       {item.quantity}
                     </Text>
-                    <TouchableOpacity
+                    <Pressable
                       style={orderitemsstyle.quantityButton}
                       onPress={() => handleQuantityChange(item.id, 1)}
                     >
                       <Text style={orderitemsstyle.quantityButtonText}>+</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
 
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => handleEdit(item)}
                     style={{ marginHorizontal: 6 }}
                   >
                     <Feather name="edit-2" size={24} color="#000" />
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               ) : (
                 ""
@@ -462,7 +462,7 @@ export default function ItemsListScreen() {
             <Text style={orderitemsstyle.summaryText}>
               Total Cost of Selection = ₹{totalCost}
             </Text>
-            <TouchableOpacity
+            <Pressable
               style={[
                 orderitemsstyle.placeOrderButton,
                 responsiveStyles.bg1,
@@ -475,7 +475,7 @@ export default function ItemsListScreen() {
               <Text style={orderitemsstyle.placeOrderButtonText}>
                 Place Order
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
       </ScrollView>

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Modal, Pressable, StyleSheet } from "react-native";
 import { responsiveStyles } from "../styles/responsive";
 
 export default function CommentModal({ visible, onClose, onSubmit }) {
@@ -18,18 +18,18 @@ export default function CommentModal({ visible, onClose, onSubmit }) {
           </Text>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
+            <Pressable
               style={[styles.button, styles.cancelButton]}
               onPress={onClose}
             >
               <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Pressable>
+            <Pressable
               style={[styles.button, styles.submitButton, responsiveStyles.bg1]}
               onPress={onSubmit}
             >
               <Text style={styles.buttonText}>Submit</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </View>

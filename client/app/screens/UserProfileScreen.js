@@ -5,7 +5,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Image,
   Dimensions,
   SafeAreaView,
@@ -132,7 +132,7 @@ export default function UserProfileScreen() {
 
   // eslint-disable-next-line react/display-name
   const AccordionHeader = React.memo(({ title, isExpanded, onPress }) => (
-    <TouchableOpacity
+    <Pressable
       style={[
         styles.accordionHeader,
         isExpanded && styles.accordionHeaderActive,
@@ -145,7 +145,7 @@ export default function UserProfileScreen() {
         size={24}
         color="#000"
       />
-    </TouchableOpacity>
+    </Pressable>
   ));
 
   AccordionHeader.propTypes = {
@@ -408,11 +408,11 @@ export default function UserProfileScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push("/customer-home")}>
+        <Pressable onPress={() => router.push("/customer-home")}>
           <MaterialIcons name="chevron-left" size={34} color="#000" />
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           style={styles.logoutButton}
           onPress={async () => {
             await AsyncStorage.clear();
@@ -420,12 +420,12 @@ export default function UserProfileScreen() {
           }}
         >
           <MaterialCommunityIcons name="power" size={28} color="#000" />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
-      {/* <TouchableOpacity>
+      {/* <Pressable>
         <MaterialIcons name="translate" size={24} color="#000" />
-      </TouchableOpacity> */}
+      </Pressable> */}
 
       {/* Profile Section */}
       <View style={styles.profileSection}>
@@ -457,23 +457,23 @@ export default function UserProfileScreen() {
 
       {/* Tab Navigation */}
       <View style={styles.tabNavigation}>
-        <TouchableOpacity
+        <Pressable
           style={styles.tabButton}
           onPress={() => setActiveTab("reviews")}
         >
           <MaterialIcons name="history" size={32} color="#000" />
           {activeTab === "reviews" && <View style={styles.tabArrow} />}
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           style={styles.tabButton}
           onPress={() => setActiveTab("favorites")}
         >
           <MaterialIcons name="favorite" size={32} color="#000" />
           {activeTab === "favorites" && <View style={styles.tabArrow} />}
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           style={styles.tabButton}
           onPress={() => setActiveTab("transactions")}
         >
@@ -490,7 +490,7 @@ export default function UserProfileScreen() {
             ₹
           </Text>
           {activeTab === "transactions" && <View style={styles.tabArrow} />}
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Border Separator */}

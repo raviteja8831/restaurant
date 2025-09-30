@@ -2,7 +2,7 @@ import React, { use, useEffect, useState } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   StyleSheet,
   Modal,
@@ -209,7 +209,7 @@ export default function UsersTabScreen() {
             contentContainerStyle={{ alignItems: "center", paddingBottom: 4 }}
           >
             {userList.map((user, idx) => (
-              <TouchableOpacity
+              <Pressable
                 key={user.id}
                 style={[
                   styles.userAvatarCol,
@@ -237,12 +237,12 @@ export default function UsersTabScreen() {
                   )}
                 </View>
                 <Text style={styles.userAvatarRole}>{user.role ? user.role.toUpperCase() : "CHEF"}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </ScrollView>
           {/* Add User Plus Icon */}
           <View style={{ alignItems: "left", marginTop: 8 }}>
-            <TouchableOpacity
+            <Pressable
               style={{
                 backgroundColor: "#ece9fa",
                 borderRadius: 28,
@@ -255,7 +255,7 @@ export default function UsersTabScreen() {
               onPress={() => setShowAddUserModal(true)}
             >
               <MaterialCommunityIcons name="plus" size={32} color="#6c63b5" />
-            </TouchableOpacity>
+            </Pressable>
             <Text
               style={{
                 fontSize: 13,
@@ -305,12 +305,12 @@ export default function UsersTabScreen() {
               </Text>
             </View>
           </View>
-          <TouchableOpacity
+          <Pressable
             style={styles.usersProfileSettingsBtn}
             onPress={() => setShowEditUserModal(true)}
           >
             <MaterialCommunityIcons name="cog" size={28} color="#6c63b5" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Edit User Modal */}
@@ -353,7 +353,7 @@ export default function UsersTabScreen() {
                 justifyContent: "space-between",
               }}
             >
-              <TouchableOpacity
+              <Pressable
                 onPress={() => {
                   setShowAddMenuModal(true);
                   setAction("remove");
@@ -364,16 +364,16 @@ export default function UsersTabScreen() {
                   size={22}
                   color="#6c63b5"
                 />
-              </TouchableOpacity>
+              </Pressable>
               <Text style={styles.usersAllottedTitle}>Allotted Dishes</Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => {
                   setShowAddMenuModal(true);
                   setAction("add");
                 }}
               >
                 <MaterialCommunityIcons name="plus" size={22} color="#6c63b5" />
-              </TouchableOpacity>
+              </Pressable>
             </View>
             <ScrollView>
               {allottedUserMenuItemIds?.map((dish, idx) => (
@@ -454,7 +454,7 @@ export default function UsersTabScreen() {
               </Text>
               {/* Floating Period Dropdown */}
               <View style={{ position: "absolute", top: 12, right: 12 }}>
-                <TouchableOpacity
+                <Pressable
                   style={{
                     backgroundColor: "#d1c4e9",
                     borderRadius: 8,
@@ -472,7 +472,7 @@ export default function UsersTabScreen() {
                   >
                     {periodOptions.find((p) => p.value === period)?.label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
                 {showPeriodDropdown && (
                   <View
                     style={{
@@ -497,7 +497,7 @@ export default function UsersTabScreen() {
                   >
                     <ScrollView nestedScrollEnabled={true} showsVerticalScrollIndicator={false}>
                       {periodOptions.map((opt) => (
-                        <TouchableOpacity
+                        <Pressable
                           key={opt.value}
                           style={{
                             padding: 12,
@@ -513,7 +513,7 @@ export default function UsersTabScreen() {
                           <Text style={{ color: "#6c63b5", fontWeight: "bold", fontSize: 16 }}>
                             {opt.label}
                           </Text>
-                        </TouchableOpacity>
+                        </Pressable>
                       ))}
                     </ScrollView>
                   </View>
@@ -616,7 +616,7 @@ export default function UsersTabScreen() {
               onChangeText={setMessage}
               editable={!sending}
             />
-            <TouchableOpacity
+            <Pressable
               onPress={handleSendMessage}
               disabled={sending || !message.trim()}
               style={{ marginLeft: 8 }}
@@ -626,7 +626,7 @@ export default function UsersTabScreen() {
                 size={24}
                 color={sending || !message.trim() ? "#ccc" : "#6c63b5"}
               />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 

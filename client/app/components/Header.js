@@ -1,26 +1,26 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function Header({ title, onBack, onProfile, onLogout, showProfile, showLogout }) {
   return (
     <View style={styles.header}>
       {onBack && (
-        <TouchableOpacity onPress={onBack} style={styles.iconBtn}>
+        <Pressable onPress={onBack} style={styles.iconBtn}>
           <MaterialCommunityIcons name="arrow-left" size={28} color="#6c63b5" />
-        </TouchableOpacity>
+        </Pressable>
       )}
       <Text style={styles.title}>{title}</Text>
       <View style={styles.rightIcons}>
         {showProfile && (
-          <TouchableOpacity onPress={onProfile} style={styles.iconBtn}>
+          <Pressable onPress={onProfile} style={styles.iconBtn}>
             Icon
-          </TouchableOpacity>
+          </Pressable>
         )}
         {showLogout && (
-          <TouchableOpacity onPress={onLogout} style={styles.iconBtn}>
+          <Pressable onPress={onLogout} style={styles.iconBtn}>
             <MaterialCommunityIcons name="power" size={28} color="#6c63b5" />
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
     </View>

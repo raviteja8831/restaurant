@@ -4,7 +4,7 @@ import {
   View,
   Text,
   Image,
-  TouchableOpacity,
+  Pressable,
   Modal,
   ActivityIndicator,
 } from "react-native";
@@ -69,7 +69,7 @@ export default function ChefHomeScreen() {
   return (
     <View style={styles.container}>
       {/* Absolute icons at corners */}
-      <TouchableOpacity
+      <Pressable
         style={styles.powerIcon}
         onPress={async () => {
           let user = null;
@@ -88,13 +88,13 @@ export default function ChefHomeScreen() {
         }}
       >
         <MaterialCommunityIcons name="power" size={28} color="#222" />
-      </TouchableOpacity>
-      <TouchableOpacity
+      </Pressable>
+      <Pressable
         style={styles.bellIcon}
         onPress={() => setShowMsgModal(true)}
       >
         <MaterialCommunityIcons name="bell-outline" size={28} color="#222" />
-      </TouchableOpacity>
+      </Pressable>
       {/* Message Modal */}
       <Modal
         visible={showMsgModal}
@@ -124,24 +124,24 @@ export default function ChefHomeScreen() {
                 </View>
               </View>
             ))}
-            <TouchableOpacity
+            <Pressable
               style={styles.msgCloseBtn}
               onPress={() => setShowMsgModal(false)}
             >
               <MaterialCommunityIcons name="close" size={28} color="#222" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
       </Modal>
 
       <View style={styles.profileImgRow}>
         <View style={{ flex: 1 }} />
-        <TouchableOpacity onPress={() => router.push("/chef-profile")}>
+        <Pressable onPress={() => router.push("/chef-profile")}>
           <Image
             source={{ uri: "https://randomuser.me/api/portraits/men/32.jpg" }}
             style={styles.profileImgLarge}
           />
-        </TouchableOpacity>
+        </Pressable>
       </View>
       {/* Name, login, filter row */}
       <View style={styles.nameRow}>
@@ -150,13 +150,13 @@ export default function ChefHomeScreen() {
           <Text style={styles.greetText}>{chefName || "Chef"}</Text>
           <Text style={styles.loginText}>{loginAt || ""}</Text>
         </View>
-        <TouchableOpacity style={styles.filterIcon}>
+        <Pressable style={styles.filterIcon}>
           <MaterialCommunityIcons
             name="filter-variant"
             size={28}
             color="#1976d2"
           />
-        </TouchableOpacity>
+        </Pressable>
       </View>
       {/* Orders Title */}
       <Text style={styles.ordersTitle}>Your Orders</Text>
@@ -216,7 +216,7 @@ export default function ChefHomeScreen() {
                         <View
                           style={[styles.profileCard, { alignItems: "center" }]}
                         >
-                          <TouchableOpacity
+                          <Pressable
                             style={{
                               position: "absolute",
                               top: 10,
@@ -236,7 +236,7 @@ export default function ChefHomeScreen() {
                               size={28}
                               color="#222"
                             />
-                          </TouchableOpacity>
+                          </Pressable>
 
                           <Text
                             style={{
@@ -255,7 +255,7 @@ export default function ChefHomeScreen() {
                             { id: 3, label: "Ready", color: "#5cb85c" },
                             { id: 4, label: "Served", color: "#0275d8" },
                           ].map((status) => (
-                            <TouchableOpacity
+                            <Pressable
                               key={`${firstProduct.id || j}-${status.id}`}
                               style={[
                                 styles.profileCloseBtn,
@@ -290,13 +290,13 @@ export default function ChefHomeScreen() {
                               <Text style={{ color: "white" }}>
                                 {status.label}
                               </Text>
-                            </TouchableOpacity>
+                            </Pressable>
                           ))}
                         </View>
                       </View>
                     </Modal>
 
-                    <TouchableOpacity
+                    <Pressable
                       onPress={() => {
                         const updatedOrders = [...orders];
                         updatedOrders[i]["orderProducts"][
@@ -326,7 +326,7 @@ export default function ChefHomeScreen() {
                         size={24}
                         color="#666"
                       />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 )
               );

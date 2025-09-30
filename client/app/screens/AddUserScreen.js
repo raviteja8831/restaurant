@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, Alert, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImage } from '../api/imageApi';
 
@@ -79,7 +79,7 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
       <View style={styles.form}>
         <Text style={styles.title}>Add Profile</Text>
         {/* User Image Upload */}
-        <TouchableOpacity
+        <Pressable
           style={{ alignItems: 'center', marginBottom: 16 }}
           onPress={handlePickImage}
           disabled={uploadingImage || loading}
@@ -92,13 +92,13 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
             </View>
           )}
           <Text style={{ color: '#7b6eea', fontWeight: 'bold' }}>Upload Photo</Text>
-        </TouchableOpacity>
+        </Pressable>
         <TextInput style={styles.input} placeholder="First Name" value={firstname} onChangeText={setFirstname} />
         <TextInput style={styles.input} placeholder="Last Name" value={lastname} onChangeText={setLastname} />
         <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
         {/* Role Dropdown */}
         <View style={{ width: '100%', marginBottom: 15 }}>
-          <TouchableOpacity
+          <Pressable
             style={[styles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderColor: '#e0e0e0' }]}
             onPress={() => setShowRoleDropdown(v => !v)}
             activeOpacity={0.8}
@@ -107,33 +107,33 @@ export default function AddUserScreen({ navigation, onSave, onClose }) {
               {role || 'Select Role'}
             </Text>
             <Text style={{ color: '#888', fontSize: 18 }}>{showRoleDropdown ? '\u25B2' : '\u25BC'}</Text>
-          </TouchableOpacity>
+          </Pressable>
           {showRoleDropdown && (
             <View style={styles.dropdown}>
               {roleOptions.map(opt => (
-                <TouchableOpacity
+                <Pressable
                   key={opt.value}
                   style={[styles.dropdownItem, role === opt.value && { backgroundColor: '#b7a7e9' }]}
                   onPress={() => { setRole(opt.value); setShowRoleDropdown(false); }}
                 >
                   <Text style={[styles.dropdownItemText, role === opt.value && { color: '#fff', fontWeight: 'bold' }]}>{opt.label}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           )}
         </View>
         <TextInput style={styles.input} placeholder="Phone No." value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
-          <TouchableOpacity style={[styles.button, { backgroundColor: '#aaa' }]} onPress={onClose} disabled={loading}>
+          <Pressable style={[styles.button, { backgroundColor: '#aaa' }]} onPress={onClose} disabled={loading}>
             <Text style={styles.buttonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Pressable>
+          <Pressable
             style={[styles.button, isSaveDisabled && { backgroundColor: '#aaa' }]}
             onPress={handleSave}
             disabled={isSaveDisabled}
           >
             {loading || uploadingImage ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Save</Text>}
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </View>
