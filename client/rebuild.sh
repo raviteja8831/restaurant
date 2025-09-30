@@ -21,15 +21,8 @@ npm install
 echo "🔄 Regenerating android folder with expo prebuild..."
 npx expo prebuild --platform android --clean
 
-# Step 4: Generate production bundle with latest code
-echo "📦 Generating production bundle..."
-mkdir -p android/app/src/main/assets
-npx react-native bundle \
-  --platform android \
-  --dev false \
-  --entry-file index.js \
-  --bundle-output android/app/src/main/assets/index.android.bundle \
-  --assets-dest android/app/src/main/res
+# Step 4: Install Pods (if iOS needed in future)
+# cd ios && pod install && cd ..
 
 # Step 5: Navigate to android folder
 cd android
