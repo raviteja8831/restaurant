@@ -39,9 +39,9 @@ fi
 echo "🔄 Regenerating android folder with expo prebuild..."
 npx expo prebuild
 
-# Step 4: Build and run Android app
-echo "🏗 Building and running Android app..."
-npx expo run:android
+# Step 4: Build Android app only (no emulator)
+echo "🏗 Building Android app (no emulator)..."
+npx expo prebuild --platform android
 chmod +x gradlew
 
 
