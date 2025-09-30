@@ -23,17 +23,17 @@ npm install
 
 
 # Step 3: Prompt for app name and update app.json
-read -p "Enter the app name to use (default: Menutha): " APPNAME
-APPNAME=${APPNAME:-Menutha}
-echo "Updating app.json with app name: $APPNAME"
-if [ -f "$PROJECT_ROOT/app.json" ]; then
-	# Use jq if available, else fallback to sed
-	if command -v jq &> /dev/null; then
-		cat $PROJECT_ROOT/app.json | jq --arg name "$APPNAME" '.expo.name = $name' > $PROJECT_ROOT/app.tmp.json && mv $PROJECT_ROOT/app.tmp.json $PROJECT_ROOT/app.json
-	else
-		sed -i.bak "s/\("name"\): ".*"/\1: \"$APPNAME\"/" $PROJECT_ROOT/app.json
-	fi
-fi
+# read -p "Enter the app name to use (default: Menutha): " APPNAME
+# APPNAME=${APPNAME:-Menutha}
+# echo "Updating app.json with app name: $APPNAME"
+# if [ -f "$PROJECT_ROOT/app.json" ]; then
+# 	# Use jq if available, else fallback to sed
+# 	if command -v jq &> /dev/null; then
+# 		cat $PROJECT_ROOT/app.json | jq --arg name "$APPNAME" '.expo.name = $name' > $PROJECT_ROOT/app.tmp.json && mv $PROJECT_ROOT/app.tmp.json $PROJECT_ROOT/app.json
+# 	else
+# 		sed -i.bak "s/\("name"\): ".*"/\1: \"$APPNAME\"/" $PROJECT_ROOT/app.json
+# 	fi
+# fi
 
 # Step 4: Regenerate android folder using Expo prebuild
 echo "🔄 Regenerating android folder with expo prebuild..."
