@@ -40,12 +40,8 @@ rm -rf ~/.gradle/caches/transforms-* ~/.gradle/caches/*/fileHashes 2>/dev/null |
 echo "🔄 Refreshing Gradle dependencies..."
 ./gradlew --refresh-dependencies --no-daemon
 
-# Step 8: Build Debug APK (this includes bundling)
-echo "🏗 Building Debug APK..."
-./gradlew assembleDebug --no-daemon
-
-# Step 9: Generate production bundle for Release
-echo "📦 Generating production JS bundle for Release..."
+# Step 8: Generate JS bundle for Debug APK
+echo "📦 Generating JS bundle for Debug..."
 cd ..
 mkdir -p android/app/src/main/assets
 npx react-native bundle \
@@ -55,9 +51,13 @@ npx react-native bundle \
   --bundle-output android/app/src/main/assets/index.android.bundle \
   --assets-dest android/app/src/main/res
 
-# Step 10: Build Release APK with bundle
-echo "🔑 Building Release APK..."
+# Step 9: Build Debug APK with bundle
+echo "🏗 Building Debug APK..."
 cd android
+./gradlew assembleDebug --no-daemon
+
+# Step 10: Build Release APK (uses same bundle from step 8)
+echo "🔑 Building Release APK..."
 ./gradlew assembleRelease --no-daemon
 
 # Step 11: Build Release AAB (optional - uncomment if needed)
