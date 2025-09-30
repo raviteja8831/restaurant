@@ -6,8 +6,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  TouchableOpacity,
 } from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { TextInput, Text } from "react-native-paper";
 import axios from "axios";
