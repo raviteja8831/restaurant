@@ -21,8 +21,22 @@ npm install
 echo "🔄 Regenerating android folder with expo prebuild..."
 npx expo prebuild --platform android --clean
 
-# Step 4: Install Pods (if iOS needed in future)
-# cd ios && pod install && cd ..
+# Step 4: Copy network security config
+echo "📋 Copying network security config..."
+mkdir -p android/app/src/main/res/xml
+cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">frootcity.com</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
+EOF
+
+# Step 4a: Add network security config to AndroidManifest
+sed -i 's/android:usesCleartextTraffic="true"/android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml\/network_security_config"/g' android/app/src/main/AndroidManifest.xml
 
 # Step 5: Navigate to android folder
 cd android

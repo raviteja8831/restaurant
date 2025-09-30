@@ -1,40 +1,37 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        // Use a specific Android Gradle Plugin version
-classpath 'com.android.tools.build:gradle:8.1.2'
-        // React Native Gradle plugin
-        classpath 'com.facebook.react:react-native-gradle-plugin:0.74.0'
-        // Kotlin plugin if needed
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10'
-    }
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath('com.android.tools.build:gradle')
+    classpath('com.facebook.react:react-native-gradle-plugin')
+    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+  }
 }
 
-// Optional: you can still try dynamic React Native path if needed
 def reactNativeAndroidDir = new File(
-    providers.exec {
-        workingDir(rootDir)
-        commandLine("node", "--print", "require.resolve('react-native/package.json')")
-    }.standardOutput.asText.get().trim(),
-    "../android"
+  providers.exec {
+    workingDir(rootDir)
+    commandLine("node", "--print", "require.resolve('react-native/package.json')")
+  }.standardOutput.asText.get().trim(),
+  "../android"
 )
 
 allprojects {
-    repositories {
-        // React Native binaries from npm
-        maven { url reactNativeAndroidDir }
-
-        google()
-        mavenCentral()
-        maven { url 'https://www.jitpack.io' }
+  repositories {
+    maven {
+      // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+      url(reactNativeAndroidDir)
     }
+
+    google()
+    mavenCentral()
+    maven { url 'https://www.jitpack.io' }
+  }
 }
 
-// Expo and React Native root project plugins
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
