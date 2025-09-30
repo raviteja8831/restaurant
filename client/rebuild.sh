@@ -3,7 +3,10 @@ set -euo pipefail
 
 echo "🚀 Starting full clean build for Android..."
 
-# Step 1: Clean everything
+# Step 1: Uninstall old app and clean everything
+echo "📱 Uninstalling old app from device..."
+adb uninstall com.anonymous.ft 2>/dev/null || echo "No existing app to uninstall"
+
 echo "🧹 Removing old build artifacts..."
 rm -rf node_modules
 rm -rf android
@@ -38,8 +41,14 @@ EOF
 # Step 4a: Add network security config to AndroidManifest
 sed -i 's/android:usesCleartextTraffic="true"/android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml\/network_security_config"/g' android/app/src/main/AndroidManifest.xml
 
-# Step 4b: Disable Hermes to fix Symbol error
-sed -i 's/hermesEnabled=true/hermesEnabled=false/g' android/gradle.properties
+# Step 4b: Disable Hermes to fix Symbol error (ensure it's set correctly)
+echo "🔧 Ensuring Hermes is disabled..."
+if grep -q "hermesEnabled=" android/gradle.properties; then
+    sed -i 's/hermesEnabled=.*/hermesEnabled=false/g' android/gradle.properties
+else
+    echo "hermesEnabled=false" >> android/gradle.properties
+fi
+echo "✅ Hermes disabled: $(grep hermesEnabled android/gradle.properties)"
 
 # Step 5: Navigate to android folder
 cd android
