@@ -12,7 +12,6 @@ import {
   TextInput,
   Modal,
   FlatList,
-  Pressable,
   Linking,
   Platform,
   Alert,
