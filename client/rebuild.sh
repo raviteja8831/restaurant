@@ -75,7 +75,7 @@ cd android
 
 # Step 10: Build Release APK (uses same bundle from step 8)
 echo "🔑 Building Release APK..."
-./gradlew assembleRelease --no-daemon
+#./gradlew assembleRelease --no-daemon
 
 # Step 11: Build Release AAB (optional - uncomment if needed)
 # echo "📦 Building Release AAB..."
@@ -85,7 +85,7 @@ echo "🔑 Building Release APK..."
 echo ""
 echo "✅ Build complete!"
 echo "📂 Debug APK:   android/app/build/outputs/apk/debug/app-debug.apk"
-echo "📂 Release APK: android/app/build/outputs/apk/release/app-release.apk"
-echo "📂 Release AAB: android/app/build/outputs/bundle/release/app-release.aab"
+# echo "📂 Release APK: android/app/build/outputs/apk/release/app-release.apk"
+# echo "📂 Release AAB: android/app/build/outputs/bundle/release/app-release.aab"
 echo ""
 echo "To install debug APK on device: adb install android/app/build/outputs/apk/debug/app-debug.apk"
