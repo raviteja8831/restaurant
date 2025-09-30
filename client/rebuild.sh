@@ -28,18 +28,21 @@ npx expo prebuild --platform android --clean
 cd android
 chmod +x gradlew
 
-# Step 6: Clean Android build
-echo "🧹 Cleaning Android build..."
-./gradlew clean
+# Step 6: Kill any existing Gradle daemons and clean
+echo "🧹 Stopping Gradle daemons and cleaning build..."
+./gradlew --stop 2>/dev/null || true
+pkill -f gradle 2>/dev/null || true
 rm -rf .gradle app/build build .cxx 2>/dev/null || true
+rm -rf ~/.gradle/caches/transforms-* ~/.gradle/caches/*/fileHashes 2>/dev/null || true
+./gradlew clean --no-daemon
 
 # Step 7: Refresh Gradle dependencies
 echo "🔄 Refreshing Gradle dependencies..."
-./gradlew --refresh-dependencies
+./gradlew --refresh-dependencies --no-daemon
 
 # Step 8: Build Debug APK (this includes bundling)
 echo "🏗 Building Debug APK..."
-./gradlew assembleDebug
+./gradlew assembleDebug --no-daemon
 
 # Step 9: Generate production bundle for Release
 echo "📦 Generating production JS bundle for Release..."
@@ -55,7 +58,7 @@ npx react-native bundle \
 # Step 10: Build Release APK with bundle
 echo "🔑 Building Release APK..."
 cd android
-./gradlew assembleRelease
+./gradlew assembleRelease --no-daemon
 
 # Step 11: Build Release AAB (optional - uncomment if needed)
 # echo "📦 Building Release AAB..."
