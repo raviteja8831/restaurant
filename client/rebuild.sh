@@ -11,7 +11,6 @@ PROJECT_ROOT=$(pwd)
 
 # Step 1: Remove node_modules and android folder
 rm -rf $PROJECT_ROOT/node_modules
-rm -rf $PROJECT_ROOT/android
 rm -rf $TMPDIR/react-*
 rm -rf $TMPDIR/metro-*
 rm -rf $TMPDIR/haste-*
