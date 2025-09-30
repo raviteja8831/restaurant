@@ -37,19 +37,31 @@ rm -rf .gradle app/build build .cxx 2>/dev/null || true
 echo "🔄 Refreshing Gradle dependencies..."
 ./gradlew --refresh-dependencies
 
-# Step 8: Build Debug APK
+# Step 8: Build Debug APK (this includes bundling)
 echo "🏗 Building Debug APK..."
 ./gradlew assembleDebug
 
-# Step 9: Build Release APK
+# Step 9: Generate production bundle for Release
+echo "📦 Generating production JS bundle for Release..."
+cd ..
+mkdir -p android/app/src/main/assets
+npx react-native bundle \
+  --platform android \
+  --dev false \
+  --entry-file index.js \
+  --bundle-output android/app/src/main/assets/index.android.bundle \
+  --assets-dest android/app/src/main/res
+
+# Step 10: Build Release APK with bundle
 echo "🔑 Building Release APK..."
+cd android
 ./gradlew assembleRelease
 
-# Step 10: Build Release AAB (optional - uncomment if needed)
+# Step 11: Build Release AAB (optional - uncomment if needed)
 # echo "📦 Building Release AAB..."
 # ./gradlew bundleRelease
 
-# Step 11: Show output paths
+# Step 12: Show output paths
 echo ""
 echo "✅ Build complete!"
 echo "📂 Debug APK:   android/app/build/outputs/apk/debug/app-debug.apk"
