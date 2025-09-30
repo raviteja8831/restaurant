@@ -59,7 +59,6 @@ export default function LoginScreen() {
       }
       // Save user profile (manager/chef details and restaurant details)
       await AsyncStorage.setItem("user_profile", JSON.stringify(user));
-      Alert.alert("API user", JSON.stringify(user));
       if (role === "manager") {
         router.push("/dashboard");
       } else if (role === "chef") {
