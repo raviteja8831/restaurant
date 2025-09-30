@@ -41,8 +41,8 @@ npm install
 # # Step 4: Build Android app only (no emulator)
 # echo "🏗 Building Android app (no emulator)..."
 # npx expo prebuild --platform android
+cd android
 chmod +x gradlew
-
 
 # Step 4: Clean Android build
 echo "🧹 Cleaning Android build..."
@@ -65,8 +65,8 @@ echo "🔑 Building Release APK and AAB..."
 # Step 8: Show output paths
 echo ""
 echo "✅ Build complete!"
-echo "📂 Debug APK:   android/app/build/outputs/apk/debug/app-debug.apk"
-echo "📂 Release APK: android/app/build/outputs/apk/release/app-release.apk"
-echo "📂 Release AAB: android/app/build/outputs/bundle/release/app-release.aab"
+echo "📂 Debug APK:   app/build/outputs/apk/debug/app-debug.apk"
+echo "📂 Release APK: app/build/outputs/apk/release/app-release.apk"
+echo "📂 Release AAB: app/build/outputs/bundle/release/app-release.aab"
 
 
