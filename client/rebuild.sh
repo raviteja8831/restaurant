@@ -36,12 +36,12 @@ npm install
 # fi
 
 # Step 4: Regenerate android folder using Expo prebuild
-echo "🔄 Regenerating android folder with expo prebuild..."
-npx expo prebuild
+# echo "🔄 Regenerating android folder with expo prebuild..."
+# npx expo prebuild
 
-# Step 4: Build Android app only (no emulator)
-echo "🏗 Building Android app (no emulator)..."
-npx expo prebuild --platform android
+# # Step 4: Build Android app only (no emulator)
+# echo "🏗 Building Android app (no emulator)..."
+# npx expo prebuild --platform android
 chmod +x gradlew
 
 
