@@ -7,7 +7,7 @@
   "icon": "./assets/images/logo.png",
     "scheme": "ft",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "config": {
@@ -24,6 +24,7 @@
           "apiKey": "AIzaSyB5P-PTRn7E0xkRlkiHWkjadh3nbT7yu7U"
         }
       },
+      "usesCleartextTraffic": true,
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.ft"
     },
