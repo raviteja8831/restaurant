@@ -3,7 +3,6 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { Provider as PaperProvider } from 'react-native-paper';
 import store from './store';
 import {  Stack } from 'expo-router';
-import 'react-native-reanimated';
 
 import { AlertProvider } from './services/alertService';
 
