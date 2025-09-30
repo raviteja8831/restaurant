@@ -1,40 +1,47 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "🚀 Rebuilding React Native Android app..."
+#!/bin/bash
+set -euo pipefail
+
+echo "🚀 FULL CLEAN: Removing node_modules and android folder for a fresh start..."
 
 # Go to project root (where script is placed)
 PROJECT_ROOT=$(pwd)
 
-
-# Step 1: Clean caches and native build artifacts
-echo "🧹 Cleaning caches and native build artifacts..."
+# Step 1: Remove node_modules and android folder
 rm -rf $PROJECT_ROOT/node_modules
-rm -rf $PROJECT_ROOT/android/app/.cxx
-rm -rf $PROJECT_ROOT/android/app/build
-rm -rf $PROJECT_ROOT/android/app/build/generated
-rm -rf $PROJECT_ROOT/android/.gradle
+rm -rf $PROJECT_ROOT/android
 rm -rf $TMPDIR/react-*
 rm -rf $TMPDIR/metro-*
 rm -rf $TMPDIR/haste-*
 npm cache clean --force
 
-
-# Step 2: Install dependencies and ensure native modules are linked
+# Step 2: Install dependencies
 echo "📦 Installing dependencies..."
 npm install
 
-# Step 2b: Reinstall native modules if missing codegen dirs
-if [ ! -d "$PROJECT_ROOT/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni" ] || \
-	 [ ! -d "$PROJECT_ROOT/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni" ]; then
-	echo "🔄 Detected missing native codegen directories. Reinstalling native modules..."
-	npm install --legacy-peer-deps
+
+# Step 3: Prompt for app name and update app.json
+read -p "Enter the app name to use (default: Menutha): " APPNAME
+APPNAME=${APPNAME:-Menutha}
+echo "Updating app.json with app name: $APPNAME"
+if [ -f "$PROJECT_ROOT/app.json" ]; then
+	# Use jq if available, else fallback to sed
+	if command -v jq &> /dev/null; then
+		cat $PROJECT_ROOT/app.json | jq --arg name "$APPNAME" '.expo.name = $name' > $PROJECT_ROOT/app.tmp.json && mv $PROJECT_ROOT/app.tmp.json $PROJECT_ROOT/app.json
+	else
+		sed -i.bak "s/\("name"\): ".*"/\1: \"$APPNAME\"/" $PROJECT_ROOT/app.json
+	fi
 fi
 
-# Step 3: Ensure gradlew permissions + fix line endings
-echo "⚙️ Fixing gradlew permissions..."
-cd $PROJECT_ROOT/android
-sed -i 's/\r$//' gradlew || true
+# Step 4: Regenerate android folder using Expo prebuild
+echo "🔄 Regenerating android folder with expo prebuild..."
+npx expo prebuild
+
+# Step 4: Build and run Android app
+echo "🏗 Building and running Android app..."
+npx expo run:android
 chmod +x gradlew
 
 
