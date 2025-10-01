@@ -83,7 +83,7 @@ cd android
 ./gradlew assembleDebug --no-daemon
 
 # Step 10: Build Release APK (uses same bundle from step 8)
-echo "🔑 Building Release APK..."
+#echo "🔑 Building Release APK..."
 #./gradlew assembleRelease --no-daemon
 
 # Step 11: Build Release AAB (optional - uncomment if needed)

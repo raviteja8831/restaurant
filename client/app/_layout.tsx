@@ -11,6 +11,7 @@ export default function RootLayout() {
 
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <ReduxProvider store={store}>
         <PaperProvider>
           <AlertProvider>
@@ -20,5 +21,6 @@ export default function RootLayout() {
           </AlertProvider>
         </PaperProvider>
       </ReduxProvider>
+    </GestureHandlerRootView>
   );
 }
