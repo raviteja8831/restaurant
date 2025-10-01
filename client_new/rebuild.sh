@@ -25,30 +25,30 @@ echo "🔄 Regenerating android folder with expo prebuild..."
 npx expo prebuild --platform android --clean
 
 # Step 4: Copy network security config
-echo "📋 Copying network security config..."
-mkdir -p android/app/src/main/res/xml
-cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">frootcity.com</domain>
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">10.0.2.2</domain>
-    </domain-config>
-</network-security-config>
-EOF
+# echo "📋 Copying network security config..."
+# mkdir -p android/app/src/main/res/xml
+# cat > android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+# <?xml version="1.0" encoding="utf-8"?>
+# <network-security-config>
+#     <domain-config cleartextTrafficPermitted="true">
+#         <domain includeSubdomains="true">frootcity.com</domain>
+#         <domain includeSubdomains="true">localhost</domain>
+#         <domain includeSubdomains="true">10.0.2.2</domain>
+#     </domain-config>
+# </network-security-config>
+# EOF
 
 # Step 4a: Add network security config to AndroidManifest
-sed -i 's/android:usesCleartextTraffic="true"/android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml\/network_security_config"/g' android/app/src/main/AndroidManifest.xml
+# sed -i 's/android:usesCleartextTraffic="true"/android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml\/network_security_config"/g' android/app/src/main/AndroidManifest.xml
 
 # Step 4b: Disable Hermes to fix Symbol error (ensure it's set correctly)
-echo "🔧 Ensuring Hermes is disabled..."
-if grep -q "hermesEnabled=" android/gradle.properties; then
-    sed -i 's/hermesEnabled=.*/hermesEnabled=false/g' android/gradle.properties
-else
-    echo "hermesEnabled=false" >> android/gradle.properties
-fi
-echo "✅ Hermes disabled: $(grep hermesEnabled android/gradle.properties)"
+# echo "🔧 Ensuring Hermes is disabled..."
+# if grep -q "hermesEnabled=" android/gradle.properties; then
+#     sed -i 's/hermesEnabled=.*/hermesEnabled=false/g' android/gradle.properties
+# else
+#     echo "hermesEnabled=false" >> android/gradle.properties
+# fi
+# echo "✅ Hermes disabled: $(grep hermesEnabled android/gradle.properties)"
 
 # Step 5: Navigate to android folder
 cd android
@@ -67,15 +67,15 @@ echo "🔄 Refreshing Gradle dependencies..."
 ./gradlew --refresh-dependencies --no-daemon
 
 # Step 8: Generate JS bundle for Debug APK
-echo "📦 Generating JS bundle for Debug..."
-cd ..
-mkdir -p android/app/src/main/assets
-npx react-native bundle \
-  --platform android \
-  --dev false \
-  --entry-file index.js \
-  --bundle-output android/app/src/main/assets/index.android.bundle \
-  --assets-dest android/app/src/main/res
+# echo "📦 Generating JS bundle for Debug..."
+# cd ..
+# mkdir -p android/app/src/main/assets
+# npx react-native bundle \
+#   --platform android \
+#   --dev false \
+#   --entry-file index.js \
+#   --bundle-output android/app/src/main/assets/index.android.bundle \
+#   --assets-dest android/app/src/main/res
 
 # Step 9: Build Debug APK with bundle
 echo "🏗 Building Debug APK..."
