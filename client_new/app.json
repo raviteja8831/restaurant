@@ -23,7 +23,10 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.menutha.app",
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "buildToolsVersion": "34.0.0"
     },
     "web": {
       "favicon": "./assets/favicon.png",
