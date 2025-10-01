@@ -11,12 +11,13 @@ import {
   Platform,
 } from "react-native";
 import {
-  TextInput,
+  TextInput as PaperTextInput,
   Text,
   Checkbox,
   RadioButton,
   Button,
 } from "react-native-paper";
+import { TextInput as RNTextInput } from "react-native";
 import { Picker } from '@react-native-picker/picker';
 let DateTimePicker;
 try {
@@ -136,19 +137,20 @@ export function FormInput(props) {
     );
   } else if (type === "textarea") {
     inputComponent = (
-      <TextInput
-        // No floating label for textarea, placeholder instead
-        placeholder={labelText}
-        value={value}
-        onChangeText={(text) => onChange(name, text)}
-        onBlur={() => onBlur(name)}
-        mode="flat"
-        error={!!showError}
-        style={[styles.input, { minWidth: 210 }]}
-        multiline
-        numberOfLines={3}
-        {...props}
-      />
+      <View style={styles.inputWrapper}>
+        <Text style={styles.inputLabel}>{labelText}</Text>
+        <RNTextInput
+          placeholder=""
+          value={value}
+          onChangeText={(text) => onChange(name, text)}
+          onBlur={() => onBlur(name)}
+          style={[styles.input, { minHeight: 80, minWidth: 210 }, showError && styles.inputError]}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+          {...props}
+        />
+      </View>
     );
   } else if (type === "date") {
     const displayValue = value ? new Date(value).toLocaleDateString() : "";
@@ -183,14 +185,14 @@ export function FormInput(props) {
     );
   } else {
     inputComponent = (
-      <TextInput
-        label={labelText}
-        value={value}
-        onChangeText={(text) => onChange(name, text)}
-        onBlur={() => onBlur(name)}
-        mode="float"
-        error={!!showError}
-        style={styles.input}
+      <View style={styles.inputWrapper}>
+        <Text style={styles.inputLabel}>{labelText}</Text>
+        <RNTextInput
+          value={value}
+          onChangeText={(text) => onChange(name, text)}
+          onBlur={() => onBlur(name)}
+          placeholder={showError ? "" : ""}
+          style={[styles.input, showError && styles.inputError]}
         secureTextEntry={type === "password"}
         keyboardType={
           type === "number"
@@ -201,6 +203,7 @@ export function FormInput(props) {
         }
         {...props}
       />
+      </View>
     );
   }
 
@@ -245,6 +248,17 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     borderWidth: 1,
     borderColor: '#d1c4e9',
+    color: '#000',
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  inputError: {
+    borderColor: 'red',
+    borderWidth: 2,
   },
   errorText: {
     color: "red",
