@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import { Pressable } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { TextInput, Text } from "react-native-paper";
+import { TextInput as RNTextInput, Text as RNText } from "react-native";
+import { Text } from "react-native-paper";
 import axios from "axios";
 import { useRouter } from "expo-router";
 import { API_BASE_URL } from "../constants/api.constants";
@@ -43,7 +44,7 @@ export default function LoginScreen() {
 
   const handleLogin = async (phoneValue, otpValue) => {
     if (!phoneValue || otpValue.some((d) => d.length !== 1)) {
-     // Alert.alert("Error", "Please enter a valid phone and OTP");
+      Alert.alert("Error", "Please enter a valid phone and OTP");
       return;
     }
     try {
@@ -71,14 +72,14 @@ export default function LoginScreen() {
       } else if (role === "chef") {
         router.push("/chef-home");
       } else {
-        // Alert.alert(
-        //   "Login Failed",
-        //   "Unknown user role: " + (user?.role || "none")
-        // );
+        Alert.alert(
+          "Login Failed",
+          "Unknown user role: " + (user?.role || "none")
+        );
       }
     } catch (err) {
       console.error("Login error:", err);
-     // Alert.alert("Login Failed", err?.response?.data?.message || err?.message || "Invalid credentials");
+      Alert.alert("Login Failed", err?.response?.data?.message || err?.message || "Invalid credentials");
     }
   };
 
@@ -93,22 +94,20 @@ export default function LoginScreen() {
         resizeMode="contain"
       />
       <View style={styles.inputGroup}>
-        <TextInput
+        <RNTextInput
           style={styles.input}
           placeholder="Enter phone number"
           keyboardType="phone-pad"
           value={phone}
           onChangeText={setPhone}
           maxLength={10}
-          mode="flat"
-          underlineColor="#fff"
-          activeUnderlineColor="#1a237e"
+          placeholderTextColor="#999"
         />
       </View>
       <View style={styles.inputGroup}>
         <View style={styles.otpRow}>
           {otp.map((digit, idx) => (
-            <TextInput
+            <RNTextInput
               key={idx}
               ref={otpInputs[idx]}
               style={styles.otpBox}
@@ -117,9 +116,7 @@ export default function LoginScreen() {
               keyboardType="number-pad"
               maxLength={1}
               returnKeyType={idx === 3 ? "done" : "next"}
-              mode="flat"
-              underlineColor="#fff"
-              activeUnderlineColor="#1a237e"
+              textAlign="center"
             />
           ))}
         </View>
@@ -130,7 +127,6 @@ export default function LoginScreen() {
       <View style={styles.registerContainer}>
         <Text style={styles.registerText}>Dont have an account? </Text>
         <Pressable onPress={() => {
-          console.log("Register button pressed");
           router.replace("/manager-register");
         }}>
           <Text style={styles.registerLink}>Register</Text>
@@ -174,9 +170,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     paddingHorizontal: 12,
     height: 44,
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: "#ddd",
     marginBottom: 0,
-    elevation: 0,
+    color: "#000",
   },
   otpRow: {
     flexDirection: "row",
@@ -194,8 +191,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     backgroundColor: "#fff",
     marginHorizontal: 4,
-    borderWidth: 0,
-    elevation: 0,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    color: "#000",
   },
   registerContainer: {
     flexDirection: "row",
