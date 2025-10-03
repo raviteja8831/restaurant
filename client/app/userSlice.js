@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { MESSAGES } from "../../client/app/constants/api.constants";
 import {
   registerUser as registerUserApi,
@@ -30,12 +31,12 @@ export const loginUser = createAsyncThunk(
       if (payload.type === "restaurant") {
         response = await loginRestaurantUserApi(payload);
         if (response.data.token) {
-          localStorage.setItem("jwtToken", response.data.token);
+          await AsyncStorage.setItem("jwtToken", response.data.token);
         }
       } else {
         response = await loginUserApi(payload);
         if (response.data.accessToken) {
-          localStorage.setItem("jwtToken", response.data.accessToken);
+          await AsyncStorage.setItem("jwtToken", response.data.accessToken);
         }
       }
       return response.data;

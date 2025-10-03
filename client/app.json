@@ -49,7 +49,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "DEFAULT_LANDING_PAGE": "/login"
+      "DEFAULT_LANDING_PAGE": "/Customer-Login"
     }
   }
 }

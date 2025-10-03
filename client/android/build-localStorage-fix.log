@@ -1,0 +1,120 @@
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:shared:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE
+> Task :gradle-plugin:shared:processResources NO-SOURCE
+> Task :gradle-plugin:shared:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:settings-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-module-gradle-plugin:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-module-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-module-gradle-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:jar UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
+
+> Task :expo-module-gradle-plugin:compileKotlin
+e: Incompatible classes were found in dependencies. Remove them from the classpath or use '-Xskip-metadata-version-check' to suppress errors
+e: file:///C:/Users/navee/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.1.20/aa8ca79cd50578314f6d1180c47cbe14c0fee567/kotlin-stdlib-2.1.20.jar!/META-INF/kotlin-stdlib-jdk7.kotlin_moduleModule was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.1.0, expected version is 1.9.0.
+e: file:///C:/Users/navee/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.1.20/aa8ca79cd50578314f6d1180c47cbe14c0fee567/kotlin-stdlib-2.1.20.jar!/META-INF/kotlin-stdlib-jdk8.kotlin_moduleModule was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.1.0, expected version is 1.9.0.
+e: file:///C:/Users/navee/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.1.20/aa8ca79cd50578314f6d1180c47cbe14c0fee567/kotlin-stdlib-2.1.20.jar!/META-INF/kotlin-stdlib.kotlin_moduleModule was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.1.0, expected version is 1.9.0.
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/META-INF/expo-autolinking-plugin-shared.kotlin_moduleModule was compiled with an incompatible version of Kotlin. The binary version of its metadata is 2.1.0, expected version is 1.9.0.
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:3:42 Class 'expo.modules.plugin.configuration.ExpoAutolinkingConfig' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/ExpoAutolinkingConfig.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:4:42 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:10:18 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:12:9 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:13:25 Class 'expo.modules.plugin.configuration.Publication' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/Publication.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:13:40 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:13:47 Class 'expo.modules.plugin.configuration.Publication' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/Publication.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:14:17 Class 'expo.modules.plugin.configuration.Publication' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/Publication.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:14:40 Class 'expo.modules.plugin.configuration.Publication' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/Publication.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:14:66 Class 'expo.modules.plugin.configuration.Publication' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/Publication.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:22:18 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:23:22 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:35:72 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:36:18 Class 'expo.modules.plugin.configuration.ExpoAutolinkingConfig' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/ExpoAutolinkingConfig.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:37:22 Class 'expo.modules.plugin.configuration.ExpoAutolinkingConfig' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/ExpoAutolinkingConfig.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:37:41 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:37:48 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:39:9 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:43:12 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:46:52 Class 'expo.modules.plugin.configuration.GradleProject' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/GradleProject.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:48:44 Class 'expo.modules.plugin.configuration.ExpoAutolinkingConfig' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/ExpoAutolinkingConfig.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:49:53 Class 'expo.modules.plugin.ExpoGradleExtension' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/ExpoGradleExtension.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:49:64 Class 'expo.modules.plugin.ExpoGradleExtension' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/ExpoGradleExtension.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:50:7 Class 'expo.modules.plugin.ExpoGradleExtension' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/ExpoGradleExtension.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:51:12 Class 'expo.modules.plugin.ExpoGradleExtension' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/ExpoGradleExtension.class
+e: file:///V:/naveen%202/restaurent2/restaurant/client/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt:51:28 Class 'expo.modules.plugin.configuration.ExpoAutolinkingConfig' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+The class is loaded from V:/naveen 2/restaurent2/restaurant/client/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build/libs/expo-autolinking-plugin-shared-1.0.jar!/expo/modules/plugin/configuration/ExpoAutolinkingConfig.class
+
+> Task :expo-module-gradle-plugin:compileKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':expo-module-gradle-plugin:compileKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 11s
+24 actionable tasks: 2 executed, 22 up-to-date

@@ -225,8 +225,8 @@ export default function MenuListScreen() {
               <View style={menuliststyles.headerContent}>
                 <Text style={menuliststyles.hotelName}>
                   {restaurant.name}{" "}
-                  {restaurant.restaurantType &&
-                    `(${restaurant.restaurantType})`}
+                  {/*  {restaurant.restaurantType &&
+                    `(${restaurant.restaurantType})`} */}
                 </Text>
                 <Text style={menuliststyles.title}>Menu</Text>
               </View>

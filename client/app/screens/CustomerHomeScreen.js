@@ -1,7 +1,6 @@
- 
 import FilterModal from "../Modals/FilterModal";
 import React, { useState, useEffect, useRef } from "react";
-  
+
 import {
   View,
   StyleSheet,
@@ -23,10 +22,11 @@ import { useRouter } from "expo-router";
 import * as Location from "expo-location";
 import {
   GoogleMap,
-  Marker,
+  Marker as GoogleMarker,
   InfoWindow,
   useJsApiLoader,
 } from "@react-google-maps/api";
+import MapView, { Marker } from "react-native-maps";
 import { getAllRestaurants } from "../api/restaurantApi";
 // import { use } from "react";
 
@@ -46,7 +46,6 @@ function CustomerHomeScreen() {
     });
   };
 
-
   const router = useRouter();
   const [userLocation, setUserLocation] = useState({
     latitude: 17.4375,
@@ -65,7 +64,6 @@ function CustomerHomeScreen() {
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState([]);
 
-
   // Only for web: load Google Maps API
   const { isLoaded } =
     Platform.OS === "web"
@@ -77,7 +75,10 @@ function CustomerHomeScreen() {
   // Navigation button handler (must be after filteredRestaurants is defined)
   const handleNavigationPress = () => {
     if (!filteredRestaurants.length) {
-      Alert.alert("No restaurants found", "No filtered restaurants to navigate to.");
+      Alert.alert(
+        "No restaurants found",
+        "No filtered restaurants to navigate to."
+      );
       return;
     }
     if (filteredRestaurants.length === 1) {
@@ -115,11 +116,15 @@ function CustomerHomeScreen() {
           const resp = await fetch(url);
           const json = await resp.json();
           if (json.status === "OK" && json.results.length > 0) {
-            const cityComp = json.results[0].address_components.find((c) => c.types.includes("locality"));
+            const cityComp = json.results[0].address_components.find((c) =>
+              c.types.includes("locality")
+            );
             const city = cityComp ? cityComp.long_name : null;
             if (city) {
               // Get city center by geocoding city name
-              const cityUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city)}&key=${apiKey}`;
+              const cityUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+                city
+              )}&key=${apiKey}`;
               const cityResp = await fetch(cityUrl);
               const cityJson = await cityResp.json();
               if (cityJson.status === "OK" && cityJson.results.length > 0) {
@@ -140,7 +145,9 @@ function CustomerHomeScreen() {
           if (!address) return null;
           try {
             const apiKey = "AIzaSyCJT87ZYDqm6bVLxRsg4Zde87HyefUfASQ";
-            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+              address
+            )}&key=${apiKey}`;
             const resp = await fetch(url);
             const json = await resp.json();
             if (json.status === "OK" && json.results.length > 0) {
@@ -163,14 +170,16 @@ function CustomerHomeScreen() {
             }
             const coords = await geocodeAddress(r.address);
             if (coords) {
-              return { ...r, latitude: coords.latitude, longitude: coords.longitude };
+              return {
+                ...r,
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+              };
             }
             return r;
           })
         );
         setRestaurants(updated);
-        
-        
       } catch (_e) {
         setRestaurants([]);
       }
@@ -194,7 +203,8 @@ function CustomerHomeScreen() {
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
         Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const d = R * c; // Distance in km
     return d;
@@ -234,15 +244,28 @@ function CustomerHomeScreen() {
         );
         return dist <= 5;
       }
-      if (filterName === "Only Veg Restaurant") return r.enableVeg === true && r.enableNonveg === false;
-      if (filterName === "Only Non Veg Restaurant") return r.enableNonveg === true && r.enableVeg === false;
+      if (filterName === "Only Veg Restaurant")
+        return r.enableVeg === true && r.enableNonveg === false;
+      if (filterName === "Only Non Veg Restaurant")
+        return r.enableNonveg === true && r.enableVeg === false;
       if (filterName === "Only Buffet") return r.enableBuffet === true;
-      if (filterName === "Only Table Service") return r.enableTableService === true;
-      if (filterName === "Only Self Service") return r.enableSelfService === true;
-      if (filterName === "3 Star Hotel") return r.restaurantType && r.restaurantType.toLowerCase().includes("3 star");
-      if (filterName === "5 Star Hotel") return r.restaurantType && r.restaurantType.toLowerCase().includes("5 star");
+      if (filterName === "Only Table Service")
+        return r.enableTableService === true;
+      if (filterName === "Only Self Service")
+        return r.enableSelfService === true;
+      if (filterName === "3 Star Hotel")
+        return (
+          r.restaurantType && r.restaurantType.toLowerCase().includes("3 star")
+        );
+      if (filterName === "5 Star Hotel")
+        return (
+          r.restaurantType && r.restaurantType.toLowerCase().includes("5 star")
+        );
       if (filterName === "5 Star Rating") return r.rating && r.rating >= 5;
-      if (filterName === "Only Bar & Restaurant") return r.restaurantType && r.restaurantType.toLowerCase().includes("bar");
+      if (filterName === "Only Bar & Restaurant")
+        return (
+          r.restaurantType && r.restaurantType.toLowerCase().includes("bar")
+        );
       // fallback: show all
       return true;
     });
@@ -251,8 +274,8 @@ function CustomerHomeScreen() {
   // Debug: log restaurants and filteredRestaurants after data load
   useEffect(() => {
     if (!loading) {
-      console.log('restaurants:', restaurants);
-      console.log('filteredRestaurants:', filteredRestaurants);
+      console.log("restaurants:", restaurants);
+      console.log("filteredRestaurants:", filteredRestaurants);
     }
   }, [loading, restaurants, filteredRestaurants]);
   // Handlers
@@ -308,17 +331,22 @@ function CustomerHomeScreen() {
   useEffect(() => {
     console.log("Selected Restaurant:", selectedRestaurant);
     if (selectedRestaurant && selectedRestaurant?.id) {
-      router.push({
+      /* router.push({
         pathname: "/menu-list",
         params: {
           restaurantId: selectedRestaurant ? selectedRestaurant.id : null,
           ishotel: "false",
         },
+      }); */
+      router.push({
+        pathname: "/HotelDetails",
+        params: {
+          id: selectedRestaurant ? selectedRestaurant.id : null,
+          // ishotel: "false",
+        },
       });
-
     }
-  },
- [selectedRestaurant, router]);
+  }, [selectedRestaurant, router]);
 
   // Platform-specific map rendering
   let mapContent = null;
@@ -341,7 +369,11 @@ function CustomerHomeScreen() {
             borderRadius: 0,
             overflow: "hidden",
           }}
-          center={cityCenter ? { lat: cityCenter.latitude, lng: cityCenter.longitude } : { lat: userLocation.latitude, lng: userLocation.longitude }}
+          center={
+            cityCenter
+              ? { lat: cityCenter.latitude, lng: cityCenter.longitude }
+              : { lat: userLocation.latitude, lng: userLocation.longitude }
+          }
           zoom={cityCenter ? cityZoom : 13}
           options={{
             fullscreenControl: false,
@@ -351,7 +383,7 @@ function CustomerHomeScreen() {
           }}
         >
           {/* User marker */}
-          <Marker
+          <GoogleMarker
             position={{
               lat: userLocation.latitude,
               lng: userLocation.longitude,
@@ -360,9 +392,15 @@ function CustomerHomeScreen() {
           />
           {/* Restaurant markers */}
           {filteredRestaurants
-            .filter(r => typeof r.latitude === "number" && typeof r.longitude === "number" && !isNaN(r.latitude) && !isNaN(r.longitude))
+            .filter(
+              (r) =>
+                typeof r.latitude === "number" &&
+                typeof r.longitude === "number" &&
+                !isNaN(r.latitude) &&
+                !isNaN(r.longitude)
+            )
             .map((r) => (
-              <Marker
+              <GoogleMarker
                 key={r.id}
                 position={{ lat: r.latitude, lng: r.longitude }}
                 label={r.name}
@@ -386,53 +424,93 @@ function CustomerHomeScreen() {
                     </div>
                   </InfoWindow>
                 )}
-              </Marker>
+              </GoogleMarker>
             ))}
         </GoogleMap>
       );
     }
   } else {
-    let MapView, NativeMarker;
-    try {
-      const maps = require("expo-maps");
-      MapView = maps.MapView;
-      NativeMarker = maps.Marker;
-    } catch (_e) {
-      MapView = null;
-      NativeMarker = null;
-    }
-    mapContent = MapView ? (
+    // For native platforms (iOS/Android), use react-native-maps
+    // mapContent = (
+    //   <MapView
+    //     style={styles.map}
+    //     initialRegion={{
+    //       latitude: userLocation.latitude,
+    //       longitude: userLocation.longitude,
+    //       latitudeDelta: 0.0922,
+    //       longitudeDelta: 0.0421,
+    //     }}
+    //   >
+    //     <Marker coordinate={userLocation} title="You" pinColor="#6B4EFF" />
+    //     {filteredRestaurants
+    //       .filter(
+    //         (r) =>
+    //           typeof r.latitude === "number" &&
+    //           typeof r.longitude === "number" &&
+    //           !isNaN(r.latitude) &&
+    //           !isNaN(r.longitude)
+    //       )
+    //       .map((r) => (
+    //         <Marker
+    //           key={r.id}
+    //           coordinate={{ latitude: r.latitude, longitude: r.longitude }}
+    //           title={r.name}
+    //           description={r.cuisine}
+    //           pinColor={
+    //             selectedRestaurant && selectedRestaurant.id === r.id
+    //               ? "#6B4EFF"
+    //               : "#43a047"
+    //           }
+    //           onPress={() => setSelectedRestaurant(r)}
+    //         />
+    //       ))}
+    //   </MapView>
+    // );
+
+    // For native platforms (iOS/Android), use react-native-maps
+    mapContent = (
       <MapView
-        style={styles.map}
+        style={StyleSheet.absoluteFillObject}
         initialRegion={{
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
+          latitude: userLocation?.latitude || 17.4375,
+          longitude: userLocation?.longitude || 78.4456,
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         }}
       >
-        <NativeMarker
-          coordinate={userLocation}
-          title="You"
-          pinColor="#6B4EFF"
-        />
-        {filteredRestaurants.map((r) => (
-          <NativeMarker
-            key={r.id}
-            coordinate={{ latitude: r.latitude, longitude: r.longitude }}
-            title={r.name}
-            description={r.cuisine}
-            pinColor={
-              selectedRestaurant && selectedRestaurant.id === r.id
-                ? "#6B4EFF"
-                : "#43a047"
-            }
-            onPress={() => setSelectedRestaurant(r)}
+        {userLocation?.latitude && userLocation?.longitude && (
+          <Marker
+            coordinate={{
+              latitude: userLocation.latitude,
+              longitude: userLocation.longitude,
+            }}
+            title="You"
+            pinColor="#6B4EFF"
           />
-        ))}
+        )}
+          {filteredRestaurants
+            .filter(
+              (r) =>
+                typeof r.latitude === "number" &&
+                typeof r.longitude === "number" &&
+                !isNaN(r.latitude) &&
+                !isNaN(r.longitude)
+            )
+            .map((r) => (
+              <Marker
+                key={r.id}
+                coordinate={{ latitude: r.latitude, longitude: r.longitude }}
+                title={r.name}
+                description={r.cuisine}
+                pinColor={
+                  selectedRestaurant && selectedRestaurant.id === r.id
+                    ? "#6B4EFF"
+                    : "#43a047"
+                }
+                onPress={() => setSelectedRestaurant(r)}
+              />
+            ))}
       </MapView>
-    ) : (
-      <Text style={styles.mapText}>Map not available</Text>
     );
   }
 
@@ -462,12 +540,25 @@ function CustomerHomeScreen() {
         {/* Animated Search Bar */}
         <View style={styles.animatedSearchBarContainer}>
           {!searchOpen ? (
-            <TouchableOpacity style={styles.searchIconButton} onPress={handleOpenSearch}>
+            <TouchableOpacity
+              style={styles.searchIconButton}
+              onPress={handleOpenSearch}
+            >
               <MaterialIcons name="search" size={28} color="#6B4EFF" />
             </TouchableOpacity>
           ) : (
-            <View style={[styles.animatedSearchBar, searchOpen && styles.animatedSearchBarOpen]}>
-              <MaterialIcons name="search" size={22} color="#6B4EFF" style={{ marginLeft: 10, marginRight: 4 }} />
+            <View
+              style={[
+                styles.animatedSearchBar,
+                searchOpen && styles.animatedSearchBarOpen,
+              ]}
+            >
+              <MaterialIcons
+                name="search"
+                size={22}
+                color="#6B4EFF"
+                style={{ marginLeft: 10, marginRight: 4 }}
+              />
               <TextInput
                 ref={searchInputRef}
                 style={styles.animatedSearchInput}
@@ -488,7 +579,10 @@ function CustomerHomeScreen() {
                   <MaterialIcons name="close" size={20} color="#888" />
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity onPress={handleCloseSearch} style={styles.animatedSearchClose}>
+                <TouchableOpacity
+                  onPress={handleCloseSearch}
+                  style={styles.animatedSearchClose}
+                >
                   <MaterialIcons name="close" size={24} color="#6B4EFF" />
                 </TouchableOpacity>
               )}
@@ -498,7 +592,7 @@ function CustomerHomeScreen() {
       </View>
 
       {/* Map Area */}
-      <View style={styles.mapWebContainer}>{mapContent}</View>
+      <View style={Platform.OS === "web" ? styles.mapWebContainer : styles.mapNativeContainer}>{mapContent}</View>
 
       {/* Filter Modal */}
       <FilterModal
@@ -508,8 +602,6 @@ function CustomerHomeScreen() {
         selectedFilters={selectedFilters}
         onClearAll={() => setSelectedFilters([])}
       />
-
-
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNavigation}>
@@ -527,7 +619,10 @@ function CustomerHomeScreen() {
           <MaterialCommunityIcons name="qrcode-scan" size={28} color="white" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton} onPress={handleNavigationPress}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={handleNavigationPress}
+        >
           <MaterialIcons name="navigation" size={24} color="white" />
         </TouchableOpacity>
 
@@ -538,21 +633,54 @@ function CustomerHomeScreen() {
           animationType="slide"
           onRequestClose={() => setShowNavModal(false)}
         >
-          <View style={{ flex:1, backgroundColor:'rgba(0,0,0,0.4)', justifyContent:'center', alignItems:'center' }}>
-            <View style={{ backgroundColor:'#fff', borderRadius:12, padding:20, minWidth:280, maxHeight:'70%' }}>
-              <Text style={{ fontWeight:'bold', fontSize:18, marginBottom:12 }}>Select Restaurant</Text>
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "rgba(0,0,0,0.4)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#fff",
+                borderRadius: 12,
+                padding: 20,
+                minWidth: 280,
+                maxHeight: "70%",
+              }}
+            >
+              <Text
+                style={{ fontWeight: "bold", fontSize: 18, marginBottom: 12 }}
+              >
+                Select Restaurant
+              </Text>
               <FlatList
                 data={navOptions}
-                keyExtractor={item => item.id?.toString() || item.name}
-                renderItem={({item}) => (
-                  <Pressable onPress={() => handleNavSelect(item)} style={{ paddingVertical:10, borderBottomWidth:1, borderColor:'#eee' }}>
-                    <Text style={{ fontSize:16 }}>{item.name}</Text>
-                    <Text style={{ fontSize:13, color:'#888' }}>{item.address}</Text>
+                keyExtractor={(item) => item.id?.toString() || item.name}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => handleNavSelect(item)}
+                    style={{
+                      paddingVertical: 10,
+                      borderBottomWidth: 1,
+                      borderColor: "#eee",
+                    }}
+                  >
+                    <Text style={{ fontSize: 16 }}>{item.name}</Text>
+                    <Text style={{ fontSize: 13, color: "#888" }}>
+                      {item.address}
+                    </Text>
                   </Pressable>
                 )}
               />
-              <TouchableOpacity onPress={() => setShowNavModal(false)} style={{ marginTop:16, alignSelf:'flex-end' }}>
-                <Text style={{ color:'#6B4EFF', fontWeight:'bold' }}>Cancel</Text>
+              <TouchableOpacity
+                onPress={() => setShowNavModal(false)}
+                style={{ marginTop: 16, alignSelf: "flex-end" }}
+              >
+                <Text style={{ color: "#6B4EFF", fontWeight: "bold" }}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -607,6 +735,10 @@ const styles = StyleSheet.create({
     height: "100vh",
     zIndex: 0,
   },
+  mapNativeContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
   fullScreenWeb: {
     position: "fixed",
     top: 0,
@@ -634,7 +766,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    // ...StyleSheet.absoluteFillObject,
+    flex: 1,
   },
 
   topControls: {
@@ -664,53 +797,53 @@ const styles = StyleSheet.create({
     fontSize: 36,
   },
   searchButton: {
-    display: 'none',
+    display: "none",
   },
   animatedSearchBarContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 0,
     zIndex: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     minWidth: 48,
     minHeight: 48,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   searchIconButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
   animatedSearchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
     minWidth: 60,
     width: 0,
     height: 48,
     paddingRight: 8,
     paddingLeft: 0,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    overflow: 'hidden',
-    transitionProperty: 'width',
-    transitionDuration: '0.3s',
-    transitionTimingFunction: 'ease',
+    overflow: "hidden",
+    transitionProperty: "width",
+    transitionDuration: "0.3s",
+    transitionTimingFunction: "ease",
   },
   animatedSearchBarOpen: {
     width: 340,
@@ -719,13 +852,13 @@ const styles = StyleSheet.create({
   animatedSearchInput: {
     flex: 1,
     fontSize: 17,
-    color: '#222',
-    backgroundColor: 'transparent',
+    color: "#222",
+    backgroundColor: "transparent",
     borderWidth: 0,
     paddingHorizontal: 8,
     paddingVertical: 0,
     height: 48,
-    outlineStyle: 'none',
+    outlineStyle: "none",
   },
   animatedSearchClear: {
     marginRight: 2,

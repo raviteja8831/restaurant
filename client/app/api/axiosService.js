@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../constants/api.constants';
 
 const axiosInstance = axios.create({
@@ -7,8 +8,8 @@ const axiosInstance = axios.create({
 
 // Attach JWT token to every request if available
 axiosInstance.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('jwtToken');
+  async config => {
+    const token = await AsyncStorage.getItem('jwtToken');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }

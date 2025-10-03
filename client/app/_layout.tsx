@@ -12,7 +12,6 @@ import { AlertProvider } from './services/alertService';
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
-
   return (
     <ReduxProvider store={store}>
       <PaperProvider>
