@@ -4,7 +4,14 @@ const db = require('../models');
 // Load environment variables
 require('dotenv').config();
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key';
+
+// Debug: Log JWT secret loading
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  JWT_SECRET not found in environment, using fallback');
+} else {
+  console.log('✅ JWT_SECRET loaded successfully');
+}
 
 /**
  * Basic JWT token verification middleware
@@ -12,7 +19,10 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
+  console.log('🔐 Token verification attempt for:', req.method, req.path);
+
   if (!authHeader) {
+    console.log('❌ No authorization header');
     return res.status(401).json({
       success: false,
       message: 'No token provided',
@@ -22,6 +32,7 @@ const verifyToken = (req, res, next) => {
 
   const token = authHeader.split(' ')[1];
   if (!token) {
+    console.log('❌ Invalid token format');
     return res.status(401).json({
       success: false,
       message: 'Invalid token format',
@@ -30,14 +41,19 @@ const verifyToken = (req, res, next) => {
   }
 
   try {
+    console.log('🔍 Verifying token with secret:', JWT_SECRET ? 'Available' : 'Missing');
     const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('✅ Token verified successfully for user:', decoded.id);
     req.user = decoded;
     next();
   } catch (error) {
+    console.log('❌ Token verification failed:', error.message);
+    console.log('🔍 Token payload preview:', token.substring(0, 50) + '...');
     return res.status(401).json({
       success: false,
       message: 'Invalid or expired token',
-      code: 'TOKEN_EXPIRED'
+      code: 'TOKEN_EXPIRED',
+      error: error.message
     });
   }
 };

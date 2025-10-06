@@ -3,7 +3,13 @@ const Customer = db.customer;
 const Role = db.roles;
 const { Op } = require("sequelize");
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = "your_secret_key";
+
+// Load environment variables
+require('dotenv').config();
+const SECRET_KEY = process.env.JWT_SECRET || "your_super_secret_key";
+
+// Debug: Log JWT secret loading for customer controller
+console.log('🔑 Customer Controller - JWT Secret:', SECRET_KEY ? 'Loaded' : 'Missing');
 
 // Create and Save a new Customer
 exports.create = async (req, res) => {
@@ -178,11 +184,14 @@ exports.findByPhone = async (req, res) => {
         message: `Customer not found with phone ${phone}`,
       });
     }
+    // Generate JWT token (extended expiration for better UX)
+    console.log('🔑 Generating customer token for user:', customer.id);
     const token = jwt.sign(
       { id: customer.id, role: customer.role?.name, phone: customer.phone },
       SECRET_KEY,
-      { expiresIn: "1h" }
+      { expiresIn: "7d" } // Extended to 7 days for better user experience
     );
+    console.log('✅ Customer token generated successfully');
     // Only send necessary customer data
     const customerData = {
       id: customer.id,

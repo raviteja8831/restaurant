@@ -5,7 +5,10 @@ const { Op } = require("sequelize");
 require('dotenv').config();
 
 // Secret key for JWT from environment variable
-const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
+const SECRET_KEY = process.env.JWT_SECRET || "your_super_secret_key";
+
+// Debug: Log JWT secret loading for user controller
+console.log('🔑 User Controller - JWT Secret:', SECRET_KEY ? 'Loaded' : 'Missing');
 
 const jwt = require("jsonwebtoken");
 
@@ -671,12 +674,14 @@ exports.login = async (req, res) => {
     if (otp !== "1234") {
       return res.status(401).send({ message: "Invalid OTP!" });
     }
-    // Generate JWT token
+    // Generate JWT token (extended expiration for better UX)
+    console.log('🔑 Generating token for user:', user.id, 'with secret:', SECRET_KEY ? 'Available' : 'Missing');
     const token = jwt.sign(
       { id: user.id, role: user.role?.name, phone: user.phone },
       SECRET_KEY,
-      { expiresIn: "1h" }
+      { expiresIn: "7d" } // Extended to 7 days for better user experience
     );
+    console.log('✅ Token generated successfully');
     res.status(200).send({
       id: user.id,
       phone: user.phone,
