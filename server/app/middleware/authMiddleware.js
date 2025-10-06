@@ -86,9 +86,33 @@ const verifyCustomer = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Check if user exists in customer table
-    const customer = await db.users.findByPk(decoded.id);
+    // Debug: show decoded token info
+    console.log('🔎 verifyCustomer - decoded token:', decoded);
+
+    // Try to find customer in the customers table first (db.customer)
+    let customer = null;
+    try {
+      if (db.customer) {
+        customer = await db.customer.findByPk(decoded.id, {
+          include: [{ model: db.roles, as: 'role', attributes: ['id', 'name'] }],
+        });
+      }
+    } catch (e) {
+      console.log('⚠️ verifyCustomer - error querying db.customer:', e.message);
+    }
+
+    // Fallback: check users table if not found in customer table
     if (!customer) {
+      try {
+        customer = await db.users.findByPk(decoded.id);
+        if (customer) console.log('ℹ️ verifyCustomer - found in db.users, id:', decoded.id);
+      } catch (e) {
+        console.log('⚠️ verifyCustomer - error querying db.users fallback:', e.message);
+      }
+    }
+
+    if (!customer) {
+      console.log('❌ verifyCustomer - customer not found for id:', decoded.id);
       return res.status(403).json({
         success: false,
         message: 'Access denied. Customer not found.',
