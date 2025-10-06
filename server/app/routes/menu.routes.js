@@ -1,14 +1,29 @@
+const { verifyToken, verifyRestaurantUser, verifyManager } = require("../middleware/authMiddleware");
+
 module.exports = (app) => {
   const menu = require("../controllers/menu.controller");
   var router = require("express").Router();
 
-  router.post("/", menu.create);
-  router.get("/", menu.findAll);
-  router.get("/with-items/:restaurantId", menu.getMenuWithItems);
-  router.get("/items/:menuId", menu.getItemsBasedOnMenu);
-  router.get("/:id", menu.findOne);
-  router.put("/:id", menu.update);
-  router.delete("/:id", menu.delete);
+  // Create menu (manager only)
+  router.post("/", verifyManager, menu.create);
+
+  // Get all menus (any authenticated user)
+  router.get("/", verifyToken, menu.findAll);
+
+  // Get menu with items for restaurant (any authenticated user)
+  router.get("/with-items/:restaurantId", verifyToken, menu.getMenuWithItems);
+
+  // Get items based on menu (any authenticated user)
+  router.get("/items/:menuId", verifyToken, menu.getItemsBasedOnMenu);
+
+  // Get single menu (any authenticated user)
+  router.get("/:id", verifyToken, menu.findOne);
+
+  // Update menu (manager only)
+  router.put("/:id", verifyManager, menu.update);
+
+  // Delete menu (manager only)
+  router.delete("/:id", verifyManager, menu.delete);
 
   app.use("/api/menus", router);
 };

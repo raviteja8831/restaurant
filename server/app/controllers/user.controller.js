@@ -1,8 +1,11 @@
 const db = require("../models");
 const { Op } = require("sequelize");
 // Use Op directly instead of db.Sequelize.Op
-// Secret key for JWT
-const SECRET_KEY = "your_secret_key";
+// Load environment variables
+require('dotenv').config();
+
+// Secret key for JWT from environment variable
+const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
 
 const jwt = require("jsonwebtoken");
 
