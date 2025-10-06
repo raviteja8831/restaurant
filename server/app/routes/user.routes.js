@@ -2,6 +2,8 @@
 
 const multer = require("multer");
 const path = require("path");
+const { verifyToken, verifyRestaurantUser, verifyManager } = require("../middleware/authMiddleware");
+
 module.exports = (app) => {
   const users = require("../controllers/user.controller.js");
 
@@ -29,30 +31,30 @@ module.exports = (app) => {
   // router.post("/loginRestaurantUser", users.loginRestaurantUser);
   router.post("/registerRestaurantUser", users.addRestaurantUser);
 
-  // Get user profile with reviews and transactions
-  router.get("/profile/:userId", users.getUserProfile);
+  // Get user profile with reviews and transactions (protected)
+  router.get("/profile/:userId", verifyToken, users.getUserProfile);
 
   // Middleware to verify token (example usage for protected routes)
-  router.get("/protected", users.verifyToken, (req, res) => {
+  router.get("/protected", verifyToken, (req, res) => {
     res.status(200).send({ message: "This is a protected route!" });
   });
 
-  // Dashboard and menu item endpoints
-  router.get("/restaurant-users", users.getRestaurantUsers);
-  router.get("/dashboard/:userId", users.getDashboardData); // period query param: week|month|year
-  router.get("/:userId/allotted-menuitems", users.getUserMenuItems); // NEW: get user's allotted menu items
-  router.post("/:userId/menu-items", users.addMenuItemToUser);
+  // Dashboard and menu item endpoints (restaurant user access)
+  router.get("/restaurant-users", verifyRestaurantUser, users.getRestaurantUsers);
+  router.get("/dashboard/:userId", verifyRestaurantUser, users.getDashboardData); // period query param: week|month|year
+  router.get("/:userId/allotted-menuitems", verifyRestaurantUser, users.getUserMenuItems); // NEW: get user's allotted menu items
+  router.post("/:userId/menu-items", verifyManager, users.addMenuItemToUser); // Only managers can add menu items
 
-  // CRUD endpoints
-  router.get("/", users.findAll);
-  router.get("/:id", users.findOne);
-  router.put("/:id", users.update);
-  router.delete("/:id", users.delete);
-  // Messaging endpoints
-  router.post("/:userId/message", users.sendMessageToUser);
-  router.get("/:userId/messages", users.getMessagesForUser);
-  router.post("/:userId/allotted-menuitems", users.saveUserMenuItems);
-  router.get("/restaurant-users", users.getRestaurantUsers);
+  // CRUD endpoints (manager access only)
+  router.get("/", verifyManager, users.findAll);
+  router.get("/:id", verifyRestaurantUser, users.findOne);
+  router.put("/:id", verifyManager, users.update);
+  router.delete("/:id", verifyManager, users.delete);
+
+  // Messaging endpoints (restaurant user access)
+  router.post("/:userId/message", verifyRestaurantUser, users.sendMessageToUser);
+  router.get("/:userId/messages", verifyRestaurantUser, users.getMessagesForUser);
+  router.post("/:userId/allotted-menuitems", verifyManager, users.saveUserMenuItems); // Only managers can allot menu items
 
   app.use("/api/users", router);
 };

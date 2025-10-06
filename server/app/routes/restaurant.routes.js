@@ -1,23 +1,23 @@
-const express = require('express');
-const router = express.Router();
-const restaurantController = require('../controllers/restaurant.controller');
+const { verifyToken, verifyManager } = require("../middleware/authMiddleware");
 
-router.post('/', restaurantController.create);
-router.get('/', restaurantController.findAll);
-router.get('/:id', restaurantController.findOne);
-router.put('/:id', restaurantController.update);
-router.delete('/:id', restaurantController.delete);
-
-module.exports = router;
 module.exports = app => {
 	const restaurant = require('../controllers/restaurant.controller');
 	var router = require('express').Router();
 
-	router.post('/', restaurant.create);
-	router.get('/', restaurant.findAll);
-	router.get('/:id', restaurant.findOne);
-	router.put('/:id', restaurant.update);
-	router.delete('/:id', restaurant.delete);
+	// Create restaurant (manager only)
+	router.post('/', verifyManager, restaurant.create);
+
+	// Get all restaurants (any authenticated user)
+	router.get('/', verifyToken, restaurant.findAll);
+
+	// Get single restaurant (any authenticated user)
+	router.get('/:id', verifyToken, restaurant.findOne);
+
+	// Update restaurant (manager only)
+	router.put('/:id', verifyManager, restaurant.update);
+
+	// Delete restaurant (manager only)
+	router.delete('/:id', verifyManager, restaurant.delete);
 
 	app.use('/api/restaurants', router);
 };
