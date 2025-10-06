@@ -38,7 +38,6 @@ db.buffet = require("./buffet.model.js")(sequelize, Sequelize);
 db.orders = require("./order.model.js")(sequelize, Sequelize);
 db.orderStatus = require("./orderStatus.model.js")(sequelize, Sequelize);
 
-
 db.buffetOrder = require("./buffetOrder.model.js")(sequelize, Sequelize);
 db.tableBooking = require("./tablebooking.model.js")(sequelize, Sequelize);
 db.message = require("./message.model.js")(sequelize, Sequelize);
@@ -48,7 +47,6 @@ db.restaurantReview = require("./restaurantreview.model.js")(
   sequelize,
   Sequelize
 );
-
 
 db.announcement = require("./announcement.model.js")(sequelize, Sequelize);
 db.orderProducts = require("./orderproducts.model.js")(sequelize, Sequelize);
@@ -193,7 +191,6 @@ db.restaurant.hasMany(db.orders, {
   as: "orders",
 });
 
-
 db.roles.hasMany(db.users, {
   foreignKey: "role_id",
   as: "users",
@@ -205,7 +202,7 @@ db.customer.belongsTo(db.roles, {
   as: "role",
 });
 
-db.customer.belongsTo(db.users, {
+/* db.customer.belongsTo(db.users, {
   foreignKey: "userId",
   as: "user",
 });
@@ -213,7 +210,7 @@ db.customer.belongsTo(db.users, {
 db.users.hasOne(db.customer, {
   foreignKey: "userId",
   as: "customerProfile",
-});
+}); */
 db.chefLogin = require("./chefLogin.model.js")(sequelize, Sequelize);
 
 db.buffet.belongsTo(db.restaurant, {
@@ -221,9 +218,19 @@ db.buffet.belongsTo(db.restaurant, {
   as: "restaurant",
 });
 
+db.restaurant.hasMany(db.buffet, {
+  foreignKey: "restaurantId",
+  as: "buffets",
+});
+
 db.buffet.hasMany(db.buffetOrder, {
   foreignKey: "buffetId",
   as: "orders",
+});
+
+db.buffetOrder.belongsTo(db.buffet, {
+  foreignKey: "buffetId",
+  as: "buffet",
 });
 
 // ChefLogin associations
@@ -274,7 +281,13 @@ db.restaurantTable.hasMany(db.tableBooking, {
   foreignKey: "tableId",
   as: "bookings",
 });
-db.message.belongsTo(db.restaurantUser, { as: 'fromUser', foreignKey: 'fromUserId' });
-db.message.belongsTo(db.restaurantUser, { as: 'toUser', foreignKey: 'toUserId' });
-db.message.belongsTo(db.roles, { as: 'fromRole', foreignKey: 'fromRoleId' });
-db.message.belongsTo(db.roles, { as: 'toRole', foreignKey: 'toRoleId' });
+db.message.belongsTo(db.restaurantUser, {
+  as: "fromUser",
+  foreignKey: "fromUserId",
+});
+db.message.belongsTo(db.restaurantUser, {
+  as: "toUser",
+  foreignKey: "toUserId",
+});
+db.message.belongsTo(db.roles, { as: "fromRole", foreignKey: "fromRoleId" });
+db.message.belongsTo(db.roles, { as: "toRole", foreignKey: "toRoleId" });
