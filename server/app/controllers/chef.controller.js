@@ -70,8 +70,9 @@ chefController.chefLogin = async (req, res) => {
     const token = jwt.sign(
       { id: chef.id, role: chef.role.name },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "7d" } // Extended to 7 days for consistency
     );
+    console.log('✅ Chef token generated successfully for:', chef.id);
 
     // Create chef login record with formatted Indian time
     const formattedTime = formatIndianDateTime(new Date());
