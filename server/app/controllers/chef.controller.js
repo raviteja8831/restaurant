@@ -358,7 +358,7 @@ chefController.chefLogout = async (req, res) => {
     });
   } catch (e) {
     console.error("Chef logout error:", e);
-    res.status(500).json({ message: "Server error", error: e.message });
+    res.status(200).json({ message: "Server error", error: e.message });
   }
 };
 
