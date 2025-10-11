@@ -139,12 +139,10 @@ exports.createOrder = async (req, res) => {
 };
 exports.deleteOrderItems = async (req, res) => {
   try {
-    const { orderId } = req.params;
     const { removedItems } = req.body;
-    const existingOrder = await Order.findByPk(req.body.orderID); // Changed from orderId to orderID
+    const existingOrder = await Order.findByPk(req.body.orderID);
     if (!existingOrder) {
-      res.status(201).json("");
-      return;
+      return res.status(404).json({ status: "error", message: "Order not found" });
     }
     // Remove items from the order
     if (Array.isArray(removedItems) && removedItems.length > 0) {
@@ -404,14 +402,16 @@ exports.getOrderProductsByOrderId = async (req, res) => {
         message: "No order products found for this order",
       });
     }
-    for (const item of orderProducts) {
+    // Mark found order products as 'in-progress' (status = 1) in a single update
+    try {
       await OrderProduct.update(
         { status: 1 },
         {
-          where: { id: item.id, orderId },
-          transaction: t,
+          where: { orderId },
         }
       );
+    } catch (updErr) {
+      console.error('Error updating order products status:', updErr);
     }
     res.status(200).json({
       status: "success",
