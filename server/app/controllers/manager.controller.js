@@ -336,3 +336,124 @@ exports.dashboard = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Get paid orders that need to be cleared
+exports.getPaidOrders = async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+
+    if (!restaurantId) {
+      return res.status(400).json({ message: "restaurantId is required" });
+    }
+
+    // Get paid orders (status = 'PAID') that are not yet completed
+    const orders = await db.orders.findAll({
+      where: {
+        restaurantId,
+        status: 'PAID', // Orders that have been paid but not cleared
+      },
+      include: [
+        {
+          model: db.users,
+          as: 'customer',
+          attributes: ['id', 'firstName', 'lastName', 'phoneNumber']
+        },
+        {
+          model: db.orderProducts,
+          as: 'orderProducts',
+          include: [
+            {
+              model: db.menuItem,
+              as: 'menuitem',
+              attributes: ['name', 'price']
+            }
+          ]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Format the response to match frontend expectations
+    const formattedOrders = orders.map(order => ({
+      id: order.id,
+      totalAmount: order.total,
+      createdAt: order.createdAt,
+      tableId: order.tableId,
+      customer: order.customer,
+      orderItems: order.orderProducts?.map(item => ({
+        menuItemName: item.menuitem?.name || 'Unknown Item',
+        quantity: item.quantity,
+        price: item.menuitem?.price || 0
+      })) || []
+    }));
+
+    res.json({
+      status: 'success',
+      orders: formattedOrders
+    });
+
+  } catch (error) {
+    console.error('Error fetching paid orders:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error fetching paid orders',
+      error: error.message
+    });
+  }
+};
+
+// Clear an order (mark as completed after payment verification)
+exports.clearOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status, clearedBy } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ message: "orderId is required" });
+    }
+
+    // Find the order
+    const order = await db.orders.findByPk(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.status !== 'PAID') {
+      return res.status(400).json({ message: "Order is not in paid status" });
+    }
+
+    // Update order status to completed
+    await order.update({
+      status: 'COMPLETED',
+      clearedAt: new Date(),
+      clearedBy: clearedBy || 'MANAGER'
+    });
+
+    // Also update all associated order products to served/completed status
+    await db.orderProducts.update(
+      { status: 4 }, // Status 4 = Served/Completed
+      {
+        where: { orderId: orderId }
+      }
+    );
+
+    res.json({
+      status: 'success',
+      message: 'Order cleared successfully',
+      order: {
+        id: order.id,
+        status: order.status,
+        clearedAt: order.clearedAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Error clearing order:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error clearing order',
+      error: error.message
+    });
+  }
+};
