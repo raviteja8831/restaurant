@@ -25,6 +25,10 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
         defaultValue: 3, // Assuming 3 is the role_id for customers
       },
+      profileImage: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
     },
     {
       tableName: "user",
