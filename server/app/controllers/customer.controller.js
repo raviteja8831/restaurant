@@ -199,6 +199,7 @@ exports.findByPhone = async (req, res) => {
       firstname: customer.firstname,
       lastname: customer.lastname,
       phone: customer.phone,
+      profileImage: customer.profileImage,
       token,
       role: customer.role
         ? {
