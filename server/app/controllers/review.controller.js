@@ -78,3 +78,65 @@ exports.listReviews = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Get all reviews for a specific user
+exports.getUserReviews = async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({
+        status: "error",
+        message: "userId is required",
+      });
+    }
+
+    const reviews = await db.restaurantReview.findAll({
+      where: { userId },
+      attributes: [
+        "id",
+        "userId",
+        "restaurantId",
+        "rating",
+        "review",
+        "createdAt",
+        "updatedAt",
+      ],
+      include: [
+        {
+          model: db.restaurant,
+          as: "restaurant",
+          attributes: ["id", "name", "address", "logoImage", "restaurantType"]
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: reviews.map((r) => ({
+        id: r.id,
+        restaurantId: r.restaurantId,
+        restaurant: {
+          id: r.restaurant?.id,
+          name: r.restaurant?.name || "",
+          address: r.restaurant?.address || "",
+          logoImage: r.restaurant?.logoImage || "",
+          restaurantType: r.restaurant?.restaurantType || "",
+        },
+        rating: r.rating,
+        review: r.review || "",
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      })),
+      count: reviews.length,
+    });
+  } catch (error) {
+    console.error("Error in getUserReviews:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching user reviews",
+      error: error.message,
+    });
+  }
+};

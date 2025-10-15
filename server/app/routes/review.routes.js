@@ -4,6 +4,7 @@ module.exports = (app) => {
   const reviewController = require("../controllers/review.controller");
 
   router.get("/", reviewController.listReviews);
+  router.get("/user", reviewController.getUserReviews);
   router.post("/add", reviewController.createReview);
 
   module.exports = router;
