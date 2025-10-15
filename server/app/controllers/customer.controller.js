@@ -14,7 +14,7 @@ console.log('🔑 Customer Controller - JWT Secret:', SECRET_KEY ? 'Loaded' : 'M
 // Create and Save a new Customer
 exports.create = async (req, res) => {
   try {
-    const { firstname, lastname, phone } = req.body;
+    const { firstname, lastname, phone, profileImage } = req.body;
 
     // Validate request
     if (!firstname || !lastname || !phone) {
@@ -48,6 +48,7 @@ exports.create = async (req, res) => {
       firstname,
       lastname,
       phone,
+      profileImage,
     });
 
     res.status(201).send(customer);
