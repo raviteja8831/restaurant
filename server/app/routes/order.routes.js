@@ -12,6 +12,9 @@ module.exports = (app) => {
   router.get("/pending/:restaurantId/:userId", orders.getPendingOrders);
   router.get("/selected/items/:orderId", orders.getSelectedOrderItems);
 
+  // Get PAID orders for a restaurant (manager only)
+  router.get("/paid/:restaurantId", orders.getPaidOrders);
+
   // Delete an order and its items (manager only)
   router.delete("/delete/:orderId", orders.deleteOrder);
 

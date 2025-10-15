@@ -83,17 +83,19 @@ exports.getUserProfile = async (req, res) => {
       });
     }
 
-    // Get recent orders with details
+    // Get recent orders with details (all statuses: PENDING, PLACED, PREPARING, PREPARED, SERVED, PAID, COMPLETED)
     const orders = await db.orders.findAll({
       where: {
         userId,
-        status: "COMPLETED",
+        status: {
+          [Op.in]: ["PENDING", "PLACED", "PREPARING", "PREPARED", "SERVED", "PAID", "COMPLETED"]
+        }
       },
       include: [
         {
           model: db.restaurant,
           as: "orderRestaurant",
-          attributes: ["name", "address"], //, "image"
+          attributes: ["name", "address", "id"], //, "image"
         },
         {
           model: db.orderProducts,
@@ -108,7 +110,7 @@ exports.getUserProfile = async (req, res) => {
         },
       ],
       order: [["createdAt", "DESC"]],
-      limit: 5,
+      limit: 20, // Increased limit to show more orders
     });
     const tableOrders = await db.tableBooking.findAll({
       where: {
@@ -152,12 +154,14 @@ exports.getUserProfile = async (req, res) => {
     // Format orders for response
     const formattedOrders = orders.map((order) => ({
       id: order.id,
+      restaurantId: order?.orderRestaurant?.id,
       restaurantName: order?.orderRestaurant?.name,
       restaurantAddress: order?.orderRestaurant?.address,
       restaurantImage: order?.orderRestaurant?.image,
       date: new Date(order?.createdAt).toLocaleDateString(),
       time: new Date(order?.createdAt).toLocaleTimeString(),
       totalAmount: order?.total,
+      status: order?.status, // Include order status
       method: order?.paymentMethod,
       items: order?.orderProducts?.map((product) => ({
         name: product?.menuitem?.name,

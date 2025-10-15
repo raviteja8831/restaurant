@@ -310,7 +310,7 @@ exports.getSelectedOrderItems = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { totalAmount, updatedItems, removedItems } = req.body;
+    const { totalAmount, updatedItems, removedItems, status } = req.body;
 
     // Start a transaction
     const result = await db.sequelize.transaction(async (t) => {
@@ -338,9 +338,12 @@ exports.updateOrderStatus = async (req, res) => {
         });
       }
 
+      // Determine order status: use provided status or default to COMPLETED
+      const orderStatus = status || "COMPLETED";
+
       const order = await Order.update(
         {
-          status: "COMPLETED",
+          status: orderStatus,
           total: totalAmount,
         },
         {
@@ -350,7 +353,10 @@ exports.updateOrderStatus = async (req, res) => {
         }
       );
 
-      return order;
+      // Fetch updated order to return
+      const updatedOrder = await Order.findByPk(orderId, { transaction: t });
+
+      return updatedOrder;
     });
 
     res.status(200).json({
@@ -358,7 +364,7 @@ exports.updateOrderStatus = async (req, res) => {
       message: "Order updated successfully",
       data: {
         order: result,
-        totalAmount: result.totalAmount,
+        totalAmount: result.total,
         status: result.status,
       },
     });
@@ -449,7 +455,7 @@ exports.updateOrderProductStatusList = async (req, res) => {
         transaction: t,
       });
 
-      // Bulk update all products with the new status
+      // Bulk update all products with the new status (PLACED = 1)
       await OrderProduct.update(
         { status: status },
         {
@@ -458,12 +464,23 @@ exports.updateOrderProductStatusList = async (req, res) => {
         }
       );
 
+      // Also update the main order status to PLACED when status=1
+      if (status === "1" || status === 1) {
+        await Order.update(
+          { status: "PLACED" },
+          {
+            where: { id: orderId },
+            transaction: t,
+          }
+        );
+      }
+
       return updatedProducts;
     });
 
     res.status(200).json({
       status: "success",
-      message: "Order products updated successfully",
+      message: "Order products updated successfully and order status set to PLACED",
       data: result,
     });
   } catch (error) {
@@ -471,6 +488,69 @@ exports.updateOrderProductStatusList = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "Error updating order products",
+      error: error.message,
+    });
+  }
+};
+
+// Get PAID orders for a restaurant (for manager)
+exports.getPaidOrders = async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+
+    const paidOrders = await Order.findAll({
+      where: {
+        restaurantId: restaurantId,
+        status: "PAID",
+      },
+      include: [
+        {
+          model: db.users,
+          as: "orderUser",
+          attributes: ["firstname", "lastname", "phone"],
+        },
+        {
+          model: db.orderProducts,
+          as: "orderProducts",
+          include: [
+            {
+              model: MenuItem,
+              as: "menuitem",
+              attributes: ["name", "price"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    const formattedOrders = paidOrders.map((order) => ({
+      id: order.id,
+      customerName: order.orderUser
+        ? `${order.orderUser.firstname || ""} ${order.orderUser.lastname || ""}`.trim()
+        : "Unknown",
+      customerPhone: order.orderUser?.phone || "",
+      date: new Date(order.createdAt).toLocaleDateString(),
+      time: new Date(order.createdAt).toLocaleTimeString(),
+      totalAmount: order.total,
+      tableId: order.tableId,
+      items: order.orderProducts.map((product) => ({
+        name: product.menuitem?.name || "Unknown",
+        quantity: product.quantity,
+        price: product.menuitem?.price || 0,
+        total: product.quantity * (product.menuitem?.price || 0),
+      })),
+    }));
+
+    res.status(200).json({
+      status: "success",
+      data: formattedOrders,
+    });
+  } catch (error) {
+    console.error("Error in getPaidOrders:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching paid orders",
       error: error.message,
     });
   }
