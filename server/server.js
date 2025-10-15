@@ -33,6 +33,7 @@ require("./app/routes/table.routes.js")(app);
 require("./app/routes/restaurant.routes.js")(app);
 require("./app/routes/qrcode.routes.js")(app);
 require("./app/routes/review.routes.js")(app);
+require("./app/routes/favorites.routes.js")(app);
 require("./app/routes/manager.routes.js")(app);
 require("./app/routes/chef.routes.js")(app);
 require("./app/routes/bufferOrder.routes.js")(app);
