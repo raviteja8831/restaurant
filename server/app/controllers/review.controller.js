@@ -105,7 +105,7 @@ exports.getUserReviews = async (req, res) => {
       include: [
         {
           model: db.restaurant,
-          as: "restaurant",
+          as: "reviewedRestaurant",
           attributes: ["id", "name", "address", "logoImage", "restaurantType"]
         },
       ],
@@ -118,11 +118,11 @@ exports.getUserReviews = async (req, res) => {
         id: r.id,
         restaurantId: r.restaurantId,
         restaurant: {
-          id: r.restaurant?.id,
-          name: r.restaurant?.name || "",
-          address: r.restaurant?.address || "",
-          logoImage: r.restaurant?.logoImage || "",
-          restaurantType: r.restaurant?.restaurantType || "",
+          id: r.reviewedRestaurant?.id,
+          name: r.reviewedRestaurant?.name || "",
+          address: r.reviewedRestaurant?.address || "",
+          logoImage: r.reviewedRestaurant?.logoImage || "",
+          restaurantType: r.reviewedRestaurant?.restaurantType || "",
         },
         rating: r.rating,
         review: r.review || "",

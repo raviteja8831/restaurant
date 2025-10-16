@@ -29,5 +29,17 @@ module.exports = (app) => {
     tableBookingController.getAvailableTables
   );
 
+  // Get pending bookings for manager verification
+  router.get(
+    "/pending/:restaurantId",
+    tableBookingController.getPendingBookings
+  );
+
+  // Manager verify payment
+  router.put(
+    "/:id/verify-payment",
+    tableBookingController.verifyPayment
+  );
+
   app.use("/api/tablebookings", router);
 };

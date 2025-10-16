@@ -43,6 +43,11 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
+      status: {
+        type: Sequelize.ENUM('booked', 'payment_completed'),
+        allowNull: false,
+        defaultValue: 'booked',
+      },
     },
     {
       tableName: "tablebookings",

@@ -17,6 +17,12 @@ router.put("/:id", buffetOrderController.update);
 // Delete a buffet order
 router.delete("/:id", buffetOrderController.delete);
 
+// Get pending buffet orders for manager verification
+router.get("/pending/:restaurantId", buffetOrderController.getPendingOrders);
+
+// Manager verify payment
+router.put("/:id/verify-payment", buffetOrderController.verifyPayment);
+
 module.exports = (app) => {
   app.use("/api/buffet", router);
 };
