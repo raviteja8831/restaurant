@@ -259,12 +259,8 @@ exports.getSelectedOrderItems = async (req, res) => {
           model: MenuItem,
           as: "menuitem",
           attributes: ["id", "name", "price"],
-        },
-        {
-          model: db.orderStatus,
-          as: "orderStatus",
-          attributes: ["name"],
-        },
+        }
+       
       ],
       raw: true,
       nest: true,
@@ -277,7 +273,7 @@ exports.getSelectedOrderItems = async (req, res) => {
       menuItemName: item.menuitem.name,
       price: item.menuitem.price,
       quantity: item.quantity,
-      statusText: item?.orderStatus?.name,
+      statusText:'',
       status: item.status,
       comments: item.comments || "",
     }));
@@ -439,13 +435,13 @@ exports.updateOrderProductStatusList = async (req, res) => {
     const { status } = req.body;
 
     // Validate status exists in orderStatus table
-    const validStatus = await db.orderStatus.findByPk(status);
-    if (!validStatus) {
-      return res.status(400).json({
-        status: "error",
-        message: "Invalid status ID provided",
-      });
-    }
+    // const validStatus = await db.orderStatus.findByPk(status);
+    // if (!validStatus) {
+    //   return res.status(400).json({
+    //     status: "error",
+    //     message: "Invalid status ID provided",
+    //   });
+    // }
 
     // Start a transaction
     const result = await db.sequelize.transaction(async (t) => {

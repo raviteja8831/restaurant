@@ -98,10 +98,10 @@ db.orders.belongsTo(db.restaurantTable, { foreignKey: "tableId", as: "table" });
 db.restaurantTable.hasMany(db.orders, { foreignKey: "tableId", as: "orders" });
 
 // Order Status associations
-db.orderProducts.belongsTo(db.orderStatus, {
-  foreignKey: "status",
-  as: "orderStatus",
-});
+// db.orderProducts.belongsTo(db.orderStatus, {
+//   foreignKey: "status",
+//   as: "orderStatus",
+// });
 // db.orderStatus.hasMany(db.orders, { foreignKey: "statusId", as: "orders" });
 
 // Many-to-many: restaurantUser <-> menuItem through userMenuItem
