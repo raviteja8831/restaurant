@@ -13,5 +13,8 @@ module.exports = app => {
   // Clear/complete an order after payment verification
   router.post('/orders/clear/:orderId', verifyManager, manager.clearOrder);
 
+  // Get chef login/logout activity report
+  router.get('/chef-activity/:restaurantId', verifyManager, manager.getChefActivityReport);
+
   app.use('/api/manager', router);
 };
