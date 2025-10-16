@@ -457,3 +457,141 @@ exports.clearOrder = async (req, res) => {
     });
   }
 };
+
+// Get detailed chef login/logout activity report
+exports.getChefActivityReport = async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+    const { startDate, endDate, chefId } = req.query;
+
+    if (!restaurantId) {
+      return res.status(400).json({ message: "restaurantId is required" });
+    }
+
+    // Build where clause for chefLogin
+    const whereClause = { restaurantId };
+
+    // If specific chef is requested
+    if (chefId) {
+      whereClause.chefId = chefId;
+    }
+
+    // Date filtering
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      whereClause.createdAt = {
+        [Op.gte]: start,
+        [Op.lte]: end
+      };
+    } else {
+      // Default to today
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      whereClause.createdAt = {
+        [Op.gte]: todayStart,
+        [Op.lte]: todayEnd
+      };
+    }
+
+    // Fetch chef login records with chef details
+    const chefActivities = await db.chefLogin.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: db.restaurantUser,
+          as: 'chef',
+          attributes: ['id', 'firstname', 'lastname', 'phone'],
+          include: [
+            {
+              model: db.roles,
+              as: 'role',
+              attributes: ['id', 'name']
+            }
+          ]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Calculate working hours for each session
+    const calculateWorkingHours = (loginTime, logoutTime) => {
+      if (!loginTime) return 0;
+
+      try {
+        // Parse Indian format date time: "DD/MM/YYYY HH:MM:SS AM/PM"
+        const parseIndianDateTime = (dateTimeStr) => {
+          const parts = dateTimeStr.trim().split(' ');
+          if (parts.length < 3) return null;
+
+          const [datePart, timePart, period] = parts;
+          const [day, month, year] = datePart.split('/');
+          const [hours, minutes, seconds] = timePart.split(':');
+
+          let hour = parseInt(hours);
+          if (period && period.toLowerCase() === 'pm' && hour !== 12) hour += 12;
+          if (period && period.toLowerCase() === 'am' && hour === 12) hour = 0;
+
+          return new Date(year, month - 1, day, hour, parseInt(minutes), parseInt(seconds || 0));
+        };
+
+        const startTime = parseIndianDateTime(loginTime);
+        if (!startTime) return 0;
+
+        const endTime = logoutTime ? parseIndianDateTime(logoutTime) : new Date();
+
+        const diffMs = endTime - startTime;
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        return Math.max(0, diffHours).toFixed(2);
+      } catch (error) {
+        console.error('Error calculating working hours:', error);
+        return 0;
+      }
+    };
+
+    // Format the response
+    const formattedActivities = chefActivities.map(activity => ({
+      id: activity.id,
+      chefId: activity.chefId,
+      chefName: `${activity.chef?.firstname || ''} ${activity.chef?.lastname || ''}`.trim() || 'Unknown Chef',
+      chefPhone: activity.chef?.phone || 'N/A',
+      loginTime: activity.loginTime,
+      logoutTime: activity.logOutTime || 'Still Active',
+      workingHours: parseFloat(calculateWorkingHours(activity.loginTime, activity.logOutTime)),
+      status: activity.logOutTime ? 'Logged Out' : 'Active',
+      createdAt: activity.createdAt
+    }));
+
+    // Calculate summary statistics
+    const totalSessions = formattedActivities.length;
+    const activeSessions = formattedActivities.filter(a => a.status === 'Active').length;
+    const completedSessions = formattedActivities.filter(a => a.status === 'Logged Out').length;
+    const totalWorkingHours = formattedActivities.reduce((sum, a) => sum + a.workingHours, 0).toFixed(2);
+
+    res.json({
+      status: 'success',
+      summary: {
+        totalSessions,
+        activeSessions,
+        completedSessions,
+        totalWorkingHours: parseFloat(totalWorkingHours)
+      },
+      activities: formattedActivities
+    });
+
+  } catch (error) {
+    console.error('Error fetching chef activity report:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error fetching chef activity report',
+      error: error.message
+    });
+  }
+};

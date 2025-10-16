@@ -686,6 +686,20 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" } // Extended to 7 days for better user experience
     );
     console.log('✅ Token generated successfully');
+
+    // If user is a chef (role_id = 2), create login record
+    let loginAT = null;
+    if (user.role_id === 2 || user.role?.id === 2) {
+      const formattedTime = formatIndianDateTime(new Date());
+      await db.chefLogin.create({
+        chefId: user.id,
+        restaurantId: user.restaurantId,
+        loginTime: formattedTime,
+      });
+      loginAT = formatShortTime(new Date());
+      console.log('✅ Chef login record created for user:', user.id);
+    }
+
     res.status(200).send({
       id: user.id,
       phone: user.phone,
@@ -694,6 +708,7 @@ exports.login = async (req, res) => {
       role: user.role || null,
       restaurant: user.restaurant || null,
       token, // <-- send token in response
+      loginAT, // <-- send login time for chefs
     });
   } catch (error) {
     res.status(500).send({ message: error.message });
