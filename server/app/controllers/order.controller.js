@@ -117,24 +117,36 @@ exports.createOrder = async (req, res) => {
 
       // Check if order items exist in the request body
       if (req.body.orderItems && Array.isArray(req.body.orderItems)) {
-        // Create order products for each item
-        const orderProducts_ = req.body.orderItems.map((item) => ({
-          orderId: order.id,
-          menuitemId: item.id, // Changed from item.menuId to item.id
-          quantity: item.quantity,
-          // status: 1, // Default status for new items
-          comments: item.comments || "", // Added comments field
-        }));
+        try {
+          // Create order products for each item
+          const orderProducts_ = req.body.orderItems.map((item) => ({
+            orderId: order.id,
+            menuitemId: item.id, // Changed from item.menuId to item.id
+            quantity: item.quantity,
+            // status: 1, // Default status for new items
+            comments: item.comments || "", // Added comments field
+          }));
 
-        // Bulk create all order products
-        await OrderProduct.bulkCreate(orderProducts_);
+          // Bulk create all order products
+          await OrderProduct.bulkCreate(orderProducts_);
+        } catch (itemError) {
+          // If there's an error creating order items, delete the order
+          await order.destroy();
+          console.error("Error creating order items:", itemError);
+          return res.status(400).json({
+            error: "Failed to add items to order. Please verify the items exist.",
+            details: itemError.message,
+            from: "Error creating order items"
+          });
+        }
       }
       res.status(201).json(order);
     }
   } catch (err) {
+    console.error("Error in createOrder:", err);
     res
       .status(500)
-      .json({ error: err.message, from: " Error creating order." });
+      .json({ error: err.message, from: "Error creating order." });
   }
 };
 exports.deleteOrderItems = async (req, res) => {
@@ -184,13 +196,13 @@ exports.getPendingOrders = async (req, res) => {
       }),
       db.sequelize.query(
         `
-        SELECT 
+        SELECT
           COUNT(DISTINCT op.id) as totalOrders,
           COALESCE(SUM(op.quantity * mi.price), 0) as totalOrdersAmount
         FROM \`order\` o
         LEFT JOIN ordersproduct op ON o.id = op.orderId
-        LEFT JOIN menuitem mi ON op.menuItemId = mi.id
-        WHERE o.restaurantId = :restaurantId 
+        LEFT JOIN menuitem mi ON op.menuitemId = mi.id
+        WHERE o.restaurantId = :restaurantId
         AND o.userId = :userId
         AND o.status = 'PENDING'
       `,

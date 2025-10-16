@@ -18,11 +18,18 @@ exports.create = async (req, res) => {
       restaurantId: req.body.restaurantId,
       buffetId: req.body.buffetId || null,
       persons: req.body.persons || 1,
+      price: req.body.price || null,
+      totalAmount: req.body.totalAmount || null,
+      status: 'booked',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
-    res.status(201).json(buffetOrder);
+    res.status(201).json({
+      success: true,
+      message: "Buffet order created successfully",
+      data: buffetOrder
+    });
   } catch (err) {
     res.status(500).send({
       message:
@@ -146,6 +153,100 @@ exports.delete = async (req, res) => {
   } catch (err) {
     res.status(500).send({
       message: "Could not delete Buffet Order with id=" + id,
+    });
+  }
+};
+
+// Get pending buffet orders for manager verification
+exports.getPendingOrders = async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+
+    if (!restaurantId) {
+      return res.status(400).json({
+        success: false,
+        message: "Restaurant ID is required",
+      });
+    }
+
+    const pendingOrders = await BuffetOrder.findAll({
+      where: {
+        restaurantId: restaurantId,
+        status: "booked",
+      },
+      include: [
+        {
+          model: db.users,
+          as: "user",
+          attributes: ["id", "name", "email", "phoneNumber"],
+        },
+        {
+          model: db.buffet,
+          as: "buffet",
+          attributes: ["id", "name", "price", "type"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: pendingOrders,
+    });
+  } catch (error) {
+    console.error("Error in getPendingOrders:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving pending buffet orders",
+      error: error.message,
+    });
+  }
+};
+
+// Manager verify payment and update status
+exports.verifyPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Buffet order ID is required",
+      });
+    }
+
+    const buffetOrder = await BuffetOrder.findByPk(id);
+
+    if (!buffetOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Buffet order not found",
+      });
+    }
+
+    if (buffetOrder.status === "payment_completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment already verified for this order",
+      });
+    }
+
+    await buffetOrder.update({
+      status: "payment_completed",
+      updatedAt: new Date()
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment verified successfully",
+      data: buffetOrder,
+    });
+  } catch (error) {
+    console.error("Error in verifyPayment:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error verifying payment",
+      error: error.message,
     });
   }
 };

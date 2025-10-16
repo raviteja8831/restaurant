@@ -147,7 +147,7 @@ exports.create = async (req, res) => {
         starttime: currentDate.getTime().toString(),
         endtime: endTime.getTime().toString(),
         amount: 50,
-        // status: "active",
+        status: "booked",
       });
     });
 
@@ -301,6 +301,96 @@ exports.findTableBookingSummary = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error retrieving table booking summary",
+      error: error.message,
+    });
+  }
+};
+
+// Get pending bookings for manager verification
+exports.getPendingBookings = async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+
+    if (!restaurantId) {
+      return res.status(400).json({
+        success: false,
+        message: "Restaurant ID is required",
+      });
+    }
+
+    const currentDate = new Date();
+    const pendingBookings = await TableBooking.findAll({
+      where: {
+        restaurantId: restaurantId,
+        status: "booked",
+        endtime: {
+          [Op.gt]: currentDate.getTime(),
+        },
+      },
+      include: [
+        {
+          model: RestaurantTable,
+          as: "table",
+          attributes: ["id", "tableName", "capacity"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: pendingBookings,
+    });
+  } catch (error) {
+    console.error("Error in getPendingBookings:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving pending bookings",
+      error: error.message,
+    });
+  }
+};
+
+// Manager verify payment and update status
+exports.verifyPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking ID is required",
+      });
+    }
+
+    const booking = await TableBooking.findByPk(id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Table booking not found",
+      });
+    }
+
+    if (booking.status === "payment_completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment already verified for this booking",
+      });
+    }
+
+    await booking.update({ status: "payment_completed" });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payment verified successfully",
+      data: booking,
+    });
+  } catch (error) {
+    console.error("Error in verifyPayment:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error verifying payment",
       error: error.message,
     });
   }

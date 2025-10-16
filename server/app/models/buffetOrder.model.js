@@ -35,6 +35,19 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: true,
       },
+      price: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true,
+      },
+      totalAmount: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true,
+      },
+      status: {
+        type: Sequelize.ENUM('booked', 'payment_completed'),
+        allowNull: false,
+        defaultValue: 'booked',
+      },
       createdAt: {
         type: Sequelize.DATE,
         allowNull: true,
