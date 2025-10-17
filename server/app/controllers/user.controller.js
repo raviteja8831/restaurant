@@ -65,8 +65,130 @@ ensureUploadDir(uploadDir);
 const User = db.users;
 const Role = db.roles;
 
+// Get recent orders for a user
+exports.getRecentOrders = async (req, res) => {
+  console.log("📋 getRecentOrders endpoint called for userId:", req.query.userId);
+  try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({
+        status: "error",
+        message: "userId is required",
+      });
+    }
+
+    // Get recent orders with details (all statuses including PAYMENT_PENDING)
+    const orders = await db.orders.findAll({
+      where: {
+        userId,
+        status: {
+          [Op.in]: ["PENDING", "PLACED", "PREPARING", "PREPARED", "SERVED", "PAID", "COMPLETED", "PAYMENT_PENDING"]
+        }
+      },
+      include: [
+        {
+          model: db.restaurant,
+          as: "orderRestaurant",
+          attributes: ["name", "address", "id"],
+        },
+        {
+          model: db.orderProducts,
+          as: "orderProducts",
+          include: [
+            {
+              model: db.menuItem,
+              as: "menuitem",
+              attributes: ["name", "price"],
+            },
+          ],
+        },
+      ],
+      order: [["id", "DESC"]],
+      limit: 10, // Last 10 orders
+    });
+
+    // Format orders for response
+    const formattedOrders = orders.map((order) => ({
+      id: order.id,
+      restaurantId: order?.orderRestaurant?.id,
+      restaurantName: order?.orderRestaurant?.name,
+      restaurantAddress: order?.orderRestaurant?.address,
+      date: new Date(order?.createdAt).toLocaleDateString(),
+      time: new Date(order?.createdAt).toLocaleTimeString(),
+      totalAmount: order?.total,
+      status: order?.status,
+      method: order?.paymentMethod,
+      items: order?.orderProducts?.map((product) => ({
+        name: product?.menuitem?.name,
+        quantity: product?.quantity,
+        price: product?.menuitem?.price,
+        total: product?.quantity * product?.menuitem?.price,
+      })),
+    }));
+
+    // Get table bookings
+    const tableBookings = await db.tableBooking.findAll({
+      where: {
+        userId,
+      },
+      include: [
+        {
+          model: db.restaurant,
+          as: "restaurant",
+          attributes: ["name", "address"],
+        },
+        {
+          model: db.restaurantTable,
+          as: "table",
+          attributes: ["name"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit: 10,
+    });
+
+    // Get buffet orders
+    const buffetOrders = await db.buffetOrder.findAll({
+      where: {
+        userId,
+      },
+      include: [
+        {
+          model: db.buffet,
+          as: "buffet",
+          attributes: ["name", "price"],
+        },
+        {
+          model: db.restaurant,
+          as: "restaurant",
+          attributes: ["name", "address"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit: 10,
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: formattedOrders,
+      tableBookings: tableBookings,
+      buffetOrders: buffetOrders,
+      count: formattedOrders.length,
+    });
+  } catch (error) {
+    console.error("Error in getRecentOrders:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching recent orders",
+      error: error.message,
+    });
+  }
+};
+
 // Get user profile with orders, favorites and transactions
 exports.getUserProfile = async (req, res) => {
+  console.log("📋 getUserProfile endpoint called for userId:", req.params.userId);
   try {
     const userId = req.params.userId;
 
@@ -83,12 +205,12 @@ exports.getUserProfile = async (req, res) => {
       });
     }
 
-    // Get recent orders with details (all statuses: PENDING, PLACED, PREPARING, PREPARED, SERVED, PAID, COMPLETED)
+    // Get recent orders with details (all statuses including PAYMENT_PENDING)
     const orders = await db.orders.findAll({
       where: {
         userId,
         status: {
-          [Op.in]: ["PENDING", "PLACED", "PREPARING", "PREPARED", "SERVED", "PAID", "COMPLETED"]
+          [Op.in]: ["PENDING", "PLACED", "PREPARING", "PREPARED", "SERVED", "PAID", "COMPLETED", "PAYMENT_PENDING"]
         }
       },
       include: [
@@ -109,8 +231,8 @@ exports.getUserProfile = async (req, res) => {
           ],
         },
       ],
-      order: [["createdAt", "DESC"]],
-      limit: 20, // Increased limit to show more orders
+      order: [["id", "DESC"]],
+      limit: 10, // Last 10 orders
     });
     const tableOrders = await db.tableBooking.findAll({
       where: {
@@ -705,6 +827,7 @@ exports.login = async (req, res) => {
       phone: user.phone,
       firstname: user.firstname,
       lastname: user.lastname,
+      userImage: user.userImage || null,
       role: user.role || null,
       restaurant: user.restaurant || null,
       token, // <-- send token in response
