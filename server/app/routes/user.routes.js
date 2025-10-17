@@ -3,22 +3,32 @@
 const multer = require("multer");
 const path = require("path");
 const { verifyToken, verifyRestaurantUser, verifyManager } = require("../middleware/authMiddleware");
+const {
+  ensureUploadDir,
+  getUploadFilename,
+} = require("../utils/imageUploadHelper.js");
 
 module.exports = (app) => {
   const users = require("../controllers/user.controller.js");
 
   const router = require("express").Router();
 
-  // File upload config
+  // File upload config - using imageUploadHelper for consistent naming
+  const uploadDir = path.join(__dirname, "../../assets/images");
+  ensureUploadDir(uploadDir);
+
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, path.join(__dirname, "../assets/images"));
+      cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-      cb(null, Date.now() + "-" + file.originalname);
+      cb(null, getUploadFilename(file));
     },
   });
-  const upload = multer({ storage: storage });
+  const upload = multer({
+    storage: storage,
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
+  });
 
   // User registration
   router.post("/register", users.register);
@@ -33,6 +43,9 @@ module.exports = (app) => {
 
   // Get user profile with reviews and transactions (protected)
   router.get("/profile/:userId", verifyToken, users.getUserProfile);
+
+  // Get recent orders for a user (protected)
+  router.get("/recent-orders", verifyToken, users.getRecentOrders);
 
   // Middleware to verify token (example usage for protected routes)
   router.get("/protected", verifyToken, (req, res) => {

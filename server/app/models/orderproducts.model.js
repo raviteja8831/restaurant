@@ -30,12 +30,9 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: true,
       },
       status: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
         allowNull: true,
-        references: {
-        model: "orderstatus",
-        key: "id",
-      }
+        defaultValue: 'ORDERED',
       },
       createdAt: {
         type: Sequelize.DATE,

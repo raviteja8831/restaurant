@@ -90,6 +90,8 @@ chefController.chefLogin = async (req, res) => {
       lastname,
       role,
       restaurantId,
+      profileImage,
+      image_url,
     } = chef;
     res.json({
       token,
@@ -100,6 +102,7 @@ chefController.chefLogin = async (req, res) => {
         lastname,
         role,
         restaurantId,
+        profileImage: profileImage || image_url || null,
         loginAT: formatShortTime(new Date()),
       },
     });
@@ -179,18 +182,14 @@ chefController.chefDashboard = async (req, res) => {
       ],
     });
     console.log(totalOrders, "total");
-    // const workingDays = await Order.count({
-    //   include: [{
-    //     model: db.orderProducts,
-    //     as: 'orderProducts',
-    //     where: { menuitemId: { [Op.in]: menuItemIds } },
-    //     required: true
-    //   }],
-    //   distinct: true,
-    //   col: Sequelize.fn('DATE', Sequelize.col('Order.createdAt'))
-    // });
-    const workingDays = 10;
-    console.log("Orders fetched:", workingDays);
+
+    // Calculate actual working days from chef login records
+    const workingDays = await db.chefLogin.count({
+      where: { chefId: chefId },
+      distinct: true,
+      col: 'loginTime'
+    });
+    console.log("Working days calculated:", workingDays);
     // Most ordered dish
     const mostOrdered = await db.orderProducts.findAll({
       where: { menuitemId: { [Op.in]: menuItemIds } },
