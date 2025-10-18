@@ -5,33 +5,38 @@ const RestaurantReview = db.restaurantReview;
 const RestaurantRating = db.restaurantRating;
 const Buffet = db.buffet; // Add Buffet model
 
-// Create a new restaurant and copy first 10 menus from the global menu table
+// Create a new restaurant and copy first 10 menus from the database
 exports.create = async (req, res) => {
   const sequelize = db.sequelize;
   try {
     const result = await sequelize.transaction(async (t) => {
       // Create restaurant
       const restaurant = await Restaurant.create(req.body, { transaction: t });
+      console.log("✅ Restaurant created with ID:", restaurant.id);
 
-      // Fetch first 10 menus from the menu table (global/default menus)
+      // Fetch first 10 menus from the menu table (any menus, regardless of restaurantId)
       const defaultMenus = await db.menu.findAll({
-        where: {},
         order: [["id", "ASC"]],
         limit: 10,
-        attributes: ["name", "status", "icon"],
+        raw: true, // Get plain objects instead of Sequelize instances
         transaction: t,
       });
 
+      console.log(`📋 Found ${defaultMenus.length} default menus to copy`);
+
       // If there are menus, duplicate them for the newly created restaurant
-      if (defaultMenus && defaultMenus.length) {
+      if (defaultMenus && defaultMenus.length > 0) {
         const menusToCreate = defaultMenus.map((m) => ({
           name: m.name,
-          status: m.status,
-          icon: m.icon,
-          restaurantId: restaurant.id,
+          status: m.status !== undefined ? m.status : true,
+          icon: m.icon || "",
+          restaurantId: restaurant.id, // Assign to the new restaurant
         }));
 
-        await db.menu.bulkCreate(menusToCreate, { transaction: t });
+        const createdMenus = await db.menu.bulkCreate(menusToCreate, { transaction: t });
+        console.log(`✅ Successfully copied ${createdMenus.length} menus for restaurant ID ${restaurant.id}`);
+      } else {
+        console.log("⚠️ No default menus found in database to copy");
       }
 
       // Reload restaurant including its menus
@@ -40,12 +45,13 @@ exports.create = async (req, res) => {
         transaction: t,
       });
 
+      console.log(`✅ Restaurant loaded with ${created.menus ? created.menus.length : 0} menus`);
       return created;
     });
 
     res.status(201).json(result);
   } catch (err) {
-    console.error("Error creating restaurant and copying menus:", err);
+    console.error("❌ Error creating restaurant and copying menus:", err);
     res.status(400).json({ error: err.message });
   }
 };

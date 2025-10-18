@@ -561,12 +561,44 @@ exports.getDashboardData = async (req, res) => {
       startDate.setDate(now.getDate() - day);
     }
 
-    // Total orders for period (for this restaurant)
-    const totalOrders = await db.orders.count({
-      where: { restaurantId, createdAt: { [db.Sequelize.Op.gte]: startDate } },
-    });
-    // Total orders all time (for this restaurant)
-    const totalOrdersAll = await db.orders.count({ where: { restaurantId } });
+    // Total orders for period (for this chef based on allotted menu items)
+    let totalOrders = 0;
+    if (allottedMenuItemIds.length > 0) {
+      totalOrders = await db.orders.count({
+        where: {
+          restaurantId,
+          createdAt: { [db.Sequelize.Op.gte]: startDate }
+        },
+        include: [
+          {
+            model: db.orderProducts,
+            as: "orderProducts",
+            where: { menuitemId: allottedMenuItemIds },
+            required: true,
+            attributes: []
+          }
+        ],
+        distinct: true
+      });
+    }
+
+    // Total orders all time (for this chef based on allotted menu items)
+    let totalOrdersAll = 0;
+    if (allottedMenuItemIds.length > 0) {
+      totalOrdersAll = await db.orders.count({
+        where: { restaurantId },
+        include: [
+          {
+            model: db.orderProducts,
+            as: "orderProducts",
+            where: { menuitemId: allottedMenuItemIds },
+            required: true,
+            attributes: []
+          }
+        ],
+        distinct: true
+      });
+    }
 
     // Today's date
     const startOfDay = new Date(
