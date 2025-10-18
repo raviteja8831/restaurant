@@ -125,7 +125,7 @@ exports.getQRCodeOrders = async (req, res) => {
       where: {
         tableId: qrcodeId,
         status: {
-          [Op.in]: ['PLACED', 'PAYMENT_PENDING']
+          [Op.in]: ['PLACED', 'PAYMENT_PENDING', 'CLEARED', 'PAID']
         },
         ...dateFilter
       },

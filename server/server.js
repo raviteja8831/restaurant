@@ -76,7 +76,7 @@ db.sequelize
 // Serve images with CORS headers
 app.use(
   "/assets/images",
-  express.static(__dirname + "/app/assets/images", {
+  express.static(__dirname + "/assets/images", {
     setHeaders: function (res, path, stat) {
       res.set("Access-Control-Allow-Origin", "*");
     },
