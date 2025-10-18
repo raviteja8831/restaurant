@@ -129,19 +129,46 @@ chefController.chefProfile = async (req, res) => {
 chefController.chefDashboard = async (req, res) => {
   try {
     const { id } = req.params;
-    const chefId = parseInt(id, 10) || 2;
-    console.log("Chef ID from params:", chefId, req.params);
+    const chefId = parseInt(id, 10);
+
+    if (!chefId || isNaN(chefId)) {
+      console.error("Invalid chef ID provided:", id);
+      return res.status(400).json({ message: "Invalid chef ID" });
+    }
+
+    console.log("=== Chef Dashboard Request ===");
+    console.log("Chef ID:", chefId);
+
     // Get menuitems allotted to chef
     const chef = await restaurantUser.findByPk(chefId, {
-      include: [{ model: MenuItem, as: "allottedMenuItems" }],
+      include: [{
+        model: MenuItem,
+        as: "allottedMenuItems",
+        attributes: ["id", "name", "price", "image"],
+      }],
     });
-    console.log("Chef details with allotted items:", chef);
-    const menuItemIds = chef.allottedMenuItems.map((item) => item.id);
+
+    if (!chef) {
+      console.error("Chef not found with ID:", chefId);
+      return res.status(404).json({ message: "Chef not found" });
+    }
+
+    console.log("Chef found:", chef.firstname, chef.lastname);
+    console.log("Allotted menu items:", chef.allottedMenuItems?.length || 0);
+
+    const menuItemIds = chef && chef.allottedMenuItems ? chef.allottedMenuItems.map((item) => item.id) : [];
     console.log("Menu Item IDs allotted to chef:", menuItemIds);
+
     // Get orders containing these menuitems
     let orders = [];
+    let allOrders = [];
+    let totalOrders = 0;
+    let workingDays = 0;
+    let mostOrdered = [];
+
     if (menuItemIds.length > 0) {
       try {
+        // Get active orders (not served) for chef home screen
         orders = await Order.findAll({
           include: [
             {
@@ -149,134 +176,231 @@ chefController.chefDashboard = async (req, res) => {
               as: "orderProducts",
               where: {
                 menuitemId: { [Op.in]: menuItemIds },
-                status: { [Op.ne]: 4 },
+                status: { [Op.ne]: 4 }, // Exclude served orders
               },
               required: true,
               include: [
                 {
                   model: MenuItem,
-                  as: "menuitem", // Use the correct alias as defined in your association
+                  as: "menuitem",
+                  attributes: ["id", "name", "price"],
                 },
               ],
             },
           ],
           order: [["createdAt", "DESC"]],
-          limit: 10,
+          limit: 20,
         });
+
+        console.log("Active orders fetched:", orders.length);
+
+        // Get all orders (including served) for statistics
+        allOrders = await Order.findAll({
+          include: [
+            {
+              model: db.orderProducts,
+              as: "orderProducts",
+              where: {
+                menuitemId: { [Op.in]: menuItemIds },
+              },
+              required: true,
+              include: [
+                {
+                  model: MenuItem,
+                  as: "menuitem",
+                  attributes: ["id", "name", "price"],
+                },
+              ],
+            },
+          ],
+          order: [["createdAt", "DESC"]],
+        });
+
+        console.log("Total orders (all time):", allOrders.length);
       } catch (err) {
         console.error("Order query failed:", err);
         return res
           .status(500)
           .json({ message: "Order query failed", error: err.message });
       }
-    }
-    console.log("Recent orders fetched:", orders);
-    const totalOrders = await Order.count({
-      include: [
-        {
-          model: db.orderProducts,
-          as: "orderProducts",
+
+      // Count total completed orders for stats (using orders table like manager does)
+      totalOrders = await Order.count({
+        include: [
+          {
+            model: db.orderProducts,
+            as: "orderProducts",
+            where: {
+              menuitemId: { [Op.in]: menuItemIds },
+              status: 4, // Only count served/completed orders
+            },
+            required: true,
+          },
+        ],
+      });
+      console.log("Total completed orders:", totalOrders);
+
+      // Calculate actual working days from chef login records (similar to manager approach)
+      try {
+        // Count distinct dates when chef logged in
+        const uniqueLoginDays = await db.chefLogin.findAll({
+          where: { chefId: chefId },
+          attributes: [
+            [Sequelize.fn("DATE", Sequelize.col("createdAt")), "loginDate"],
+          ],
+          group: [Sequelize.fn("DATE", Sequelize.col("createdAt"))],
+          raw: true,
+        });
+        workingDays = uniqueLoginDays.length;
+        console.log("Working days calculated:", workingDays, "unique days:", uniqueLoginDays);
+      } catch (err) {
+        console.error("Error calculating working days:", err);
+        workingDays = 0;
+      }
+
+      // Most ordered dish
+      try {
+        mostOrdered = await db.orderProducts.findAll({
           where: { menuitemId: { [Op.in]: menuItemIds } },
-          required: true,
-        },
-      ],
-    });
-    console.log(totalOrders, "total");
+          attributes: [
+            "menuitemId",
+            [Sequelize.fn("SUM", Sequelize.col("quantity")), "totalQuantity"],
+          ],
+          group: ["menuitemId", "menuitem.id", "menuitem.name"],
+          order: [[Sequelize.literal("totalQuantity"), "DESC"]],
+          limit: 5,
+          include: [
+            {
+              model: MenuItem,
+              as: "menuitem",
+              attributes: ["id", "name"],
+            },
+          ],
+        });
+        console.log("Most ordered items:", mostOrdered.length);
+      } catch (err) {
+        console.error("Error fetching most ordered:", err);
+        mostOrdered = [];
+      }
+    } else {
+      console.warn("No menu items allotted to this chef");
+    }
 
-    // Calculate actual working days from chef login records
-    const workingDays = await db.chefLogin.count({
-      where: { chefId: chefId },
-      distinct: true,
-      col: 'loginTime'
-    });
-    console.log("Working days calculated:", workingDays);
-    // Most ordered dish
-    const mostOrdered = await db.orderProducts.findAll({
-      where: { menuitemId: { [Op.in]: menuItemIds } },
-      attributes: [
-        "menuitemId",
-        [Sequelize.fn("COUNT", Sequelize.col("menuitemId")), "count"],
-      ],
-      group: ["menuitemId", "menuitem.id"],
-      order: [[Sequelize.literal("count"), "DESC"]],
-      limit: 5,
-      include: [
-        {
-          model: MenuItem,
-          as: "menuitem",
-        },
-      ],
-    });
-    console.log("Most ordered item:", mostOrdered);
-
-    // Get today's date as a string in Indian format
+    // Get today's date range (similar to manager controller approach)
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const todayFormatted = formatIndianDateTime(todayStart).split(" ")[0]; // Get only the date part
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
 
-    // Find today's login record
-    const loginRecord = await db.chefLogin.findOne({
+    // Find today's login record using date range instead of string matching
+    // First try to get active session (no logout)
+    let loginRecord = await db.chefLogin.findOne({
       where: {
         chefId: chefId,
-        loginTime: {
-          [Op.like]: `${todayFormatted}%`, // Match any login time from today
+        createdAt: {
+          [Op.gte]: todayStart,
+          [Op.lte]: todayEnd,
         },
+        logOutTime: null, // Get active session
       },
-      order: [["loginTime", "DESC"]],
+      order: [["createdAt", "DESC"]],
     });
+
+    // If no active session, get the most recent login today (even if logged out)
+    if (!loginRecord) {
+      loginRecord = await db.chefLogin.findOne({
+        where: {
+          chefId: chefId,
+          createdAt: {
+            [Op.gte]: todayStart,
+            [Op.lte]: todayEnd,
+          },
+        },
+        order: [["createdAt", "DESC"]],
+      });
+    }
 
     let loginHours = 0;
     let loginTime = null;
     let logoutTime = null;
 
     if (loginRecord) {
-      // Extract time from the stored formatted string
-      loginTime = loginRecord.loginTime.split(" ").slice(1).join(" "); // Get only the time part
+      // Parse login time (Indian format or use createdAt as fallback)
+      loginTime = loginRecord.loginTime || formatShortTime(loginRecord.createdAt);
 
-      // Convert Indian format date time to Date object
-      const [datePart, timePart, period] = loginRecord.loginTime.split(" ");
-      const [day, month, year] = datePart.split("/");
-      const [hours, minutes, seconds] = timePart.split(":");
-      let hour = parseInt(hours);
-      if (period.toLowerCase() === "pm" && hour !== 12) hour += 12;
-      if (period.toLowerCase() === "am" && hour === 12) hour = 0;
+      // Helper to parse Indian date time format (consistent with manager controller)
+      const parseIndianDateTime = (dateTimeStr) => {
+        if (!dateTimeStr) return null;
 
-      const startTime = new Date(
-        year,
-        month - 1,
-        day,
-        hour,
-        parseInt(minutes),
-        parseInt(seconds)
-      );
+        try {
+          const parts = dateTimeStr.trim().split(' ');
+          if (parts.length < 3) return null;
+
+          const [datePart, timePart, period] = parts;
+          const [day, month, year] = datePart.split('/');
+          const [hours, minutes, seconds] = timePart.split(':');
+
+          let hour = parseInt(hours);
+          if (period && period.toLowerCase() === 'pm' && hour !== 12) hour += 12;
+          if (period && period.toLowerCase() === 'am' && hour === 12) hour = 0;
+
+          return new Date(year, month - 1, day, hour, parseInt(minutes), parseInt(seconds || 0));
+        } catch (err) {
+          console.error("Error parsing date time:", err);
+          return null;
+        }
+      };
+
+      // Calculate working hours
+      const startTime = loginRecord.loginTime
+        ? parseIndianDateTime(loginRecord.loginTime)
+        : loginRecord.createdAt;
+
       const endTime = loginRecord.logOutTime
-        ? new Date(loginRecord.createdAt)
+        ? parseIndianDateTime(loginRecord.logOutTime)
         : new Date();
 
-      loginHours = ((endTime - startTime) / (1000 * 60 * 60)).toFixed(2); // Convert to hours with 2 decimal places
+      if (startTime) {
+        const diffMs = endTime - startTime;
+        loginHours = Math.max(0, diffMs / (1000 * 60 * 60)).toFixed(2);
+      }
 
       if (loginRecord.logOutTime) {
-        // Extract time from logout time string if it exists
         logoutTime = loginRecord.logOutTime.split(" ").slice(1).join(" ");
       }
     }
 
+    console.log("=== Response Summary ===");
+    console.log("Active orders:", orders.length);
+    console.log("All orders (for stats):", allOrders.length);
+    console.log("Total completed orders:", totalOrders);
+    console.log("Working days:", workingDays);
+    console.log("Menu items:", chef?.allottedMenuItems?.length || 0);
+    console.log("Most ordered:", mostOrdered.length);
+    console.log("Login hours:", loginHours);
+
     res.json({
-      orders,
-      totalOrders,
-      workingDays,
-      menuItems: chef.allottedMenuItems,
-      mostOrdered,
+      orders: allOrders || [], // Send all orders for profile stats
+      activeOrders: orders || [], // Send active orders for home screen
+      totalOrders: totalOrders || 0,
+      workingDays: workingDays || 0,
+      menuItems: (chef && chef.allottedMenuItems) || [],
+      mostOrdered: mostOrdered || [],
       todayStats: {
-        loginTime,
-        logoutTime,
-        loginHours: parseFloat(loginHours),
+        loginTime: loginTime || null,
+        logoutTime: logoutTime || null,
+        loginHours: parseFloat(loginHours) || 0,
         isCurrentlyLoggedIn: loginRecord && !loginRecord.logOutTime,
-        // loginRecord: loginRecord,
       },
     });
   } catch (e) {
-    res.status(500).json({ message: "Server error" });
+    console.error("=== Chef Dashboard Error ===");
+    console.error(e);
+    res.status(500).json({
+      message: "Server error",
+      error: e.message,
+      stack: process.env.NODE_ENV === "development" ? e.stack : undefined,
+    });
   }
 };
 
@@ -304,11 +428,31 @@ chefController.chefMessages = async (req, res) => {
           },
         ],
       },
+      include: [
+        {
+          model: restaurantUser,
+          as: "fromUser",
+          attributes: ["id", "firstname", "lastname"],
+          include: [
+            {
+              model: roles,
+              as: "role",
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: restaurantUser,
+          as: "toUser",
+          attributes: ["id", "firstname", "lastname"],
+        },
+      ],
       order: [["createdAt", "DESC"]],
     });
     res.json({ messages: messagesList });
   } catch (e) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Error fetching chef messages:", e);
+    res.status(500).json({ message: "Server error", error: e.message });
   }
 };
 

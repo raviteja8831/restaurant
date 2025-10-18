@@ -275,6 +275,18 @@ exports.getUserProfile = async (req, res) => {
       // limit: 5,
     });
 
+    // Helper function to format date as YYYY-MM-DD HH:mm:ss
+    const formatDateTimeSQL = (date) => {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
     // Format orders for response
     const formattedOrders = orders.map((order) => ({
       id: order.id,
@@ -284,6 +296,7 @@ exports.getUserProfile = async (req, res) => {
       restaurantImage: order?.orderRestaurant?.image,
       date: new Date(order?.createdAt).toLocaleDateString(),
       time: new Date(order?.createdAt).toLocaleTimeString(),
+      createdAt: formatDateTimeSQL(order?.createdAt),
       totalAmount: order?.total,
       status: order?.status, // Include order status
       method: order?.paymentMethod,
@@ -770,38 +783,72 @@ console.log(req.body);
 
     let logoImageUrl = logo;
 
-    // Create restaurant first
-    const restaurant = await db.restaurant.create({
-      name: name,
-      address: restaurantAddress,
-      enableBuffet: enableBuffet === true || enableBuffet === "true",
-      enableVeg: enableVeg === true || enableVeg === "true",
-      enableNonveg: enableNonveg === true || enableNonveg === "true",
-      enableTableService:
-        enableTableService === true || enableTableService === "true",
-      enableSelfService:
-        enableSelfService === true || enableSelfService === "true",
-      ambianceImage: ambianceImage || null,
-      logoImage: logoImageUrl,
-      latitude: latitude || null,
-      longitude: longitude || null,
-      upi: upi || null,
-      restaurantType: restaurantType || "Other",
-    });
+    // Use transaction to ensure both restaurant and menus are created together
+    const sequelize = db.sequelize;
+    const result = await sequelize.transaction(async (t) => {
+      // Create restaurant first
+      const restaurant = await db.restaurant.create({
+        name: name,
+        address: restaurantAddress,
+        enableBuffet: enableBuffet === true || enableBuffet === "true",
+        enableVeg: enableVeg === true || enableVeg === "true",
+        enableNonveg: enableNonveg === true || enableNonveg === "true",
+        enableTableService:
+          enableTableService === true || enableTableService === "true",
+        enableSelfService:
+          enableSelfService === true || enableSelfService === "true",
+        ambianceImage: ambianceImage || null,
+        logoImage: logoImageUrl,
+        latitude: latitude || null,
+        longitude: longitude || null,
+        upi: upi || null,
+        restaurantType: restaurantType || "Other",
+      }, { transaction: t });
 
-    // Create manager user for the restaurant
-    const managerUser = await db.restaurantUser.create({
-      phone,
-      firstname,
-      lastname,
-      restaurantId: restaurant.id,
-      role_id: 1, // 1 = manager
+      console.log("✅ Restaurant created with ID:", restaurant.id);
+
+      // Fetch first 10 menus from the menu table to copy
+      const defaultMenus = await db.menu.findAll({
+        attributes: ["name", "status", "icon"],
+        order: [["id", "ASC"]],
+        limit: 10,
+        raw: true,
+        transaction: t,
+      });
+
+      console.log(`📋 Found ${defaultMenus.length} default menus to copy`);
+
+      // Copy menus for the newly created restaurant
+      if (defaultMenus && defaultMenus.length > 0) {
+        const menusToCreate = defaultMenus.map((m) => ({
+          name: m.name,
+          status: m.status !== undefined ? m.status : true,
+          icon: m.icon || "",
+          restaurantId: restaurant.id,
+        }));
+
+        const createdMenus = await db.menu.bulkCreate(menusToCreate, { transaction: t });
+        console.log(`✅ Successfully copied ${createdMenus.length} menus for restaurant ID ${restaurant.id}`);
+      } else {
+        console.log("⚠️ No default menus found in database to copy");
+      }
+
+      // Create manager user for the restaurant
+      const managerUser = await db.restaurantUser.create({
+        phone,
+        firstname,
+        lastname,
+        restaurantId: restaurant.id,
+        role_id: 1, // 1 = manager
+      }, { transaction: t });
+
+      return { restaurant, managerUser };
     });
 
     res.status(201).send({
       message: "Manager and restaurant registered successfully!",
-      managerUser,
-      restaurant,
+      managerUser: result.managerUser,
+      restaurant: result.restaurant,
     });
   } catch (error) {
     res.status(500).send({ message: error.message });
