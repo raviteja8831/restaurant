@@ -144,7 +144,7 @@ chefController.chefDashboard = async (req, res) => {
       include: [{
         model: MenuItem,
         as: "allottedMenuItems",
-        attributes: ["id", "name", "price", "image"],
+        attributes: ["id", "name", "price"],
       }],
     });
 
@@ -176,7 +176,7 @@ chefController.chefDashboard = async (req, res) => {
               as: "orderProducts",
               where: {
                 menuitemId: { [Op.in]: menuItemIds },
-                status: { [Op.ne]: 4 }, // Exclude served orders
+                status: { [Op.ne]: 'SERVED' }, // Exclude served orders
               },
               required: true,
               include: [
@@ -224,21 +224,14 @@ chefController.chefDashboard = async (req, res) => {
           .json({ message: "Order query failed", error: err.message });
       }
 
-      // Count total completed orders for stats (using orders table like manager does)
-      totalOrders = await Order.count({
-        include: [
-          {
-            model: db.orderProducts,
-            as: "orderProducts",
-            where: {
-              menuitemId: { [Op.in]: menuItemIds },
-              status: 4, // Only count served/completed orders
-            },
-            required: true,
-          },
-        ],
+      // Count total order items with ORDERED, PREPARING, READY, and SERVED statuses
+      totalOrders = await db.orderProducts.count({
+        where: {
+          menuitemId: { [Op.in]: menuItemIds },
+          status: { [Op.in]: ['ORDERED', 'PREPARING', 'READY', 'SERVED'] },
+        },
       });
-      console.log("Total completed orders:", totalOrders);
+      console.log("Total order items (ORDERED/PREPARING/READY/SERVED) for chef:", totalOrders);
 
       // Calculate actual working days from chef login records (similar to manager approach)
       try {
