@@ -16,6 +16,7 @@ exports.create = async (req, res) => {
 
       // Fetch first 10 menus from the menu table (any menus, regardless of restaurantId)
       const defaultMenus = await db.menu.findAll({
+        attributes: ["name", "status", "icon"], // Only select fields needed for copying
         order: [["id", "ASC"]],
         limit: 10,
         raw: true, // Get plain objects instead of Sequelize instances
