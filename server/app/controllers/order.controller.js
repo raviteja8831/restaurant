@@ -107,10 +107,10 @@ exports.createOrder = async (req, res) => {
     } else {
       // Create new order if no orderID provided
       var order_data = {
-        restaurantId: req.body.restaurantId,
-        userId: req.body.userId,
-        total: req.body.total || 0,
-        tableId: req.body.tableId,
+        restaurantId: parseInt(req.body.restaurantId),
+        userId: parseInt(req.body.userId),
+        total: parseFloat(req.body.total) || 0,
+        tableId: req.body.tableId ? parseInt(req.body.tableId) : null, // Allow null for non-table orders
       };
       order_data.status = "PENDING";
       const order = await Order.create(order_data);
