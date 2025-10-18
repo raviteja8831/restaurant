@@ -416,12 +416,15 @@ exports.getOrderProductsByOrderId = async (req, res) => {
         message: "No order products found for this order",
       });
     }
-    // Mark found order products as 'in-progress' (status = 1) in a single update
+    // Mark found order products as 'ORDERED' status ONLY if they don't have a status yet
     try {
       await OrderProduct.update(
-        { status: 1 },
+        { status: 'ORDERED' },
         {
-          where: { orderId },
+          where: {
+            orderId,
+            status: null // Only update items without a status
+          },
         }
       );
     } catch (updErr) {
@@ -463,17 +466,17 @@ exports.updateOrderProductStatusList = async (req, res) => {
         transaction: t,
       });
 
-      // Bulk update all products with the new status (PLACED = 1)
+      // Bulk update all products with the new status (remove status: null condition)
       await OrderProduct.update(
         { status: status },
         {
-          where: { orderId, status: null },
+          where: { orderId },
           transaction: t,
         }
       );
 
-      // Also update the main order status to PLACED when status=1
-      if (status === "1" || status === 1) {
+      // Also update the main order status to PLACED when status is ORDERED
+      if (status === "ORDERED") {
         await Order.update(
           { status: "PLACED" },
           {

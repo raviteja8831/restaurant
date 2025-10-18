@@ -86,7 +86,7 @@ exports.dashboard = async (req, res) => {
     const totalUniqueLogins = await db.chefLogin.count({
       where: {
         restaurantId,
-        loginTime: {
+        createdAt: {
           [Op.gte]: startDate,
           [Op.lte]: endDate,
         },
@@ -109,7 +109,7 @@ exports.dashboard = async (req, res) => {
     const currentlyLoggedIn = await db.chefLogin.count({
       where: {
         restaurantId,
-        loginTime: {
+        createdAt: {
           [Op.gte]: startDate,
           [Op.lte]: endDate,
         },
@@ -133,7 +133,8 @@ exports.dashboard = async (req, res) => {
     const logoutsToday = await db.chefLogin.count({
       where: {
         restaurantId,
-        logOutTime: {
+        logOutTime: { [Op.ne]: null }, // Has logged out
+        updatedAt: {
           [Op.gte]: startDate,
           [Op.lte]: endDate,
         },
@@ -432,7 +433,7 @@ exports.clearOrder = async (req, res) => {
 
     // Also update all associated order products to served/completed status
     await db.orderProducts.update(
-      { status: 4 }, // Status 4 = Served/Completed
+      { status: 'SERVED' }, // Status SERVED = Served/Completed
       {
         where: { orderId: orderId }
       }
