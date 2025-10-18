@@ -122,7 +122,13 @@ exports.getQRCodeOrders = async (req, res) => {
       dateFilter = { createdAt: { [Op.between]: [start, end] } };
     }
     const orders = await db.orders.findAll({
-      where: { tableId: qrcodeId, ...dateFilter },
+      where: {
+        tableId: qrcodeId,
+        status: {
+          [Op.in]: ['PLACED', 'PAYMENT_PENDING']
+        },
+        ...dateFilter
+      },
       attributes: ['id', 'userId', 'total', 'status', 'createdAt'],
       order: [['createdAt', 'DESC']],
       include: [{

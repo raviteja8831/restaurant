@@ -108,6 +108,8 @@ exports.getRecentOrders = async (req, res) => {
       limit: 10, // Last 10 orders
     });
 
+    console.log(`📊 Found ${orders.length} orders for userId ${userId}`);
+
     // Format orders for response
     const formattedOrders = orders.map((order) => ({
       id: order.id,

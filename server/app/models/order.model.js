@@ -33,7 +33,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       tableId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true, // Allow null for non-table orders (delivery, pickup)
         references: {
           model: "restauranttable",
           key: "id",
