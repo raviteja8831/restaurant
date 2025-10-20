@@ -411,13 +411,13 @@ chefController.chefMessages = async (req, res) => {
         [Op.or]: [
           {
             fromUserId: chefId,
-            fromRoleId: chefRole.id,
-            toRoleId: managerRole.id,
+            // fromRoleId: chefRole.id,
+            // toRoleId: managerRole.id,
           },
           {
             toUserId: chefId,
-            toRoleId: chefRole.id,
-            fromRoleId: managerRole.id,
+            // toRoleId: chefRole.id,
+            // fromRoleId: managerRole.id,
           },
         ],
       },

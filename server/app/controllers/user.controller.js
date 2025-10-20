@@ -416,10 +416,42 @@ exports.saveUserMenuItems = async (req, res) => {
   const { menuitemIds } = req.body;
   if (!Array.isArray(menuitemIds))
     return res.status(400).json({ error: "menuitemIds must be array" });
+
   try {
     const user = await db.restaurantUser.findByPk(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
-    await user.setAllottedMenuItems(menuitemIds);
+
+    const sequelize = db.sequelize;
+    await sequelize.transaction(async (t) => {
+      // Save allotted menu items (join table)
+      await user.setAllottedMenuItems(menuitemIds, { transaction: t });
+
+      // Find parent menu ids for the allotted menu items.
+      // Handle both common column names (menuId or menu_id) defensively.
+      const menuItems = await db.menuItem.findAll({
+        where: { id: menuitemIds },
+        attributes: ["id", "menuId"],
+        transaction: t,
+        raw: true,
+      });
+
+      const menuIds = [
+        ...new Set(
+          menuItems
+            .map((mi) => mi.menuId )
+            .filter((v) => v !== undefined && v !== null)
+        ),
+      ];
+
+      // Update menu.status = true for affected menus
+      if (menuIds.length > 0) {
+        await db.menu.update(
+          { status: true },
+          { where: { id: menuIds }, transaction: t }
+        );
+      }
+    });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -513,7 +545,7 @@ exports.getDashboardData = async (req, res) => {
       userWithMenu && userWithMenu.allottedMenuItems
         ? userWithMenu.allottedMenuItems
         : [];
-    const allottedMenuItemIds = allottedMenuItems.map((mi) => mi.id);
+    const allottedMenuItemIds = allottedMenuItems.map((mi) => mi.id) || [];
 
     // Get today's login time for the chef from ChefLogin model
     let todayLoginTime = null;
@@ -580,6 +612,7 @@ exports.getDashboardData = async (req, res) => {
       totalOrders = await db.orders.count({
         where: {
           restaurantId,
+          status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
           createdAt: { [db.Sequelize.Op.gte]: startDate }
         },
         include: [
@@ -600,6 +633,8 @@ exports.getDashboardData = async (req, res) => {
     if (allottedMenuItemIds.length > 0) {
       totalOrdersAll = await db.orders.count({
         where: { restaurantId },
+        status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
+        
         include: [
           {
             model: db.orderProducts,
@@ -640,6 +675,7 @@ exports.getDashboardData = async (req, res) => {
             attributes: [],
             where: {
               restaurantId,
+              status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
               createdAt: { [db.Sequelize.Op.gte]: startOfDay },
             },
           },
@@ -657,6 +693,8 @@ exports.getDashboardData = async (req, res) => {
       const orders = await db.orders.findAll({
         where: {
           restaurantId,
+                    status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
+        
           createdAt: { [db.Sequelize.Op.gte]: startOfDay },
         },
         include: [
@@ -736,14 +774,24 @@ exports.addMenuItemToUser = async (req, res) => {
 };
 // File upload handler
 exports.uploadImage = async (req, res) => {
+  console.log("📁 uploadImage endpoint hit");
   try {
+    // Debug logging to help diagnose multipart/multer issues
+    console.log('Request content-type:', req.headers['content-type']);
+    console.log('req.file:', req.file);
+    console.log('req.files:', req.files);
+    console.log('req.body keys:', Object.keys(req.body || {}));
+
     if (!req.file) {
-      return res.status(400).send({ message: "No file uploaded" });
+      console.warn('uploadImage: no req.file found — multer did not parse any single file');
+      return res.status(400).send({ message: 'No file uploaded' });
     }
+
     // Save file URL (relative to server)
     const fileUrl = `/assets/images/${req.file.filename}`;
     res.status(200).send({ url: fileUrl });
   } catch (error) {
+    console.error('uploadImage: unexpected error', error);
     res.status(500).send({ message: error.message });
   }
 };
@@ -943,9 +991,12 @@ exports.findOne = async (req, res) => {
 // Update user (for restaurantUser, including password and role)
 exports.update = async (req, res) => {
   try {
-    const { firstname, lastname, phone, password, role_id } = req.body;
-    const updateFields = { firstname, lastname, phone };
+    const { firstname, lastname, phone, password, role_id,userImage } = req.body;
+    const updateFields = { firstname, lastname, phone,userImage };
     if (role_id !== undefined) updateFields.role_id = role_id;
+    if (firstname !== undefined) updateFields.firstname = firstname;
+    if (lastname !== undefined) updateFields.lastname = lastname;
+    if (phone !== undefined) updateFields.phone = phone;
     if (password) {
       const bcrypt = require("bcryptjs");
       updateFields.password = await bcrypt.hash(password, 10);
