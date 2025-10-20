@@ -633,8 +633,8 @@ exports.getDashboardData = async (req, res) => {
     if (allottedMenuItemIds.length > 0) {
       totalOrdersAll = await db.orders.count({
         where: { restaurantId },
-        status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
-        
+                  status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
+          createdAt: { [Op.gte]: startOfDay },
         include: [
           {
             model: db.orderProducts,
@@ -675,8 +675,10 @@ exports.getDashboardData = async (req, res) => {
             attributes: [],
             where: {
               restaurantId,
-              status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
-              createdAt: { [db.Sequelize.Op.gte]: startOfDay },
+              // status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
+              // createdAt: { [db.Sequelize.Op.gte]: startOfDay },
+                        status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
+          createdAt: { [Op.gte]: startOfDay },
             },
           },
         ],
@@ -693,9 +695,8 @@ exports.getDashboardData = async (req, res) => {
       const orders = await db.orders.findAll({
         where: {
           restaurantId,
-                    status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
-        
-          createdAt: { [db.Sequelize.Op.gte]: startOfDay },
+          status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
+          createdAt: { [Op.gte]: startOfDay },
         },
         include: [
           {
