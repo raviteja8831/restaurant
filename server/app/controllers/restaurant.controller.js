@@ -100,7 +100,7 @@ exports.findOne = async (req, res) => {
           "id",
           "name",
           "address",
-          // "enableBuffet",
+          "enableBuffet",
           "enableVeg",
           "enableNonveg",
           "enableTableService",
