@@ -148,7 +148,9 @@ export default function ChefHomeScreen() {
         <View>
           <Text style={styles.greetText}>Hi</Text>
           <Text style={styles.greetText}>{chefName || "Chef"}</Text>
-          <Text style={styles.loginText}>{loginAt || ""}</Text>
+          <Text style={styles.loginText}>
+            {loginAt ? `Login at ${loginAt}` : ""}
+          </Text>
         </View>
         <Pressable style={styles.filterIcon}>
           <MaterialCommunityIcons
@@ -164,6 +166,8 @@ export default function ChefHomeScreen() {
       <View style={{ marginHorizontal: 16, marginTop: 8 }}>
         {loading ? (
           <ActivityIndicator color="#7b6eea" size="large" />
+        ) : orders.length === 0 ? (
+          <Text style={styles.noOrdersText}>No orders at the moment</Text>
         ) : (
           orders.map((order, i) =>
             order.orderProducts.map((firstProduct, j) => {
@@ -339,9 +343,9 @@ export default function ChefHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#a9a1e2", paddingTop: 24 },
-  powerIcon: { position: "absolute", top: 18, left: 24, zIndex: 10 },
-  bellIcon: { position: "absolute", top: 18, right: 24, zIndex: 10 },
+  container: { flex: 1, backgroundColor: "#a9a1e2", paddingTop: 48 },
+  powerIcon: { position: "absolute", top: 48, left: 24, zIndex: 10 },
+  bellIcon: { position: "absolute", top: 48, right: 24, zIndex: 10 },
   profileImgRow: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -365,12 +369,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   greetText: {
-    fontSize: 16,
-    color: "#222",
+    fontSize: 24,
+    color: "#fff",
     fontWeight: "bold",
-    lineHeight: 20,
+    lineHeight: 28,
   },
-  loginText: { fontSize: 13, color: "#222", marginTop: 2, fontWeight: "500" },
+  loginText: {
+    fontSize: 16,
+    color: "#fff",
+    marginTop: 6,
+    fontWeight: "400",
+  },
+  noOrdersText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 32,
+    fontStyle: "italic",
+  },
   filterIcon: {
     marginLeft: 18,
     backgroundColor: "#ece9fa",
@@ -378,10 +394,10 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   ordersTitle: {
-    fontSize: 16,
-    color: "#222",
+    fontSize: 20,
+    color: "#fff",
     fontWeight: "bold",
-    marginLeft: 16,
+    marginLeft: 32,
     marginTop: 24,
   },
   orderCard: {

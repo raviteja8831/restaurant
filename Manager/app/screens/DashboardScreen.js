@@ -295,7 +295,7 @@ export default function ManagerDashboardScreenNew() {
           </View>
 
         <View style={styles.infoBuffetRow}>
-          <Surface style={[styles.infoCard, { flex: 1.8, marginRight: 8 }]}>
+          <Surface style={[styles.infoCard, { flex: 2.33, marginRight: 8 }]}>
             <Text style={styles.infoTitle}>Current Info</Text>
             <View style={{ width: "100%" }}>
               <View style={styles.infoRow}>
@@ -321,7 +321,7 @@ export default function ManagerDashboardScreenNew() {
             style={[
               styles.buffetCard,
               {
-                flex: 1.2,
+                flex: 1,
                 marginLeft: 8,
                 alignItems: "center",
                 flexDirection: "column",
@@ -832,14 +832,18 @@ const styles = StyleSheet.create({
     width: 8,
   },
   buffetCard: {
-    backgroundColor: "#8D8BEA",
+    backgroundColor: "transparent",
     padding: 16,
     minWidth: 120,
     minHeight: 180,
     alignItems: "center",
-    borderRadius: 20,
+    borderRadius: 0,
     elevation: 0,
     shadowOpacity: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 0,
+    borderWidth: 0,
   },
   buffetTitle: {
     fontWeight: "bold",
