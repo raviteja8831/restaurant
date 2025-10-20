@@ -57,8 +57,9 @@ exports.dashboard = async (req, res) => {
         break;
       case "day":
       default:
+        // Last 8 hours from current time
         startDate = new Date(now);
-        startDate.setHours(0, 0, 0, 0);
+        startDate.setHours(now.getHours() - 8, 0, 0, 0);
         endDate = new Date(now);
         endDate.setHours(23, 59, 59, 999);
         break;
@@ -269,8 +270,12 @@ exports.dashboard = async (req, res) => {
     let salesData = [];
     let incomeData = [];
     if (dateFilter === "day") {
-      // 0-23 hours
-      for (let h = 0; h < 24; h++) {
+      // Last 8 hours from current hour
+      const currentHour = now.getHours();
+      const startHour = currentHour - 8;
+
+      for (let i = 0; i < 8; i++) {
+        const h = (startHour + i + 24) % 24; // Handle negative hours by wrapping around
         const found = salesIncomeRaw.find(r => Number(r.hour) === h);
         salesData.push({ label: `${h}:00`, value: found ? Number(found.salesCount) : 0 });
         incomeData.push({ label: `${h}:00`, value: found ? Number(found.incomeSum) : 0 });
@@ -283,12 +288,20 @@ exports.dashboard = async (req, res) => {
         incomeData.push({ label: day.slice(0, 3), value: found ? Number(found.incomeSum) : 0 });
       });
     } else if (dateFilter === "month") {
+      // Show fewer labels for better readability: 1, 5, 10, 15, 20, 25, 30
       const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      for (let d = 1; d <= daysInMonth; d++) {
+      const displayDays = [1, 5, 10, 15, 20, 25];
+      if (daysInMonth === 31) {
+        displayDays.push(30);
+      } else if (daysInMonth >= 28) {
+        displayDays.push(daysInMonth);
+      }
+
+      displayDays.forEach(d => {
         const found = salesIncomeRaw.find(r => Number(r.day) === d);
         salesData.push({ label: `${d}`, value: found ? Number(found.salesCount) : 0 });
         incomeData.push({ label: `${d}`, value: found ? Number(found.incomeSum) : 0 });
-      }
+      });
     } else if (dateFilter === "year") {
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       for (let m = 1; m <= 12; m++) {
