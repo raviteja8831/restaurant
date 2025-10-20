@@ -811,7 +811,7 @@ console.log(req.body);
       const defaultMenus = await db.menu.findAll({
         attributes: ["name", "status", "icon"],
         order: [["id", "ASC"]],
-        limit: 10,
+        limit: 9,
         raw: true,
         transaction: t,
       });
@@ -822,7 +822,7 @@ console.log(req.body);
       if (defaultMenus && defaultMenus.length > 0) {
         const menusToCreate = defaultMenus.map((m) => ({
           name: m.name,
-          status: m.status !== undefined ? m.status : true,
+          status: false,
           icon: m.icon || "",
           restaurantId: restaurant.id,
         }));
