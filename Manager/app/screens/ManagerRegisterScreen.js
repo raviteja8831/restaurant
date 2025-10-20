@@ -329,20 +329,13 @@ export default function ManagerRegisterScreen() {
             style={{ flex: 1, backgroundColor: '#8D8BEA' }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
-          
             <ScrollView
               style={{ flex: 1 }}
-              contentContainerStyle={{ flexGrow: 1 }}
+              contentContainerStyle={{ paddingBottom: 20 }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
               <Surface style={styles.formSurface}>
-                 {/* <View style={styles.loginLinkContainer}>
-                <Text style={styles.loginLinkText}>Already have an account? </Text>
-                <Pressable onPress={() => router.push("/login")}>
-                  <Text style={styles.loginLink}>Login here</Text>
-                </Pressable>
-              </View> */}
                 <Pressable onPress={() => step === 1 ? router.push("/login") : setStep(1)}>
                   <Image
                     source={require("../assets/images/logo.png")}
@@ -469,34 +462,13 @@ export default function ManagerRegisterScreen() {
                           type="text"
                         />
                       )}
-                       <Text style={styles.sectionTitleStep2Grid}>
-                          Upload Ambiance Photo
-                        </Text>
-                        <Pressable
-                          style={styles.photoUploadBoxStep2}
-                          onPress={pickImage}
-                        >
-                          {ambianceImage ? (
-                            <Image
-                              source={{ uri: ambianceImage }}
-                              style={styles.photoPreviewStep2}
-                              onError={() =>
-                                showApiError(
-                                  "Image failed to load. Check the URL or server."
-                                )
-                              }
-                            />
-                          ) : (
-                            <Image
-                              source={require("../assets/images/camera-icon.png")}
-                              style={styles.cameraIconStep2}
-                            />
-                          )}
-                        </Pressable>
+
+                      {/* Choose your Restaurant Type Section */}
+                      <Text style={styles.sectionTitleStep2}>
+                        Choose your Restaurant Type
+                      </Text>
                       {/* Extra controls below the form, not inside it */}
-                      <View style={{ marginTop: 4 }}>
-                        <Text style={styles.sectionTitleStep2Grid}>
-                        </Text>
+                      <View style={{ marginTop: 4, width: "100%" }}>
                         <View style={styles.typeFoodGridRow}>
                           <View style={styles.typeFoodGridCol}>
                             <Pressable
@@ -616,56 +588,66 @@ export default function ManagerRegisterScreen() {
                           </Pressable>
                         </View>
 
+                        {/* Upload Ambiance Photo Section */}
+                        <Text style={styles.sectionTitleStep2Grid}>
+                          Upload Ambiance Photo
+                        </Text>
+                        <Pressable
+                          style={styles.photoUploadBoxStep2}
+                          onPress={pickImage}
+                        >
+                          {ambianceImage ? (
+                            <Image
+                              source={{ uri: ambianceImage }}
+                              style={styles.photoPreviewStep2}
+                              onError={() =>
+                                showApiError(
+                                  "Image failed to load. Check the URL or server."
+                                )
+                              }
+                            />
+                          ) : (
+                            <Image
+                              source={require("../assets/images/camera-icon.png")}
+                              style={styles.cameraIconStep2}
+                            />
+                          )}
+                        </Pressable>
                       </View>
                     </View>
                   </View>
                 )}
                 </View>
 
-            {/* Fixed bottom bar for Next/Register button */}
-            <View style={styles.buttonContainer}>
-              {step === 1 && (
-                <Button
-                  mode="contained"
-                  style={styles.bottomButtonStep}
-                  labelStyle={styles.buttonTextStep}
-                  onPress={handleNext}
-                  loading={loading}
-                >
-                  Next
-                </Button>
-              )}
-              {step === 2 && (
-                <View style={styles.buttonRow}>
-                  {/* <Button
-                    mode="outlined"
-                    style={[styles.bottomButtonStep, styles.backButton]}
-                    labelStyle={[styles.buttonTextStep, styles.backButtonText]}
-                    onPress={handleBack}
-                    disabled={loading}
-                  >
-                    Back
-                  </Button> */}
-                  <Button
-                    mode="contained"
-                    style={[styles.bottomButtonStep, styles.registerButton]}
-                    labelStyle={styles.buttonTextStep}
-                    onPress={handleRegister}
-                    loading={loading}
-                  >
-                    Register
-                  </Button>
+                {/* Next/Register button inside ScrollView */}
+                <View style={styles.buttonContainer}>
+                  {step === 1 && (
+                    <Button
+                      mode="contained"
+                      style={styles.bottomButtonStep}
+                      labelStyle={styles.buttonTextStep}
+                      onPress={handleNext}
+                      loading={loading}
+                    >
+                      Next
+                    </Button>
+                  )}
+                  {step === 2 && (
+                    <Button
+                      mode="contained"
+                      style={styles.bottomButtonStep}
+                      labelStyle={styles.buttonTextStep}
+                      onPress={handleRegister}
+                      loading={loading}
+                    >
+                      Register
+                    </Button>
+                  )}
                 </View>
-              )}
-
-              {/* Login Link */}
-             
-            </View>
-                </Surface>
+              </Surface>
             </ScrollView>
           </KeyboardAvoidingView>
         </SafeAreaView>
-     
       );
  
     }
@@ -675,7 +657,7 @@ const styles = StyleSheet.create({
   appbar: { backgroundColor: "#8D8BEA", elevation: 0 },
   appbarTitle: { fontWeight: "bold", fontSize: 20, textAlign: "center" },
   formSurface: {
-    flex: 1,
+    width: "100%",
     justifyContent: "flex-start",
     alignItems: "center",
     padding: 0,
@@ -683,7 +665,6 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   formWrapper: {
-    flex: 1,
     width: "100%",
     alignItems: "center",
   },
@@ -864,7 +845,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   stepBox: {
-    flex: 1,
     width: "100%",
     backgroundColor: "#8D8BEA",
     justifyContent: "flex-start",
@@ -896,7 +876,6 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     alignItems: "center",
     marginBottom: 0,
-    flex: 1,
     justifyContent: "flex-start",
     paddingHorizontal: 32,
     paddingTop: 0,
@@ -941,23 +920,23 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: "100%",
     paddingHorizontal: 32,
-    paddingTop: 24,
-    paddingBottom: 40,
+    paddingTop: 16,
+    paddingBottom: 24,
     alignItems: "center",
   },
   bottomButtonStep: {
-    borderRadius: 12,
+    borderRadius: 30,
     width: "100%",
     minWidth: 280,
     maxWidth: 600,
     alignSelf: "center",
-    paddingVertical: 10,
-    backgroundColor: "#6c6cf2",
+    paddingVertical: 12,
+    backgroundColor: "#6c5ce7",
     marginTop: 0,
     marginBottom: 0,
     marginHorizontal: "auto",
     elevation: 3,
-    height: 60,
+    height: 56,
   },
   buttonTextStep: {
     fontSize: 24,
@@ -1014,18 +993,20 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   locationBtnStep2: {
-    marginBottom: 24,
-    backgroundColor: "#7b6eea",
+    marginBottom: 16,
+    backgroundColor: "#6c5ce7",
     width: "100%",
-    borderRadius: 12,
+    borderRadius: 8,
     alignSelf: "center",
   },
   sectionTitleStep2: {
-    fontSize: 15,
-    fontWeight: "bold",
-    marginVertical: 8,
+    fontSize: 16,
+    fontWeight: "400",
+    marginTop: 8,
+    marginBottom: 16,
     textAlign: "center",
     color: "#fff",
+    alignSelf: "center",
   },
   sectionTitleStep2Grid: {
     fontSize: 16,
@@ -1174,13 +1155,13 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   checkboxStep2: {
-    width: 18,
-    height: 18,
-    borderRadius: 3,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     borderWidth: 0,
     borderColor: "#fff",
     marginRight: 10,
-    backgroundColor: "#fff",
+    backgroundColor: "#D9D9D9",
   },
   checkboxActiveStep2: { backgroundColor: "#00ff00" },
   checkboxLabelStep2: { fontSize: 15, color: "#fff", fontWeight: "400" },

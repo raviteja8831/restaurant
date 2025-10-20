@@ -28,6 +28,21 @@ import { useUserData } from "../services/getUserData";
 const { width } = Dimensions.get("window");
 
 /**
+ * Format date to YYYY-MM-DD HH:mm:ss
+ */
+const formatDateTime = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+/**
  * UserProfileScreen component with sub-tabs for history, favorites, and transactions
  */
 export default function UserProfileScreen() {
@@ -262,6 +277,11 @@ export default function UserProfileScreen() {
                 <Text style={styles.hotelName}>{item.restaurantName}</Text>
                 <Text style={styles.members}>{item.members}</Text>
                 <Text style={styles.totalAmount}>₹{item.totalAmount}/-</Text>
+                {item.createdAt && (
+                  <Text style={styles.transactionDate}>
+                    {item.createdAt}
+                  </Text>
+                )}
               </View>
 
               {/* Orders Section */}
@@ -790,5 +810,30 @@ const styles = StyleSheet.create({
   currencyIcon: {
     fontSize: 28,
     fontWeight: "bold",
+  },
+  cardHeader: {
+    marginBottom: 12,
+  },
+  transactionDate: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 6,
+    fontStyle: "italic",
+  },
+  transactionCard: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  members: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
   },
 });

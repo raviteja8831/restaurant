@@ -81,40 +81,48 @@ export default function ChefProfileScreen() {
             {/* Number of Items */}
             <View style={styles.itemsBox}>
               <Text style={styles.itemsTitle}>Number of Items</Text>
-              {stats?.menuItems?.map((item, i) => (
-                <Text key={i} style={styles.itemText}>
-                   {item.name}
-                </Text>
-              ))}
+              {stats?.menuItems && stats.menuItems.length > 0 ? (
+                stats.menuItems.map((item, i) => (
+                  <Text key={i} style={styles.itemText}>
+                    • {item.name}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.itemText}>No items allotted</Text>
+              )}
             </View>
             {/* Stats */}
             <View style={styles.statsCol}>
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>Total Order Completed</Text>
                 <Text style={styles.statValue}>
-                  {stats?.totalOrders ?? "-"}
+                  {stats?.totalOrders ?? 0}
                 </Text>
               </View>
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>No of Working Days</Text>
                 <Text style={styles.statValue}>
-                  {stats?.workingDays ?? "-"}
+                  {stats?.workingDays ?? 0}
                 </Text>
               </View>
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>Most Ordered Dish</Text>
-                {stats?.mostOrdered?.map?.((dish, i) => (
-                  <Text key={i} style={styles.mostOrderedText}>
-                    {"\u2022"} {dish.menuitem?.name || "-"}
-                  </Text>
-                ))}
+                {stats?.mostOrdered && stats.mostOrdered.length > 0 ? (
+                  stats.mostOrdered.map((dish, i) => (
+                    <Text key={i} style={styles.mostOrderedText}>
+                      • {dish.menuitem?.name || "-"}
+                    </Text>
+                  ))
+                ) : (
+                  <Text style={styles.mostOrderedText}>No data</Text>
+                )}
               </View>
             </View>
           </View>
         )}
         {/* Login Hours (placeholder) */}
         <Text style={styles.loginHours}>
-          Login Hours : {stats?.todayStats.loginHours} Hrs
+          Login Hours : {stats?.todayStats?.loginHours ?? 0} Hrs
         </Text>
 
         {/* Orders grouped by Today and Yesterday */}
@@ -164,7 +172,7 @@ export default function ChefProfileScreen() {
                             {firstProduct && firstProduct.quantity
                               ? `${firstProduct.quantity} Nos`
                               : ""}{" "}
-                            {tableNumber}
+                            to {tableNumber}
                           </Text>
                           <Text style={styles.orderRowTime}>{time}</Text>
                         </View>
@@ -200,7 +208,7 @@ export default function ChefProfileScreen() {
                             {firstProduct && firstProduct.quantity
                               ? `${firstProduct.quantity} Nos`
                               : ""}{" "}
-                            {tableNumber}
+                            to {tableNumber}
                           </Text>
                           <Text style={styles.orderRowTime}>{time}</Text>
                         </View>

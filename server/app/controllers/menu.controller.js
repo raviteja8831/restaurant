@@ -2,16 +2,51 @@
 exports.getMenuWithItems = async (req, res) => {
   try {
     const restaurantId = req.params.restaurantId;
-    // where: { id: userId },
     const db = require("../models");
+
     const query = {
-      include: [{ model: db.menuItem, as: "menuItems" }],
+      include: [{
+        model: db.menuItem,
+        as: "menuItems",
+        include: [{
+          model: db.restaurantUser,
+          as: "allottedUsers",
+          through: {
+            model: db.userMenuItem,
+            attributes: []
+          },
+          required: false,
+          attributes: []
+        }]
+      }],
     };
+
     if (restaurantId) {
       query.where = { restaurantId: Number(restaurantId) };
     }
+
     const menus = await db.menu.findAll(query);
-    res.json(menus);
+
+    // Filter menus to only include those with at least one menu item allocated to a chef
+    const filteredMenus = menus
+      .map(menu => {
+        // Filter menu items to only include those with allocations in user_menuitem
+        const allocatedItems = menu.menuItems.filter(item =>
+          item.allottedUsers && item.allottedUsers.length > 0
+        );
+
+        // Return menu only if it has allocated items
+        if (allocatedItems.length > 0) {
+          return {
+            ...menu.toJSON(),
+            menuItems: allocatedItems
+          };
+        }
+        return null;
+      })
+      .filter(menu => menu !== null);
+
+    res.json(filteredMenus);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
