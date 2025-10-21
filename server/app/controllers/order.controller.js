@@ -286,7 +286,7 @@ exports.getSelectedOrderItems = async (req, res) => {
       price: item.menuitem.price,
       quantity: item.quantity,
       statusText:'',
-      status: item.status,
+      status: item.status || order.status, // Use OrderProduct status if available, otherwise use Order status
       comments: item.comments || "",
     }));
 
