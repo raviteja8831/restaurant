@@ -197,7 +197,7 @@ exports.getUserProfile = async (req, res) => {
     // Get user details
     const user = await db.users.findOne({
       where: { id: userId },
-      attributes: ["id", "firstname", "lastname", "phone", "email"],
+      attributes: ["id", "firstname", "lastname", "phone", "email", "profileImage"],
     });
 
     if (!user) {
@@ -341,6 +341,7 @@ exports.getUserProfile = async (req, res) => {
           lastName: user.lastname,
           phoneNumber: user.phone,
           email: user.email,
+          profileImage: user.profileImage,
         },
         orders: formattedOrders,
         favorites: formattedFavorites,
@@ -355,6 +356,82 @@ exports.getUserProfile = async (req, res) => {
       status: "error",
       message: "Error fetching user profile",
       error: error.message,
+    });
+  }
+};
+
+// Update customer profile (for user model - customers)
+exports.updateCustomerProfile = async (req, res) => {
+  try {
+    const { firstname, lastname, phone, email, profileImage } = req.body;
+    const userId = req.params.userId;
+
+    if (!userId) {
+      return res.status(400).send({
+        message: "User ID is required"
+      });
+    }
+
+    // If phone number is being updated, check if it's already used by another user
+    if (phone !== undefined) {
+      const existingUser = await db.users.findOne({
+        where: {
+          phone,
+          id: { [Op.ne]: userId } // Exclude current user
+        }
+      });
+
+      if (existingUser) {
+        return res.status(400).send({
+          message: "Phone already registered. Please try with a new one."
+        });
+      }
+    }
+
+    // Build update fields object with only provided fields
+    const updateFields = {};
+    if (firstname !== undefined) updateFields.firstname = firstname;
+    if (lastname !== undefined) updateFields.lastname = lastname;
+    if (phone !== undefined) updateFields.phone = phone;
+    if (email !== undefined) updateFields.email = email;
+    if (profileImage !== undefined) updateFields.profileImage = profileImage;
+
+    // Update user
+    const [updated] = await db.users.update(updateFields, {
+      where: { id: userId },
+    });
+
+    if (!updated) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found"
+      });
+    }
+
+    // Fetch updated user data
+    const updatedUser = await db.users.findByPk(userId, {
+      attributes: ["id", "firstname", "lastname", "phone", "email", "profileImage"],
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Profile updated successfully",
+      data: {
+        user: {
+          id: updatedUser.id,
+          firstName: updatedUser.firstname,
+          lastName: updatedUser.lastname,
+          phoneNumber: updatedUser.phone,
+          email: updatedUser.email,
+          profileImage: updatedUser.profileImage,
+        }
+      }
+    });
+  } catch (err) {
+    console.error("Error updating customer profile:", err);
+    return res.status(400).json({
+      status: "error",
+      message: err.message
     });
   }
 };
@@ -420,6 +497,36 @@ exports.saveUserMenuItems = async (req, res) => {
   try {
     const user = await db.restaurantUser.findByPk(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Check if any menu items are already allotted to other users
+    const conflictingAllotments = await db.sequelize.query(
+      `SELECT umi.menuItemId, umi.userId, ru.firstname, ru.lastname, mi.name as menuItemName
+       FROM user_menuitem umi
+       JOIN restaurantUser ru ON umi.userId = ru.id
+       JOIN menuitem mi ON umi.menuItemId = mi.id
+       WHERE umi.menuItemId IN (:menuitemIds)
+       AND umi.userId != :userId`,
+      {
+        replacements: { menuitemIds, userId },
+        type: db.Sequelize.QueryTypes.SELECT
+      }
+    );
+
+    if (conflictingAllotments.length > 0) {
+      // Format error message with details
+      const conflicts = conflictingAllotments.map(c => ({
+        menuItemName: c.menuItemName,
+        allottedTo: `${c.firstname} ${c.lastname}`,
+        userId: c.userId
+      }));
+
+      const errorMessage = `The following items are already allotted to other chefs:\n${conflicts.map(c => `- ${c.menuItemName} (allotted to ${c.allottedTo})`).join('\n')}\n\nPlease remove them from the other chef first.`;
+
+      return res.status(400).json({
+        error: errorMessage,
+        conflicts: conflicts
+      });
+    }
 
     const sequelize = db.sequelize;
     await sequelize.transaction(async (t) => {
@@ -594,6 +701,14 @@ exports.getDashboardData = async (req, res) => {
 
     // Get order stats (total, week/month/year) for this restaurant
     const now = new Date();
+
+    // Today's date - define early since it's used in multiple places
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+
     let startDate;
     if (period === "year") {
       startDate = new Date(now.getFullYear(), 0, 1);
@@ -632,9 +747,11 @@ exports.getDashboardData = async (req, res) => {
     let totalOrdersAll = 0;
     if (allottedMenuItemIds.length > 0) {
       totalOrdersAll = await db.orders.count({
-        where: { restaurantId },
-                  status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
-          createdAt: { [Op.gte]: startOfDay },
+        where: {
+          restaurantId,
+          status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
+          createdAt: { [Op.gte]: startOfDay }
+        },
         include: [
           {
             model: db.orderProducts,
@@ -647,13 +764,6 @@ exports.getDashboardData = async (req, res) => {
         distinct: true
       });
     }
-
-    // Today's date
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    );
 
     // Top 3 orders for today (by menu items allotted to this user)
     let topOrders = [];
@@ -798,6 +908,76 @@ exports.uploadImage = async (req, res) => {
 };
 // Add Restaurant User (Chef or other role)
 
+// Check if phone number is already registered (for restaurant users/managers)
+exports.checkPhoneAvailability = async (req, res) => {
+  try {
+    const { phone } = req.params;
+
+    if (!phone) {
+      return res.status(400).send({
+        message: "Phone number is required"
+      });
+    }
+
+    const existingUser = await db.restaurantUser.findOne({
+      where: { phone }
+    });
+
+    if (existingUser) {
+      return res.status(200).send({
+        available: false,
+        message: "Phone already registered. Please try with a new one."
+      });
+    }
+
+    return res.status(200).send({
+      available: true,
+      message: "Phone number is available"
+    });
+  } catch (error) {
+    console.error("Error checking phone availability:", error);
+    return res.status(500).send({
+      message: "Error checking phone availability",
+      error: error.message
+    });
+  }
+};
+
+// Check if phone number is already registered (for customers)
+exports.checkCustomerPhoneAvailability = async (req, res) => {
+  try {
+    const { phone } = req.params;
+
+    if (!phone) {
+      return res.status(400).send({
+        message: "Phone number is required"
+      });
+    }
+
+    const existingUser = await db.user.findOne({
+      where: { phone }
+    });
+
+    if (existingUser) {
+      return res.status(200).send({
+        available: false,
+        message: "Phone already registered. Please try with a new one."
+      });
+    }
+
+    return res.status(200).send({
+      available: true,
+      message: "Phone number is available"
+    });
+  } catch (error) {
+    console.error("Error checking customer phone availability:", error);
+    return res.status(500).send({
+      message: "Error checking phone availability",
+      error: error.message
+    });
+  }
+};
+
 // User registration (manager)
 exports.register = async (req, res) => {
   console.log("--- Register endpoint hit ---");
@@ -829,6 +1009,17 @@ exports.register = async (req, res) => {
       restaurantType,
     } = req.body;
 console.log(req.body);
+
+    // Check if phone number is already registered
+    const existingUser = await db.restaurantUser.findOne({
+      where: { phone }
+    });
+
+    if (existingUser) {
+      return res.status(400).send({
+        message: "Phone already registered. Please try with a new one."
+      });
+    }
 
     let logoImageUrl = logo;
 
@@ -993,6 +1184,23 @@ exports.findOne = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { firstname, lastname, phone, password, role_id,userImage } = req.body;
+
+    // If phone number is being updated, check if it's already used by another user
+    if (phone !== undefined) {
+      const existingUser = await db.restaurantUser.findOne({
+        where: {
+          phone,
+          id: { [Op.ne]: req.params.id } // Exclude current user
+        }
+      });
+
+      if (existingUser) {
+        return res.status(400).send({
+          message: "Phone already registered. Please try with a new one."
+        });
+      }
+    }
+
     const updateFields = { firstname, lastname, phone,userImage };
     if (role_id !== undefined) updateFields.role_id = role_id;
     if (firstname !== undefined) updateFields.firstname = firstname;
@@ -1058,6 +1266,17 @@ exports.addRestaurantUser = async (req, res) => {
 
     if (!firstname || !password || !role_id || !phone || !restId) {
       return res.status(400).send({ message: "Missing required fields" });
+    }
+
+    // Check if phone number is already registered
+    const existingUser = await db.restaurantUser.findOne({
+      where: { phone }
+    });
+
+    if (existingUser) {
+      return res.status(400).send({
+        message: "Phone already registered. Please try with a new one."
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
