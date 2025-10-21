@@ -34,6 +34,10 @@ module.exports = (sequelize, Sequelize) => {
         key: "id",      // Key in the roles table to reference
       },
     },
+    profileImage: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
   },
    {
     tableName: 'user'

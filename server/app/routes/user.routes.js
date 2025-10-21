@@ -30,6 +30,12 @@ module.exports = (app) => {
     limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
   });
 
+  // Check phone availability (restaurant users)
+  router.get("/check-phone/:phone", users.checkPhoneAvailability);
+
+  // Check phone availability (customers)
+  router.get("/check-customer-phone/:phone", users.checkCustomerPhoneAvailability);
+
   // User registration
   router.post("/register", users.register);
   // File upload endpoint
@@ -43,6 +49,9 @@ module.exports = (app) => {
 
   // Get user profile with reviews and transactions (protected)
   router.get("/profile/:userId", verifyToken, users.getUserProfile);
+
+  // Update customer profile (protected)
+  router.put("/profile/:userId", verifyToken, users.updateCustomerProfile);
 
   // Get recent orders for a user (protected)
   router.get("/recent-orders", verifyToken, users.getRecentOrders);
