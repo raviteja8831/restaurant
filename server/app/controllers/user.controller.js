@@ -502,7 +502,7 @@ exports.saveUserMenuItems = async (req, res) => {
     const conflictingAllotments = await db.sequelize.query(
       `SELECT umi.menuItemId, umi.userId, ru.firstname, ru.lastname, mi.name as menuItemName
        FROM user_menuitem umi
-       JOIN restaurantUser ru ON umi.userId = ru.id
+       JOIN restaurantuser ru ON umi.userId = ru.id
        JOIN menuitem mi ON umi.menuItemId = mi.id
        WHERE umi.menuItemId IN (:menuitemIds)
        AND umi.userId != :userId`,
