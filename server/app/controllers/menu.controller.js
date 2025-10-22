@@ -2,13 +2,15 @@
 exports.getMenuWithItems = async (req, res) => {
   try {
     const restaurantId = req.params.restaurantId;
+        const status = req.params.status=='all'?false:true;
+
     // where: { id: userId },
     const db = require("../models");
     const query = {
       include: [{ model: db.menuItem, as: "menuItems" }],
     };
     if (restaurantId) {
-      query.where = { restaurantId: Number(restaurantId) , status: true};
+      query.where = { restaurantId: Number(restaurantId) , status: status};
     }
     const menus = await db.menu.findAll(query);
     res.json(menus);

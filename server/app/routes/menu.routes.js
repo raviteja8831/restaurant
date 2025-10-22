@@ -11,7 +11,7 @@ module.exports = (app) => {
   router.get("/", verifyToken, menu.findAll);
 
   // Get menu with items for restaurant (any authenticated user)
-  router.get("/with-items/:restaurantId", verifyToken, menu.getMenuWithItems);
+  router.get("/with-items/:restaurantId/:status", verifyToken, menu.getMenuWithItems);
 
   // Get items based on menu (any authenticated user)
   router.get("/items/:menuId", verifyToken, menu.getItemsBasedOnMenu);
