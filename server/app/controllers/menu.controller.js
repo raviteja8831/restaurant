@@ -2,16 +2,22 @@
 exports.getMenuWithItems = async (req, res) => {
   try {
     const restaurantId = req.params.restaurantId;
-        const status = req.params.status=='all'?false:true;
 
     // where: { id: userId },
     const db = require("../models");
     const query = {
       include: [{ model: db.menuItem, as: "menuItems" }],
     };
-    if (restaurantId) {
-      query.where = { restaurantId: Number(restaurantId) , status: status};
-    }
+ if (restaurantId) {
+  query.where = { restaurantId: Number(restaurantId) };
+ }
+  // ✅ Add status condition only if not 'all'
+  if (statusParam !== "all") {
+    // convert to boolean if statusParam is 'true' or 'false'
+    const status = statusParam === "true" || statusParam === true;
+    query.where.status = status;
+  }
+  
     const menus = await db.menu.findAll(query);
     res.json(menus);
   } catch (err) {
