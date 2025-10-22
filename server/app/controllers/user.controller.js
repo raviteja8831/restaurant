@@ -197,7 +197,7 @@ exports.getUserProfile = async (req, res) => {
     // Get user details
     const user = await db.users.findOne({
       where: { id: userId },
-      attributes: ["id", "firstname", "lastname", "phone", "email", "profileImage"],
+      attributes: ["id", "firstname", "lastname", "phone", "profileImage"],
     });
 
     if (!user) {
@@ -363,7 +363,7 @@ exports.getUserProfile = async (req, res) => {
 // Update customer profile (for user model - customers)
 exports.updateCustomerProfile = async (req, res) => {
   try {
-    const { firstname, lastname, phone, email, profileImage } = req.body;
+    const { firstname, lastname, phone, profileImage } = req.body;
     const userId = req.params.userId;
 
     if (!userId) {
@@ -393,7 +393,7 @@ exports.updateCustomerProfile = async (req, res) => {
     if (firstname !== undefined) updateFields.firstname = firstname;
     if (lastname !== undefined) updateFields.lastname = lastname;
     if (phone !== undefined) updateFields.phone = phone;
-    if (email !== undefined) updateFields.email = email;
+    // if (email !== undefined) updateFields.email = email;
     if (profileImage !== undefined) updateFields.profileImage = profileImage;
 
     // Update user
@@ -410,7 +410,7 @@ exports.updateCustomerProfile = async (req, res) => {
 
     // Fetch updated user data
     const updatedUser = await db.users.findByPk(userId, {
-      attributes: ["id", "firstname", "lastname", "phone", "email", "profileImage"],
+      attributes: ["id", "firstname", "lastname", "phone",  "profileImage"],
     });
 
     return res.status(200).json({
