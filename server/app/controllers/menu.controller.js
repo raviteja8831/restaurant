@@ -2,6 +2,7 @@
 exports.getMenuWithItems = async (req, res) => {
   try {
     const restaurantId = req.params.restaurantId;
+const statusParam = req.params.status;
 
     // where: { id: userId },
     const db = require("../models");
