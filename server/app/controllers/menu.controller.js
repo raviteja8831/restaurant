@@ -16,7 +16,7 @@ const statusParam = req.params.status;
   if (statusParam !== "all") {
     // convert to boolean if statusParam is 'true' or 'false'
     const status = statusParam === "true" || statusParam === true;
-    query.where.status = status;
+    query.where.status = true;
   }
   
     const menus = await db.menu.findAll(query);
