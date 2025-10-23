@@ -187,6 +187,12 @@ chefController.chefDashboard = async (req, res) => {
                 },
               ],
             },
+            {
+              model: db.restaurantTable,
+              as: "table",
+              attributes: ["id", "name"],
+              required: false, // LEFT JOIN - some orders may not have a table
+            },
           ],
           order: [["createdAt", "DESC"]],
           limit: 20,
@@ -211,6 +217,12 @@ chefController.chefDashboard = async (req, res) => {
                   attributes: ["id", "name", "price"],
                 },
               ],
+            },
+            {
+              model: db.restaurantTable,
+              as: "table",
+              attributes: ["id", "name"],
+              required: false, // LEFT JOIN - some orders may not have a table
             },
           ],
           order: [["createdAt", "DESC"]],
