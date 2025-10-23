@@ -533,6 +533,14 @@ exports.saveUserMenuItems = async (req, res) => {
       // Save allotted menu items (join table)
       await user.setAllottedMenuItems(menuitemIds, { transaction: t });
 
+      // Update menuitem.status = true for allotted menu items
+      if (menuitemIds.length > 0) {
+        await db.menuItem.update(
+          { status: true },
+          { where: { id: menuitemIds }, transaction: t }
+        );
+      }
+
       // Find parent menu ids for the allotted menu items.
       // Handle both common column names (menuId or menu_id) defensively.
       const menuItems = await db.menuItem.findAll({

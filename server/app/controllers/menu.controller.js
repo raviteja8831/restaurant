@@ -1,24 +1,35 @@
-// Get all menus with their items
+// Get all menus with their items (both menu and menuItems filtered by status)
 exports.getMenuWithItems = async (req, res) => {
   try {
     const restaurantId = req.params.restaurantId;
-const statusParam = req.params.status;
+    const statusParam = req.params.status;
 
-    // where: { id: userId },
     const db = require("../models");
+
+    // Build the query with where conditions
     const query = {
-      include: [{ model: db.menuItem, as: "menuItems" }],
+      where: {},
+      include: [{
+        model: db.menuItem,
+        as: "menuItems",
+        where: {},
+        required: false // LEFT JOIN to include menus even if no items
+      }],
     };
- if (restaurantId) {
-  query.where = { restaurantId: Number(restaurantId) };
- }
-  // ✅ Add status condition only if not 'all'
-  if (statusParam !== "all") {
-    // convert to boolean if statusParam is 'true' or 'false'
-    const status = statusParam === "true" || statusParam === true;
-    query.where.status = true;
-  }
-  
+
+    // Add restaurantId filter if provided
+    if (restaurantId) {
+      query.where.restaurantId = Number(restaurantId);
+    }
+
+    // Add status condition for both menu and menuItems (only if not 'all')
+    if (statusParam !== "all") {
+      // Filter menus by status = true
+      query.where.status = true;
+      // Filter menuItems by status = true
+      query.include[0].where.status = true;
+    }
+
     const menus = await db.menu.findAll(query);
     res.json(menus);
   } catch (err) {
