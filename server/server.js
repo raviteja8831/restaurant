@@ -42,6 +42,8 @@ require("./app/routes/buffetdetails.routes.js")(app);
 // require("./app/routes/tablebooking.routes.js")(app);
 require("./app/routes/tablebooking.routes.js")(app);
 require("./app/routes/debug.routes.js")(app);
+require("./app/routes/subscription.routes.js")(app);
+require("./app/routes/appsettings.routes.js")(app);
 
 require("dotenv").config();
 var corsOptions = {
