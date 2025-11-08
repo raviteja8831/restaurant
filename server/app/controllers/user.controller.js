@@ -315,7 +315,7 @@ exports.getUserProfile = async (req, res) => {
       include: [
         {
           model: db.restaurant,
-          as: "reviewedRestaurant",
+          as: "restaurant",
           attributes: ["id", "name", "address"], //, "image"
         },
       ],
@@ -324,10 +324,10 @@ exports.getUserProfile = async (req, res) => {
     // Format favorites for response
     const formattedFavorites = favorites.map((favorite) => ({
       id: favorite.id,
-      restaurantId: favorite?.reviewedRestaurant?.id,
-      restaurantName: favorite?.reviewedRestaurant?.name,
-      restaurantAddress: favorite?.reviewedRestaurant?.address,
-      restaurantImage: favorite?.reviewedRestaurant?.image,
+      restaurantId: favorite?.restaurant?.id,
+      restaurantName: favorite?.restaurant?.name,
+      restaurantAddress: favorite?.restaurant?.address,
+      restaurantImage: favorite?.restaurant?.image,
       review: favorite?.review,
       rating: favorite?.rating,
       addedAt: new Date(favorite?.createdAt).toLocaleDateString(),
@@ -718,15 +718,16 @@ exports.getDashboardData = async (req, res) => {
     );
 
     let startDate;
-    if (period === "year") {
+    if (period === "day") {
+      startDate = startOfDay;
+    } else if (period === "year") {
       startDate = new Date(now.getFullYear(), 0, 1);
     } else if (period === "month") {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     } else {
-      // week
+      // week - start from Sunday at 00:00:00
       const day = now.getDay();
-      startDate = new Date(now);
-      startDate.setDate(now.getDate() - day);
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
     }
 
     // Total orders for period (for this chef based on allotted menu items)
@@ -736,7 +737,7 @@ exports.getDashboardData = async (req, res) => {
         where: {
           restaurantId,
           status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
-          createdAt: { [db.Sequelize.Op.gte]: startDate }
+          createdAt: { [Op.gte]: startDate }
         },
         include: [
           {
@@ -747,7 +748,8 @@ exports.getDashboardData = async (req, res) => {
             attributes: []
           }
         ],
-        distinct: true
+        distinct: true,
+        col: 'id'
       });
     }
 
@@ -757,8 +759,8 @@ exports.getDashboardData = async (req, res) => {
       totalOrdersAll = await db.orders.count({
         where: {
           restaurantId,
-          status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
-          createdAt: { [Op.gte]: startOfDay }
+          status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] }
+          // No date filter - counting ALL orders ever for this chef
         },
         include: [
           {
@@ -769,11 +771,12 @@ exports.getDashboardData = async (req, res) => {
             attributes: []
           }
         ],
-        distinct: true
+        distinct: true,
+        col: 'id'
       });
     }
 
-    // Top 3 orders for today (by menu items allotted to this user)
+    // Top 3 orders for the selected period (by menu items allotted to this user)
     let topOrders = [];
     if (allottedMenuItemIds.length > 0) {
       topOrders = await db.orderProducts.findAll({
@@ -793,10 +796,8 @@ exports.getDashboardData = async (req, res) => {
             attributes: [],
             where: {
               restaurantId,
-              // status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
-              // createdAt: { [db.Sequelize.Op.gte]: startOfDay },
-                        status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
-          createdAt: { [Op.gte]: startOfDay },
+              status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
+              createdAt: { [Op.gte]: startDate },
             },
           },
         ],
@@ -807,14 +808,14 @@ exports.getDashboardData = async (req, res) => {
       });
     }
 
-    // Today's order list (orders for this restaurant, with at least one product in allottedMenuItemIds)
+    // Order list for the selected period (orders for this restaurant, with at least one product in allottedMenuItemIds)
     let todaysOrders = [];
     if (allottedMenuItemIds.length > 0) {
       const orders = await db.orders.findAll({
         where: {
           restaurantId,
           status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
-          createdAt: { [Op.gte]: startOfDay },
+          createdAt: { [Op.gte]: startDate },
         },
         include: [
           {
@@ -1107,6 +1108,11 @@ console.log(req.body);
 exports.login = async (req, res) => {
   try {
     const { phone, otp } = req.body;
+
+    if (!phone || !otp) {
+      return res.status(400).send({ message: "Phone and OTP are required" });
+    }
+
     // Find user by phone
     const user = await db.restaurantUser.findOne({
       where: { phone },
@@ -1125,9 +1131,16 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(404).send({ message: "User not found!" });
     }
-    // Mock OTP validation (replace with real OTP logic)
-    if (otp !== "1234") {
-      return res.status(401).send({ message: "Invalid OTP!" });
+
+    // Verify OTP using OTP service (this will mark OTP as verified)
+    const { verifyOTP } = require("../services/otp.service");
+    const otpVerification = await verifyOTP(phone, otp, "USER_LOGIN");
+
+    if (!otpVerification.success) {
+      return res.status(401).send({
+        message: otpVerification.message || "Invalid OTP!",
+        remainingAttempts: otpVerification.remainingAttempts
+      });
     }
     // Generate JWT token (extended expiration for better UX)
     console.log('🔑 Generating token for user:', user.id, 'with secret:', SECRET_KEY ? 'Available' : 'Missing');

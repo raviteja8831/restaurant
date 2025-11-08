@@ -70,7 +70,7 @@ exports.listReviews = async (req, res) => {
         user: r.user ? `${r.user.firstname} ${r.user.lastname}` : "",
         restaurant: r.restaurant ? r.restaurant.name : "",
         rating: r.rating,
-        comment: r.comment,
+        review: r.review,
         createdAt: r.createdAt,
       }))
     );
@@ -105,7 +105,7 @@ exports.getUserReviews = async (req, res) => {
       include: [
         {
           model: db.restaurant,
-          as: "reviewedRestaurant",
+          as: "restaurant",
           attributes: ["id", "name", "address", "logoImage", "restaurantType"]
         },
       ],
@@ -118,11 +118,11 @@ exports.getUserReviews = async (req, res) => {
         id: r.id,
         restaurantId: r.restaurantId,
         restaurant: {
-          id: r.reviewedRestaurant?.id,
-          name: r.reviewedRestaurant?.name || "",
-          address: r.reviewedRestaurant?.address || "",
-          logoImage: r.reviewedRestaurant?.logoImage || "",
-          restaurantType: r.reviewedRestaurant?.restaurantType || "",
+          id: r.restaurant?.id,
+          name: r.restaurant?.name || "",
+          address: r.restaurant?.address || "",
+          logoImage: r.restaurant?.logoImage || "",
+          restaurantType: r.restaurant?.restaurantType || "",
         },
         rating: r.rating,
         review: r.review || "",

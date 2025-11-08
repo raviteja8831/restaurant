@@ -83,8 +83,8 @@ exports.dashboard = async (req, res) => {
   // Get chef login statistics
   const todayFormatted = formatIndianDateTime(startDate).split(" ")[0]; // Get only the date part
 
-    // 1. Total unique chefs who logged in in range
-    const totalUniqueLogins = await db.chefLogin.count({
+    // 1. Total login sessions (events) in date range - count all records, not distinct
+    const totalLoginSessions = await db.chefLogin.count({
       where: {
         restaurantId,
         createdAt: {
@@ -92,8 +92,6 @@ exports.dashboard = async (req, res) => {
           [Op.lte]: endDate,
         },
       },
-      distinct: true,
-      col: "chefId",
       include: [
         {
           model: db.restaurantUser,
@@ -106,15 +104,12 @@ exports.dashboard = async (req, res) => {
       ],
     });
 
-    // 2. Currently logged in chefs (unique chefs with login time in range but no logout time)
+    // 2. Currently logged in chefs (chefs with active session - logOutTime is null)
+    // No date filter - we want to know who is CURRENTLY logged in regardless of when they logged in
     const currentlyLoggedIn = await db.chefLogin.count({
       where: {
         restaurantId,
-        createdAt: {
-          [Op.gte]: startDate,
-          [Op.lte]: endDate,
-        },
-        logOutTime: null,
+        logOutTime: null, // Active session
       },
       include: [
         {
@@ -130,29 +125,55 @@ exports.dashboard = async (req, res) => {
       col: "chefId",
     });
 
-    // 3. Number of unique chefs who logged out in range
-    const logoutsToday = await db.chefLogin.count({
+    // 3. Chefs who logged out in the date range but haven't logged back in (not currently active)
+    // First, get all distinct chefs who logged out in the range
+    const loggedOutChefIds = await db.chefLogin.findAll({
       where: {
         restaurantId,
-        logOutTime: { [Op.ne]: null }, // Has logged out
+        logOutTime: { [Op.ne]: null },
         updatedAt: {
           [Op.gte]: startDate,
           [Op.lte]: endDate,
         },
       },
+      attributes: ['chefId'],
       include: [
         {
           model: db.restaurantUser,
           as: "chef",
-          where: {
-            role_id: "2",
-          },
+          where: { role_id: "2" },
           required: true,
+          attributes: []
         },
       ],
-      distinct: true,
-      col: "chefId",
+      group: ['chefId'],
+      raw: true,
     });
+
+    // Get chefs with active sessions (logOutTime = null)
+    const activeChefIds = await db.chefLogin.findAll({
+      where: {
+        restaurantId,
+        logOutTime: null,
+      },
+      attributes: ['chefId'],
+      include: [
+        {
+          model: db.restaurantUser,
+          as: "chef",
+          where: { role_id: 2 },
+          required: true,
+          attributes: []
+        },
+      ],
+      group: ['chefId'],
+      raw: true,
+    });
+
+    // Filter out active chefs from logged out chefs
+    const activeChefIdsSet = new Set(activeChefIds.map(c => c.chefId));
+    const loggedOutNotActive = loggedOutChefIds.filter(c => !activeChefIdsSet.has(c.chefId));
+    const loggedOutNotActiveCount = loggedOutNotActive.length;
 
     // Tables served in range (distinct tableId in orders)
     const tablesServed = await db.orders.count({
@@ -341,10 +362,10 @@ exports.dashboard = async (req, res) => {
       buffetPrice,
       salesData,
       incomeData,
-      // Real chef login statistics
-      chefLogins: totalUniqueLogins, // Total number of unique chefs who logged in today
-      currentlyLoggedIn: currentlyLoggedIn, // Number of chefs currently logged in
-      chefLogouts: logoutsToday, // Number of chef logouts today
+      // Chef login statistics
+      chefLogins: totalLoginSessions, // Total login sessions/events in date range
+      currentlyLoggedIn: currentlyLoggedIn, // Chefs currently logged in (active sessions)
+      chefLogouts: loggedOutNotActiveCount, // Chefs who logged out but haven't logged back in
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

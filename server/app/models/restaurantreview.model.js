@@ -31,6 +31,14 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      orderId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "orders",
+          key: "id",
+        },
+      },
     },
     {
       tableName: "restaurantReview",

@@ -53,13 +53,14 @@ db.orderProducts = require("./orderproducts.model.js")(sequelize, Sequelize);
 db.userMenuItem = require("./user_menuitem.model.js")(sequelize, Sequelize);
 db.subscription = require("./subscription.model.js")(sequelize, Sequelize);
 db.appSettings = require("./appsettings.model.js")(sequelize, Sequelize);
+db.otp = require("./otp.model.js")(sequelize, Sequelize);
 db.restaurantReview.belongsTo(db.restaurant, {
   foreignKey: "restaurantId",
-  as: "reviewedRestaurant",
+  as: "restaurant",
 });
 db.restaurantReview.belongsTo(db.users, {
   foreignKey: "userId",
-  as: "reviewer",
+  as: "user",
 });
 db.buffetOrder.belongsTo(db.restaurant, {
   foreignKey: "restaurantId",
@@ -158,12 +159,10 @@ db.roles.hasMany(db.restaurantUser, {
 });
 
 // RestaurantRating associations
-// db.restaurantReview.belongsTo(db.restaurant, { foreignKey: 'restaurantId', as: 'restaurant' });
 db.restaurant.hasMany(db.restaurantReview, {
   foreignKey: "restaurantId",
   as: "restaurantReviews",
 });
-db.restaurantReview.belongsTo(db.users, { foreignKey: "userId", as: "user" });
 db.users.hasMany(db.restaurantReview, {
   foreignKey: "userId",
   as: "userReviews",

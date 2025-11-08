@@ -7,6 +7,9 @@ module.exports = app => {
   // Get admin UPI (any authenticated user can view)
   router.get('/admin/upi', verifyToken, appSettings.getAdminUpi);
 
+  // Get platform fees (any authenticated user can view)
+  router.get('/platform/fees', verifyToken, appSettings.getPlatformFees);
+
   // Get a specific setting by key (manager only)
   router.get('/:key', verifyManager, appSettings.getSetting);
 

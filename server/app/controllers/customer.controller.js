@@ -156,10 +156,10 @@ exports.delete = async (req, res) => {
   }
 };
 
-// Find Customer by phone number
+// Find Customer by phone number (Login with OTP)
 exports.findByPhone = async (req, res) => {
   try {
-    const { phone } = req.body;
+    const { phone, otp } = req.body;
 
     if (!phone) {
       return res.status(400).send({
@@ -167,6 +167,36 @@ exports.findByPhone = async (req, res) => {
       });
     }
 
+    // If OTP is not provided, this is just a phone check
+    if (!otp) {
+      const customer = await Customer.findOne({
+        where: { phone },
+      });
+
+      if (!customer) {
+        return res.status(404).send({
+          message: `Customer not found with phone ${phone}`,
+        });
+      }
+
+      return res.status(200).send({
+        message: "Customer found. Please provide OTP to login.",
+        phoneExists: true,
+      });
+    }
+
+    // If OTP is provided, verify it (this will mark OTP as verified)
+    const { verifyOTP } = require("../services/otp.service");
+    const otpVerification = await verifyOTP(phone, otp, "CUSTOMER_LOGIN");
+
+    if (!otpVerification.success) {
+      return res.status(401).send({
+        message: otpVerification.message || "Invalid OTP!",
+        remainingAttempts: otpVerification.remainingAttempts,
+      });
+    }
+
+    // OTP verified, fetch customer details
     const customer = await Customer.findOne({
       where: { phone },
       include: [

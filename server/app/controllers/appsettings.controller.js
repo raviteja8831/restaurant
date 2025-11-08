@@ -133,6 +133,30 @@ exports.deleteSetting = async (req, res) => {
   }
 };
 
+// Get platform fees (convenience method)
+exports.getPlatformFees = async (req, res) => {
+  try {
+    const feeBelow100 = await AppSettings.findOne({
+      where: { settingKey: 'platform_fee_below_100' }
+    });
+
+    const feeAbove100 = await AppSettings.findOne({
+      where: { settingKey: 'platform_fee_above_100' }
+    });
+
+    res.status(200).send({
+      platformFeeBelow100: feeBelow100 ? parseInt(feeBelow100.settingValue) : 1,
+      platformFeeAbove100: feeAbove100 ? parseInt(feeAbove100.settingValue) : 3,
+      message: (!feeBelow100 || !feeAbove100) ? 'Using default values (not set in database)' : null
+    });
+  } catch (error) {
+    console.error("Error getting platform fees:", error);
+    res.status(500).send({
+      message: error.message || "Error retrieving platform fees."
+    });
+  }
+};
+
 // Initialize default settings (can be called on first setup)
 exports.initializeDefaults = async (req, res) => {
   try {
@@ -146,6 +170,16 @@ exports.initializeDefaults = async (req, res) => {
         settingKey: 'subscription_amount',
         settingValue: '5000',
         description: 'Default subscription amount per month in rupees'
+      },
+      {
+        settingKey: 'platform_fee_below_100',
+        settingValue: '1',
+        description: 'Platform fee for orders below 100 rupees'
+      },
+      {
+        settingKey: 'platform_fee_above_100',
+        settingValue: '3',
+        description: 'Platform fee for orders above 100 rupees'
       }
     ];
 
