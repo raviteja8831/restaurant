@@ -191,3 +191,66 @@ exports.getAdminUpi = async (req, res) => {
     });
   }
 };
+
+// Check subscription status (active/expired/not found)
+exports.checkStatus = async (req, res) => {
+  try {
+    const restaurantId = req.params.restaurantId;
+
+    const subscription = await Subscription.findOne({
+      where: { restaurantId },
+      order: [['createdAt', 'DESC']],
+      include: [{
+        model: Restaurant,
+        as: 'restaurant',
+        attributes: ['id', 'name']
+      }]
+    });
+
+    if (!subscription) {
+      return res.status(404).send({
+        isActive: false,
+        message: "No subscription found for this restaurant"
+      });
+    }
+
+    // Check if subscription is active based on:
+    // 1. Payment status is 'completed'
+    // 2. Current date is between startDate and endDate
+    const now = new Date();
+    const startDate = new Date(subscription.startDate);
+    const endDate = new Date(subscription.endDate);
+
+    const isPaymentCompleted = subscription.paymentStatus === 'completed';
+    const isWithinDateRange = now >= startDate && now <= endDate;
+    const isActive = isPaymentCompleted && isWithinDateRange;
+
+    let message = "";
+    if (!isPaymentCompleted) {
+      message = "Subscription payment is pending";
+    } else if (now < startDate) {
+      message = "Subscription not yet started";
+    } else if (now > endDate) {
+      message = "Subscription has expired";
+    } else {
+      message = "Subscription is active";
+    }
+
+    res.status(200).send({
+      isActive,
+      subscription: {
+        id: subscription.id,
+        startDate: subscription.startDate,
+        endDate: subscription.endDate,
+        paymentStatus: subscription.paymentStatus,
+        amount: subscription.amount
+      },
+      message
+    });
+  } catch (error) {
+    console.error("Error checking subscription status:", error);
+    res.status(500).send({
+      message: error.message || "Error checking subscription status."
+    });
+  }
+};

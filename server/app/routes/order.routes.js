@@ -15,6 +15,9 @@ module.exports = (app) => {
   // Get PAID orders for a restaurant (manager only)
   router.get("/paid/:restaurantId", orders.getPaidOrders);
 
+  // Get user's pending payment orders (PLACED but not PAID) - customer access
+  router.get("/user-pending-payments/:restaurantId/:userId", orders.getUserPendingPayments);
+
   // Delete an order and its items (manager only)
   router.delete("/delete/:orderId", orders.deleteOrder);
 

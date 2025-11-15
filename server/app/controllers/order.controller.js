@@ -11,22 +11,50 @@ exports.deleteOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
 
+    // First, check if order exists and get its details
+    const order = await Order.findByPk(orderId);
+
+    if (!order) {
+      return res.status(404).json({
+        status: "error",
+        message: "Order not found",
+      });
+    }
+
+    // Check order status - only allow deletion of PENDING orders
+    if (order.status !== "PENDING") {
+      return res.status(400).json({
+        status: "error",
+        message: "Cannot delete order. Order is already being processed.",
+        errorCode: "ORDER_ALREADY_PROCESSED",
+        currentStatus: order.status,
+      });
+    }
+
+    // Check order age - only allow deletion within 45 seconds
+    const orderAge = (new Date() - new Date(order.createdAt)) / 1000; // in seconds
+    const MAX_DELETION_AGE = 45; // 45 seconds
+
+    if (orderAge > MAX_DELETION_AGE) {
+      return res.status(400).json({
+        status: "error",
+        message: "Cannot delete order. The 45-second deletion window has expired. Your order is already being processed.",
+        errorCode: "DELETION_WINDOW_EXPIRED",
+        orderAge: Math.floor(orderAge),
+        maxAge: MAX_DELETION_AGE,
+      });
+    }
+
+    // All validations passed - proceed with deletion
     // First, delete all associated order items
     await OrderProduct.destroy({
       where: { orderId: orderId },
     });
 
     // Then delete the order itself
-    const deletedOrder = await Order.destroy({
+    await Order.destroy({
       where: { id: orderId },
     });
-
-    if (deletedOrder === 0) {
-      return res.status(404).json({
-        status: "error",
-        message: "Order not found",
-      });
-    }
 
     res.status(200).json({
       status: "success",
@@ -570,6 +598,75 @@ exports.getPaidOrders = async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "Error fetching paid orders",
+      error: error.message,
+    });
+  }
+};
+
+// Get user's pending payment orders (PLACED but not PAID)
+exports.getUserPendingPayments = async (req, res) => {
+  try {
+    const { restaurantId, userId } = req.params;
+
+    const pendingPaymentOrders = await Order.findAll({
+      where: {
+        restaurantId: restaurantId,
+        userId: userId,
+        status: "PLACED", // Orders that have been placed but not yet paid
+      },
+      include: [
+        {
+          model: db.orderProducts,
+          as: "orderProducts",
+          include: [
+            {
+              model: MenuItem,
+              as: "menuitem",
+              attributes: ["name", "price"],
+            },
+          ],
+        },
+        {
+          model: Restaurant,
+          as: "orderRestaurant",
+          attributes: ["name"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!pendingPaymentOrders || pendingPaymentOrders.length === 0) {
+      return res.status(404).send({
+        hasPendingPayments: false,
+        orders: [],
+        message: "No pending payment orders found"
+      });
+    }
+
+    const formattedOrders = pendingPaymentOrders.map((order) => ({
+      id: order.id,
+      restaurantId: order.restaurantId,
+      restaurantName: order.orderRestaurant?.name || "Unknown",
+      total: order.total,
+      createdAt: order.createdAt,
+      items: order.orderProducts.map((product) => ({
+        name: product.menuitem?.name || "Unknown",
+        quantity: product.quantity,
+        price: product.menuitem?.price || 0,
+        total: product.quantity * (product.menuitem?.price || 0),
+      })),
+    }));
+
+    res.status(200).json({
+      hasPendingPayments: true,
+      orders: formattedOrders,
+      message: `You have ${formattedOrders.length} pending payment order(s)`,
+    });
+  } catch (error) {
+    console.error("Error in getUserPendingPayments:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching pending payment orders",
       error: error.message,
     });
   }

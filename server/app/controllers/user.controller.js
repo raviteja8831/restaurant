@@ -673,37 +673,37 @@ exports.getDashboardData = async (req, res) => {
     });
 
     if (userRole) {
-      const now = new Date();
-      const todayStart = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      );
-      const todayFormatted = formatIndianDateTime(todayStart).split(" ")[0]; // Get only the date part
-
-      console.log("Searching for chef login with:", {
-        userId,
-        todayFormatted,
-      });
-
+      // Get the most recent login for this chef (regardless of logout status)
+      // This will show the last login time even if they haven't logged out yet
       chefLogin = await db.chefLogin.findOne({
         where: {
           chefId: userId,
-          loginTime: {
-            [Op.like]: `${todayFormatted}%`, // Match any login time from today
-          },
-          logoutTime: null, // Only get active login sessions
         },
-        order: [["loginTime", "DESC"]],
+        order: [["createdAt", "DESC"]],  // Use createdAt instead of loginTime for ordering
       });
 
-      console.log("Found chef login:", chefLogin);
+      console.log("Found chef login:", chefLogin ? {
+        id: chefLogin.id,
+        loginTime: chefLogin.loginTime,
+        logoutTime: chefLogin.logoutTime,
+        createdAt: chefLogin.createdAt
+      } : null);
     }
 
-    if (chefLogin) {
+    if (chefLogin && chefLogin.loginTime) {
       console.log("Raw loginTime value:", chefLogin.loginTime);
-      // Format the login time in Indian format
-      todayLoginTime = chefLogin.loginTime.split(" ").slice(1).join(" ");
+      // Extract just the time portion from the formatted datetime
+      // loginTime format: "DD/MM/YYYY HH:MM:SS AM/PM"
+      const timeParts = chefLogin.loginTime.split(" ");
+      if (timeParts.length >= 3) {
+        // Remove seconds from time (HH:MM:SS -> HH:MM)
+        const timeWithSeconds = timeParts[1]; // HH:MM:SS
+        const timeComponents = timeWithSeconds.split(":");
+        const timeWithoutSeconds = `${timeComponents[0]}:${timeComponents[1]}`; // HH:MM
+        todayLoginTime = `${timeWithoutSeconds} ${timeParts[2]}`; // HH:MM AM/PM
+      } else {
+        todayLoginTime = chefLogin.loginTime;
+      }
       console.log("Formatted login time:", todayLoginTime);
     }
 
@@ -718,11 +718,13 @@ exports.getDashboardData = async (req, res) => {
     );
 
     let startDate;
-    if (period === "day") {
+    // Normalize period to handle "Today" from frontend (case-insensitive)
+    const normalizedPeriod = period.toLowerCase();
+    if (normalizedPeriod === "day" || normalizedPeriod === "today") {
       startDate = startOfDay;
-    } else if (period === "year") {
+    } else if (normalizedPeriod === "year") {
       startDate = new Date(now.getFullYear(), 0, 1);
-    } else if (period === "month") {
+    } else if (normalizedPeriod === "month") {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     } else {
       // week - start from Sunday at 00:00:00
@@ -731,49 +733,66 @@ exports.getDashboardData = async (req, res) => {
     }
 
     // Total orders for period (for this chef based on allotted menu items)
+    // Count distinct orders that have items prepared by this chef
     let totalOrders = 0;
     if (allottedMenuItemIds.length > 0) {
-      totalOrders = await db.orders.count({
+      const periodOrderProducts = await db.orderProducts.findAll({
         where: {
-          restaurantId,
-          status: { [Op.in]: ["CLEARED", "READY","COMPLETED"] },
-          createdAt: { [Op.gte]: startDate }
+          menuitemId: allottedMenuItemIds,
+          status: { [Op.in]: ["PREPARED", "SERVED", "COMPLETED"] }
         },
         include: [
           {
-            model: db.orderProducts,
-            as: "orderProducts",
-            where: { menuitemId: allottedMenuItemIds },
+            model: db.orders,
+            as: "order",
+            where: {
+              restaurantId,
+              createdAt: { [Op.gte]: startDate }
+            },
             required: true,
-            attributes: []
+            attributes: ["id"]
           }
         ],
-        distinct: true,
-        col: 'id'
+        attributes: ["orderId"],
+        raw: true
       });
+
+      // Get unique order IDs
+      const uniqueOrderIds = [...new Set(periodOrderProducts.map(op => op.orderId))];
+      totalOrders = uniqueOrderIds.length;
+
+      console.log(`Period orders count: ${totalOrders}, startDate: ${startDate}`);
     }
 
     // Total orders all time (for this chef based on allotted menu items)
     let totalOrdersAll = 0;
     if (allottedMenuItemIds.length > 0) {
-      totalOrdersAll = await db.orders.count({
+      const allTimeOrderProducts = await db.orderProducts.findAll({
         where: {
-          restaurantId,
-          status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] }
+          menuitemId: allottedMenuItemIds,
+          status: { [Op.in]: ["PREPARED", "SERVED", "COMPLETED"] }
           // No date filter - counting ALL orders ever for this chef
         },
         include: [
           {
-            model: db.orderProducts,
-            as: "orderProducts",
-            where: { menuitemId: allottedMenuItemIds },
+            model: db.orders,
+            as: "order",
+            where: {
+              restaurantId
+            },
             required: true,
-            attributes: []
+            attributes: ["id"]
           }
         ],
-        distinct: true,
-        col: 'id'
+        attributes: ["orderId"],
+        raw: true
       });
+
+      // Get unique order IDs
+      const uniqueOrderIdsAll = [...new Set(allTimeOrderProducts.map(op => op.orderId))];
+      totalOrdersAll = uniqueOrderIdsAll.length;
+
+      console.log(`All-time orders count: ${totalOrdersAll}`);
     }
 
     // Top 3 orders for the selected period (by menu items allotted to this user)
@@ -796,12 +815,14 @@ exports.getDashboardData = async (req, res) => {
             attributes: [],
             where: {
               restaurantId,
-              status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
               createdAt: { [Op.gte]: startDate },
             },
           },
         ],
-        where: { menuitemId: allottedMenuItemIds },
+        where: {
+          menuitemId: allottedMenuItemIds,
+          status: { [Op.in]: ["PREPARED", "SERVED", "COMPLETED"] }
+        },
         group: ["menuitemId", "menuitem.id", "menuitem.name"],
         order: [[db.Sequelize.literal("count"), "DESC"]],
         limit: 3,
@@ -814,14 +835,16 @@ exports.getDashboardData = async (req, res) => {
       const orders = await db.orders.findAll({
         where: {
           restaurantId,
-          status: { [Op.in]: ["CLEARED", "READY", "COMPLETED"] },
           createdAt: { [Op.gte]: startDate },
         },
         include: [
           {
             model: db.orderProducts,
             as: "orderProducts",
-            where: { menuitemId: allottedMenuItemIds },
+            where: {
+              menuitemId: allottedMenuItemIds,
+              status: { [Op.in]: ["PREPARED", "SERVED", "COMPLETED"] }
+            },
             required: true,
             include: [
               {
