@@ -185,39 +185,47 @@ exports.getPendingOrders = async (req, res) => {
   try {
     const { restaurantId, userId } = req.params;
 
-    const [pendingOrders, totalStats] = await Promise.all([
-      Order.findAll({
-        where: {
-          restaurantId: restaurantId,
-          userId: userId,
-          status: "PENDING",
-        },
-        attributes: ["id"],
-      }),
-      db.sequelize.query(
-        `
+    // First, get the first pending order for this user and restaurant
+    const pendingOrder = await Order.findOne({
+      where: {
+        restaurantId: restaurantId,
+        userId: userId,
+        status: "PENDING",
+      },
+      attributes: ["id"],
+      order: [["createdAt", "DESC"]], // Get the most recent pending order
+    });
+
+    // If no pending order exists, return zeros
+    if (!pendingOrder) {
+      return res.status(200).json({
+        orderId: null,
+        totalOrders: 0,
+        totalOrdersAmount: 0,
+      });
+    }
+
+    // Get the total items and amount for THIS specific order only
+    const totalStats = await db.sequelize.query(
+      `
         SELECT
-          COUNT(DISTINCT op.id) as totalOrders,
+          COALESCE(SUM(op.quantity), 0) as totalOrders,
           COALESCE(SUM(op.quantity * mi.price), 0) as totalOrdersAmount
-        FROM \`order\` o
-        LEFT JOIN ordersproduct op ON o.id = op.orderId
-        LEFT JOIN menuitem mi ON op.menuitemId = mi.id
-        WHERE o.restaurantId = :restaurantId
-        AND o.userId = :userId
-        AND o.status = 'PENDING'
+        FROM ordersproduct op
+        INNER JOIN menuitem mi ON op.menuitemId = mi.id
+        WHERE op.orderId = :orderId
       `,
-        {
-          replacements: { restaurantId, userId },
-          type: db.sequelize.QueryTypes.SELECT,
-        }
-      ),
-    ]);
+      {
+        replacements: { orderId: pendingOrder.id },
+        type: db.sequelize.QueryTypes.SELECT,
+      }
+    );
 
     const stats = totalStats[0] || { totalOrders: 0, totalOrdersAmount: 0 };
     const response = {
-      orderId: pendingOrders[0]?.id || null,
-      totalOrders: stats.totalOrders.toString(),
-      totalOrdersAmount: stats.totalOrdersAmount,
+      orderId: pendingOrder.id,
+      totalOrders: parseInt(stats.totalOrders) || 0,
+      totalOrdersAmount: parseFloat(stats.totalOrdersAmount) || 0,
     };
 
     res.status(200).json(response);
