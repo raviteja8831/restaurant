@@ -603,16 +603,17 @@ exports.getPaidOrders = async (req, res) => {
   }
 };
 
-// Get user's pending payment orders (PLACED but not PAID)
+// Get user's pending payment orders (PENDING or PLACED but not PAID)
+// Always checks across ALL restaurants for the user (user-level check)
 exports.getUserPendingPayments = async (req, res) => {
   try {
     const { restaurantId, userId } = req.params;
 
+    // Check across all restaurants for this user - don't filter by restaurantId
     const pendingPaymentOrders = await Order.findAll({
       where: {
-        restaurantId: restaurantId,
         userId: userId,
-        status: "PLACED", // Orders that have been placed but not yet paid
+        status: ["PENDING", "PLACED"], // Orders that are pending or placed but not yet paid
       },
       include: [
         {
