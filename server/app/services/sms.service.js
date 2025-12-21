@@ -1,8 +1,16 @@
+const axios = require('axios');
 const db = require("../models");
 const { Op } = require("sequelize");
-const { sendOTPToQueue } = require("./sqs.service");
-const { sendOTPViaSMS } = require("./sms.service");
 require("dotenv").config();
+
+// Configure SMS India Hub API
+const API_BASE_URL = "http://cloud.smsindiahub.in/api/mt/SendSMS";
+const USER = process.env.SMS_USER || "Daiva";
+const PASSWORD = process.env.SMS_PASSWORD || "Vishal$07";
+const SENDER_ID = process.env.SMS_SENDER_ID || "WEBSMS";
+const CHANNEL = "Promo";
+const DCS = 0;
+const FLASHSMS = 0;
 
 const OTP = db.otp;
 
@@ -23,6 +31,63 @@ const generateOTP = (length = OTP_LENGTH) => {
     otp += digits[Math.floor(Math.random() * 10)];
   }
   return otp;
+};
+
+/**
+ * Send OTP via SMS using SMS India Hub
+ * @param {string} phone - Recipient phone number (e.g., 989xxxxxxx or +91989xxxxxxx)
+ * @param {string} otp - OTP code to send
+ * @returns {Promise<Object>} - API response result
+ */
+const sendOTPViaSMS = async (phone, otp) => {
+  try {
+    // Format phone number: ensure it's 91989xxxxxxx format
+    let formattedPhone = phone.replace(/^\+?91/, '').replace(/\D/g, '');
+    if (formattedPhone.length === 10) {
+      formattedPhone = `91${formattedPhone}`;
+    } else if (formattedPhone.length === 12 && formattedPhone.startsWith('91')) {
+      // already good
+    } else {
+      throw new Error('Invalid phone number format');
+    }
+
+    const message = `Your OTP is: ${otp}. Valid for ${process.env.OTP_EXPIRY_MINUTES || 5} minutes. Do not share this with anyone.`;
+
+    const params = {
+      user: USER,
+      password: PASSWORD,
+      senderid: SENDER_ID,
+      channel: CHANNEL,
+      DCS: DCS,
+      flashsms: FLASHSMS,
+      number: formattedPhone,
+      text: message,
+    };
+
+    const response = await axios.get(API_BASE_URL, { params });
+
+    const result = response.data;
+
+    if (response.status === 200 && result.ErrorCode === "000") {
+      console.log("📱 SMS sent successfully via SMS India Hub:", {
+        jobId: result.JobId,
+        messageData: result.MessageData,
+        phone: formattedPhone,
+      });
+
+      return {
+        success: true,
+        jobId: result.JobId,
+        messageData: result.MessageData,
+        message: "OTP sent successfully",
+      };
+    } else {
+      throw new Error(result.ErrorMessage || 'Failed to send SMS');
+    }
+  } catch (error) {
+    console.error("❌ Error sending SMS via SMS India Hub:", error);
+    throw new Error(`Failed to send SMS: ${error.message}`);
+  }
 };
 
 /**
@@ -68,8 +133,7 @@ const sendOTP = async (phone, type = "USER_LOGIN") => {
 
     console.log(`🔐 Generated OTP for ${phone}: ${otpCode} (ID: ${otpRecord.id})`);
 
-    // Send OTP directly via SMS India Hub (SQS disabled for now)
-    // TODO: Set up SQS queue and update AWS_SQS_QUEUE_URL in .env to use queue
+    // Send OTP directly via SMS India Hub
     console.log("📱 Sending OTP directly via SMS India Hub...");
     await sendOTPViaSMS(phone, otpCode);
 
@@ -254,6 +318,7 @@ const cleanupExpiredOTPs = async () => {
 };
 
 module.exports = {
+  sendOTPViaSMS,
   sendOTP,
   checkOTP,
   verifyOTP,

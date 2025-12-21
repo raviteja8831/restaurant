@@ -186,7 +186,7 @@ exports.findByPhone = async (req, res) => {
     }
 
     // If OTP is provided, verify it (this will mark OTP as verified)
-    const { verifyOTP } = require("../services/otp.service");
+    const { verifyOTP } = require("../services/sms.service");
     const otpVerification = await verifyOTP(phone, otp, "CUSTOMER_LOGIN");
 
     if (!otpVerification.success) {

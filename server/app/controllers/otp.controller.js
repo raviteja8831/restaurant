@@ -1,4 +1,4 @@
-const { sendOTP, checkOTP, verifyOTP } = require("../services/otp.service");
+const { sendOTP, checkOTP, verifyOTP } = require("../services/sms.service");
 const db = require("../models");
 
 /**

@@ -1156,7 +1156,7 @@ exports.login = async (req, res) => {
     }
 
     // Verify OTP using OTP service (this will mark OTP as verified)
-    const { verifyOTP } = require("../services/otp.service");
+    const { verifyOTP } = require("../services/sms.service");
     const otpVerification = await verifyOTP(phone, otp, "USER_LOGIN");
 
     if (!otpVerification.success) {
