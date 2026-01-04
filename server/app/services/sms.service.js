@@ -7,11 +7,11 @@ require("dotenv").config();
 const API_BASE_URL = "http://cloud.smsindiahub.in/api/mt/SendSMS";
 const USER = process.env.SMS_USER || "Daiva";
 const PASSWORD = process.env.SMS_PASSWORD || "Vishal$07";
-const SENDER_ID = process.env.SMS_SENDER_ID || "WEBSMS";
+const SENDER_ID = process.env.SMS_SENDER_ID || "ADMENU";
 const CHANNEL = "Promo";
 const DCS = 0;
 const FLASHSMS = 0;
-
+const route = "dlt"
 const OTP = db.otp;
 
 // Configuration
@@ -61,6 +61,7 @@ const sendOTPViaSMS = async (phone, otp) => {
       DCS: DCS,
       flashsms: FLASHSMS,
       number: formattedPhone,
+      route: route,
       text: message,
     };
 
