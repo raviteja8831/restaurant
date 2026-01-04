@@ -13,7 +13,7 @@ const route = "dlt"
 const OTP = db.otp;
 
 // Configuration
-const OTP_LENGTH = parseInt(process.env.OTP_LENGTH) || 6;
+const OTP_LENGTH = 4;
 const OTP_EXPIRY_MINUTES = parseInt(process.env.OTP_EXPIRY_MINUTES) || 5;
 const MAX_ATTEMPTS = 3;
 
@@ -45,14 +45,13 @@ const sendOTPViaSMS = async (phone, otp) => {
       throw new Error('Invalid phone number format');
     }
 
-    const message = `Your OTP is: ${otp}. Valid for ${process.env.OTP_EXPIRY_MINUTES || 5} minutes. Do not share this with anyone.`;
+    const message = otp;
 
     const params = {
       authorization: AUTHORIZATION,
       route: ROUTE,
       sender_id: SENDER_ID,
       variables_values: message,
-      variables_values: "",
       numbers: formattedPhone,
       schedule_time: "",
       flash: FLASH.toString(),
