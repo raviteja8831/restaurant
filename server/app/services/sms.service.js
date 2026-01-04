@@ -66,7 +66,7 @@ const sendOTPViaSMS = async (phone, otp) => {
     };
 
     const response = await axios.get(API_BASE_URL, { params });
-
+console.log("SMS India Hub response:", response, params, API_BASE_URL);
     const result = response.data;
 
     if (response.status === 200 && result.ErrorCode === "000") {
