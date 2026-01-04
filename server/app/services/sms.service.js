@@ -51,11 +51,12 @@ const sendOTPViaSMS = async (phone, otp) => {
       authorization: AUTHORIZATION,
       route: ROUTE,
       sender_id: SENDER_ID,
-      message: message,
+      variables_values: message,
       variables_values: "",
       numbers: formattedPhone,
       schedule_time: "",
       flash: FLASH.toString(),
+      message: 206794,
     };
 
     const response = await axios.get(API_BASE_URL, { params });
