@@ -3,14 +3,12 @@ const db = require("../models");
 const { Op } = require("sequelize");
 require("dotenv").config();
 
-// Configure SMS India Hub API
-const API_BASE_URL = "http://cloud.smsindiahub.in/api/mt/SendSMS";
-const USER = process.env.SMS_USER || "Daiva";
-const PASSWORD = process.env.SMS_PASSWORD || "Vishal$07";
-const SENDER_ID = process.env.SMS_SENDER_ID || "ADMENU";
-const CHANNEL = "Promo";
-const DCS = 0;
-const FLASHSMS = 0;
+// Configure Fast2SMS API
+const API_BASE_URL = "https://www.fast2sms.com/dev/bulkV2";
+const AUTHORIZATION = process.env.FAST2SMS_AUTH || "S7RUhkpBQcsy0ir6wFfWoaH2NZq84GIxLt5Ym9lOTvgVCEMjbd0eg5Yw6jC1ISusLiTWx4XrFEc9MyZd";
+const SENDER_ID = process.env.FAST2SMS_SENDER_ID || "ADMENU";
+const ROUTE = "dlt";
+const FLASH = 0;
 const route = "dlt"
 const OTP = db.otp;
 
@@ -41,52 +39,46 @@ const generateOTP = (length = OTP_LENGTH) => {
  */
 const sendOTPViaSMS = async (phone, otp) => {
   try {
-    // Format phone number: ensure it's 91989xxxxxxx format
+    // Format phone number: ensure it's 10-digit without country code
     let formattedPhone = phone.replace(/^\+?91/, '').replace(/\D/g, '');
-    if (formattedPhone.length === 10) {
-      formattedPhone = `91${formattedPhone}`;
-    } else if (formattedPhone.length === 12 && formattedPhone.startsWith('91')) {
-      // already good
-    } else {
+    if (formattedPhone.length !== 10) {
       throw new Error('Invalid phone number format');
     }
 
     const message = `Your OTP is: ${otp}. Valid for ${process.env.OTP_EXPIRY_MINUTES || 5} minutes. Do not share this with anyone.`;
 
     const params = {
-      user: USER,
-      password: PASSWORD,
-      senderid: SENDER_ID,
-      channel: CHANNEL,
-      DCS: DCS,
-      flashsms: FLASHSMS,
-      number: formattedPhone,
-      route: route,
-      text: message,
+      authorization: AUTHORIZATION,
+      route: ROUTE,
+      sender_id: SENDER_ID,
+      message: message,
+      variables_values: "",
+      numbers: formattedPhone,
+      schedule_time: "",
+      flash: FLASH.toString(),
     };
 
     const response = await axios.get(API_BASE_URL, { params });
-console.log("SMS India Hub response:", response, params, API_BASE_URL);
+
     const result = response.data;
 
-    if (response.status === 200 && result.ErrorCode === "000") {
-      console.log("📱 SMS sent successfully via SMS India Hub:", {
-        jobId: result.JobId,
-        messageData: result.MessageData,
+    if (response.status === 200 && result.return === true) {
+      console.log("📱 SMS sent successfully via Fast2SMS:", {
+        request_id: result.request_id,
+        message: result.message,
         phone: formattedPhone,
       });
 
       return {
         success: true,
-        jobId: result.JobId,
-        messageData: result.MessageData,
-        message: "OTP sent successfully",
+        request_id: result.request_id,
+        message: result.message,
       };
     } else {
-      throw new Error(result.ErrorMessage || 'Failed to send SMS');
+      throw new Error(result.message ? result.message.join(', ') : 'Failed to send SMS');
     }
   } catch (error) {
-    console.error("❌ Error sending SMS via SMS India Hub:", error);
+    console.error("❌ Error sending SMS via Fast2SMS:", error);
     throw new Error(`Failed to send SMS: ${error.message}`);
   }
 };
