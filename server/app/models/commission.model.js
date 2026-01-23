@@ -5,11 +5,11 @@ module.exports = (sequelize, Sequelize) => {
       autoIncrement: true,
       primaryKey: true,
     },
-    transactionId: {
+    orderId: {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
-        model: 'transaction',
+        model: 'order',
         key: 'id'
       }
     },
@@ -18,14 +18,6 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       references: {
         model: 'restaurant',
-        key: 'id'
-      }
-    },
-    orderId: {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'order',
         key: 'id'
       }
     },

@@ -1,7 +1,14 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 const express = require("express");
 const cors = require("cors");
 const app = express();
+
+// Log environment variables for debugging
+console.log("Server starting...");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("RAZORPAY_KEY_ID:", process.env.RAZORPAY_KEY_ID ? "SET" : "NOT SET");
+console.log("RAZORPAY_KEY_SECRET:", process.env.RAZORPAY_KEY_SECRET ? "SET" : "NOT SET");
 
 // Always set CORS headers for all responses (including errors)
 const allowAllCORS = (req, res, next) => {

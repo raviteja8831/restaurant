@@ -5,24 +5,23 @@
 -- 1. EXTEND TRANSACTION TABLE
 -- ============================================
 ALTER TABLE transaction 
-ADD COLUMN IF NOT EXISTS restaurantId INT NOT NULL AFTER orderId,
-ADD COLUMN IF NOT EXISTS paymentMethod VARCHAR(50) DEFAULT 'razorpay' AFTER status,
-ADD COLUMN IF NOT EXISTS razorpayOrderId VARCHAR(100) AFTER paymentMethod,
-ADD COLUMN IF NOT EXISTS razorpayPaymentId VARCHAR(100) AFTER razorpayOrderId,
-ADD COLUMN IF NOT EXISTS razorpaySignature VARCHAR(255) AFTER razorpayPaymentId,
-ADD COLUMN IF NOT EXISTS commission FLOAT DEFAULT 0 AFTER razorpaySignature,
-ADD COLUMN IF NOT EXISTS commissionPercentage FLOAT DEFAULT 2.5 AFTER commission,
-ADD COLUMN IF NOT EXISTS commissionStatus ENUM('none', 'pending', 'paid') DEFAULT 'none' AFTER commissionPercentage,
-ADD COLUMN IF NOT EXISTS hasSubscription BOOLEAN DEFAULT FALSE AFTER commissionStatus,
-ADD FOREIGN KEY (restaurantId) REFERENCES restaurant(id);
+ADD COLUMN restaurantId INT AFTER orderId,
+ADD COLUMN paymentMethod VARCHAR(50) DEFAULT 'razorpay' AFTER status,
+ADD COLUMN razorpayOrderId VARCHAR(100) AFTER paymentMethod,
+ADD COLUMN razorpayPaymentId VARCHAR(100) AFTER razorpayOrderId,
+ADD COLUMN razorpaySignature VARCHAR(255) AFTER razorpayPaymentId,
+ADD COLUMN commission FLOAT DEFAULT 0 AFTER razorpaySignature,
+ADD COLUMN commissionPercentage FLOAT DEFAULT 2.5 AFTER commission,
+ADD COLUMN commissionStatus ENUM('none', 'pending', 'paid') DEFAULT 'none' AFTER commissionPercentage,
+ADD COLUMN hasSubscription BOOLEAN DEFAULT FALSE AFTER commissionStatus;
 
 -- Create indexes for better query performance
-CREATE INDEX IF NOT EXISTS idx_transaction_razorpay_order ON transaction(razorpayOrderId);
-CREATE INDEX IF NOT EXISTS idx_transaction_razorpay_payment ON transaction(razorpayPaymentId);
-CREATE INDEX IF NOT EXISTS idx_transaction_restaurant ON transaction(restaurantId);
-CREATE INDEX IF NOT EXISTS idx_transaction_status ON transaction(status);
-CREATE INDEX IF NOT EXISTS idx_transaction_commission_status ON transaction(commissionStatus);
-CREATE INDEX IF NOT EXISTS idx_transaction_date ON transaction(date);
+CREATE INDEX idx_transaction_razorpay_order ON transaction(razorpayOrderId);
+CREATE INDEX idx_transaction_razorpay_payment ON transaction(razorpayPaymentId);
+CREATE INDEX idx_transaction_restaurant ON transaction(restaurantId);
+CREATE INDEX idx_transaction_status ON transaction(status);
+CREATE INDEX idx_transaction_commission_status ON transaction(commissionStatus);
+CREATE INDEX idx_transaction_date ON transaction(date);
 
 -- ============================================
 -- 2. CREATE COMMISSION TABLE
@@ -48,21 +47,17 @@ CREATE TABLE IF NOT EXISTS commission (
 );
 
 -- Create indexes on commission table
-CREATE INDEX IF NOT EXISTS idx_commission_status ON commission(status);
-CREATE INDEX IF NOT EXISTS idx_commission_restaurant ON commission(restaurantId);
-CREATE INDEX IF NOT EXISTS idx_commission_transaction ON commission(transactionId);
-CREATE INDEX IF NOT EXISTS idx_commission_date ON commission(createdAt);
+CREATE INDEX idx_commission_status ON commission(status);
+CREATE INDEX idx_commission_restaurant ON commission(restaurantId);
+CREATE INDEX idx_commission_transaction ON commission(transactionId);
+CREATE INDEX idx_commission_date ON commission(createdAt);
 
 -- ============================================
 -- 3. VERIFY SUBSCRIPTION TABLE
 -- ============================================
 -- Ensure subscription table has the required fields for commission logic
 ALTER TABLE subscription 
-MODIFY COLUMN paymentStatus ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
-ADD COLUMN IF NOT EXISTS endDate DATE NOT NULL AFTER startDate;
-
-CREATE INDEX IF NOT EXISTS idx_subscription_status ON subscription(paymentStatus);
-CREATE INDEX IF NOT EXISTS idx_subscription_end_date ON subscription(endDate);
+ADD COLUMN IF NOT EXISTS endDate DATE AFTER startDate;
 
 -- ============================================
 -- 4. DATA MIGRATION

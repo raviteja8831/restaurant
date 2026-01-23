@@ -54,6 +54,8 @@ db.userMenuItem = require("./user_menuitem.model.js")(sequelize, Sequelize);
 db.subscription = require("./subscription.model.js")(sequelize, Sequelize);
 db.appSettings = require("./appsettings.model.js")(sequelize, Sequelize);
 db.otp = require("./otp.model.js")(sequelize, Sequelize);
+db.transaction = require("./transaction.model.js")(sequelize, Sequelize);
+db.commission = require("./commission.model.js")(sequelize, Sequelize);
 db.restaurantReview.belongsTo(db.restaurant, {
   foreignKey: "restaurantId",
   as: "restaurant",
@@ -301,4 +303,43 @@ db.subscription.belongsTo(db.restaurant, {
 db.restaurant.hasMany(db.subscription, {
   foreignKey: "restaurantId",
   as: "subscriptions",
+});
+
+// Commission associations
+db.commission.belongsTo(db.orders, {
+  foreignKey: "orderId",
+  as: "order",
+});
+db.orders.hasMany(db.commission, {
+  foreignKey: "orderId",
+  as: "commissions",
+});
+
+db.commission.belongsTo(db.restaurant, {
+  foreignKey: "restaurantId",
+  as: "restaurant",
+});
+db.restaurant.hasMany(db.commission, {
+  foreignKey: "restaurantId",
+  as: "commissions",
+});
+
+// Transaction associations (for historical tracking)
+db.transaction.belongsTo(db.orders, {
+  foreignKey: "orderId",
+  as: "order",
+});
+db.orders.hasMany(db.transaction, {
+  foreignKey: "orderId",
+  as: "transactions",
+});
+
+db.transaction.belongsTo(db.restaurant, {
+  foreignKey: "restaurantId",
+  as: "restaurant",
+});
+db.restaurant.hasMany(db.transaction, {
+  foreignKey: "restaurantId",
+  as: "transactions",
+});
 });

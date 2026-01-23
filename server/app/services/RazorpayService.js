@@ -2,17 +2,33 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const db = require('../models');
 
+const Order = db.orders;
 const Subscription = db.subscription;
-const Transaction = db.transaction;
+const Commission = db.commission;
 const Restaurant = db.restaurant;
-const AppSettings = db.appsettings;
+const AppSettings = db.appSettings;
 
 class RazorpayService {
   constructor() {
+    // Log environment variables for debugging
+    console.log('Initializing RazorpayService...');
+    console.log('RAZORPAY_KEY_ID:', process.env.RAZORPAY_KEY_ID ? 'SET' : 'NOT SET');
+    console.log('RAZORPAY_KEY_SECRET:', process.env.RAZORPAY_KEY_SECRET ? 'SET' : 'NOT SET');
+
+    // Validate that credentials are available
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error('ERROR: Razorpay credentials not found in environment variables!');
+      console.error('Please ensure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set in .env file');
+    }
+
     this.razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
+
+    if (!this.razorpay) {
+      throw new Error('Failed to initialize Razorpay client. Check environment variables.');
+    }
   }
 
   /**
@@ -46,24 +62,26 @@ class RazorpayService {
       const commission = hasSubscription ? 0 : amount * (2.5 / 100);
       const commissionStatus = hasSubscription ? 'none' : 'pending';
 
-      // Create transaction record
-      const transaction = await Transaction.create({
-        orderId: orderId,
-        restaurantId: restaurantId,
-        amount: amount,
-        status: 'pending',
-        paymentMethod: 'razorpay',
-        razorpayOrderId: razorpayOrder.id,
-        commission: commission,
-        commissionPercentage: 2.5,
-        commissionStatus: commissionStatus,
-        hasSubscription: hasSubscription,
-      });
+      // Update the order with Razorpay details
+      const order = await Order.update(
+        {
+          paymentMethod: 'razorpay',
+          razorpayOrderId: razorpayOrder.id,
+          commission: commission,
+          commissionPercentage: 2.5,
+          commissionStatus: commissionStatus,
+          hasSubscription: hasSubscription,
+          paymentDate: new Date(),
+        },
+        {
+          where: { id: orderId },
+        }
+      );
 
       return {
         success: true,
         razorpayOrder: razorpayOrder,
-        transaction: transaction,
+        orderId: orderId,
         hasSubscription: hasSubscription,
         commission: commission,
       };
@@ -97,15 +115,15 @@ class RazorpayService {
 
   /**
    * Split payment between restaurant and app provider
-   * @param {Object} transaction - Transaction object
+   * @param {Object} order - Order object with payment details
    * @returns {Promise<Object>} - Payment split result
    */
-  async splitPayment(transaction) {
+  async splitPayment(order) {
     try {
       // Get restaurant UPI
-      const restaurant = await Restaurant.findByPk(transaction.restaurantId);
+      const restaurant = await Restaurant.findByPk(order.restaurantId);
       if (!restaurant || !restaurant.upi) {
-        throw new Error(`Restaurant UPI not found for restaurant ${transaction.restaurantId}`);
+        throw new Error(`Restaurant UPI not found for restaurant ${order.restaurantId}`);
       }
 
       // Get app provider UPI from settings
@@ -118,15 +136,15 @@ class RazorpayService {
 
       const restaurantUPI = restaurant.upi;
       const appProviderUPI = appSettings.settingValue;
-      const commission = transaction.commission || 0;
-      const restaurantAmount = transaction.amount - commission;
+      const commission = order.commission || 0;
+      const restaurantAmount = order.totalPrice - commission;
 
       // Create transfer to restaurant
       const restaurantTransfer = await this.razorpay.transfers.create({
         account: restaurantUPI,
         amount: Math.round(restaurantAmount * 100), // in paise
         currency: 'INR',
-        description: `Payment for order ${transaction.orderId}`,
+        description: `Payment for order ${order.id}`,
       });
 
       // Create transfer to app provider (if commission exists)
@@ -136,14 +154,21 @@ class RazorpayService {
           account: appProviderUPI,
           amount: Math.round(commission * 100), // in paise
           currency: 'INR',
-          description: `Commission for order ${transaction.orderId}`,
+          description: `Commission for order ${order.id}`,
         });
 
-        // Update commission status to paid
-        await db.commission.update(
-          { status: 'paid' },
-          { where: { transactionId: transaction.id } }
-        );
+        // Create commission record
+        if (Commission) {
+          await Commission.create({
+            orderId: order.id,
+            restaurantId: order.restaurantId,
+            amount: commission,
+            percentage: order.commissionPercentage || 2.5,
+            status: 'paid',
+            hasSubscription: order.hasSubscription,
+            paymentMethod: 'razorpay',
+          });
+        }
       }
 
       return {
@@ -158,11 +183,11 @@ class RazorpayService {
   }
 
   /**
-   * Handle successful payment and update transaction
+   * Handle successful payment and update order
    * @param {string} razorpayOrderId - Razorpay order ID
    * @param {string} razorpayPaymentId - Razorpay payment ID
    * @param {string} signature - Payment signature
-   * @returns {Promise<Object>} - Updated transaction object
+   * @returns {Promise<Object>} - Updated order object
    */
   async handlePaymentSuccess(razorpayOrderId, razorpayPaymentId, signature) {
     try {
@@ -171,17 +196,17 @@ class RazorpayService {
         throw new Error('Invalid payment signature');
       }
 
-      // Find transaction by razorpayOrderId
-      const transaction = await Transaction.findOne({
+      // Find order by razorpayOrderId
+      const order = await Order.findOne({
         where: { razorpayOrderId: razorpayOrderId },
       });
 
-      if (!transaction) {
-        throw new Error('Transaction not found');
+      if (!order) {
+        throw new Error('Order not found');
       }
 
-      // Update transaction status
-      await transaction.update({
+      // Update order status
+      await order.update({
         status: 'completed',
         razorpayPaymentId: razorpayPaymentId,
         razorpaySignature: signature,
@@ -191,11 +216,11 @@ class RazorpayService {
       const payment = await this.razorpay.payments.fetch(razorpayPaymentId);
 
       // Split payment between restaurant and app provider
-      const splitResult = await this.splitPayment(transaction);
+      const splitResult = await this.splitPayment(order);
 
       return {
         success: true,
-        transaction: transaction,
+        order: order,
         payment: payment,
         paymentSplit: splitResult,
       };
@@ -208,25 +233,25 @@ class RazorpayService {
   /**
    * Handle failed payment
    * @param {string} razorpayOrderId - Razorpay order ID
-   * @returns {Promise<Object>} - Updated transaction object
+   * @returns {Promise<Object>} - Updated order object
    */
   async handlePaymentFailure(razorpayOrderId) {
     try {
-      const transaction = await Transaction.findOne({
+      const order = await Order.findOne({
         where: { razorpayOrderId: razorpayOrderId },
       });
 
-      if (!transaction) {
-        throw new Error('Transaction not found');
+      if (!order) {
+        throw new Error('Order not found');
       }
 
-      await transaction.update({
+      await order.update({
         status: 'failed',
       });
 
       return {
         success: true,
-        transaction: transaction,
+        order: order,
       };
     } catch (error) {
       console.error('Error handling payment failure:', error);
