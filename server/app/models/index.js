@@ -342,4 +342,4 @@ db.restaurant.hasMany(db.transaction, {
   foreignKey: "restaurantId",
   as: "transactions",
 });
-});
+
