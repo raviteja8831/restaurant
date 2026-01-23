@@ -45,6 +45,11 @@ require("./app/routes/debug.routes.js")(app);
 require("./app/routes/subscription.routes.js")(app);
 require("./app/routes/appsettings.routes.js")(app);
 require("./app/routes/otp.routes.js")(app);
+require("./app/routes/razorpay.routes.js")(app);
+require("./app/routes/subscription-payment.routes.js")(app);
+require("./app/routes/tablebooking-payment.routes.js")(app);
+require("./app/routes/buffet-payment.routes.js")(app);
+require("./app/routes/order-payment.routes.js")(app);
 
 require("dotenv").config();
 var corsOptions = {
