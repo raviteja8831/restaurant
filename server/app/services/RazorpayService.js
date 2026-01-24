@@ -64,33 +64,39 @@ class RazorpayService {
       const commission = hasSubscription ? 0 : amount * (2.5 / 100);
       const commissionStatus = hasSubscription ? 'none' : 'pending';
 
-      // Try to find existing order
-      let order = await Order.findByPk(orderId);
+      // Try to find existing order by Razorpay order ID (primary lookup)
+      let order = await Order.findOne({
+        where: { razorpayOrderId: razorpayOrder.id },
+      });
+
+      if (!order) {
+        // Try to find by ID
+        order = await Order.findByPk(orderId);
+      }
       
       if (!order) {
         // If no order exists (table booking scenario), create a new order record
         console.log(`Order ${orderId} not found - creating new order for table booking`);
         order = await Order.create({
-          id: orderId,
-          userId: null, // Will be set from booking data
+          userId: null, // Will be set from booking data if needed
           restaurantId: restaurantId,
           total: amount,
           status: 'pending',
           paymentMethod: 'razorpay',
           razorpayOrderId: razorpayOrder.id,
-          commission: commission,
+          commission: parseFloat(commission.toFixed(2)),
           commissionPercentage: 2.5,
           commissionStatus: commissionStatus,
           hasSubscription: hasSubscription,
           paymentDate: new Date(),
         });
-        console.log(`Created new order record ${order.id} for payment tracking`);
+        console.log(`Created new order record ${order.id} with Razorpay order ${razorpayOrder.id}`);
       } else {
         // Update existing order with Razorpay details
         await order.update({
           paymentMethod: 'razorpay',
           razorpayOrderId: razorpayOrder.id,
-          commission: commission,
+          commission: parseFloat(commission.toFixed(2)),
           commissionPercentage: 2.5,
           commissionStatus: commissionStatus,
           hasSubscription: hasSubscription,
@@ -104,7 +110,7 @@ class RazorpayService {
         razorpayOrder: razorpayOrder,
         orderId: orderId,
         hasSubscription: hasSubscription,
-        commission: commission,
+        commission: parseFloat(commission.toFixed(2)),
       };
     } catch (error) {
       console.error('Error creating Razorpay order:', error);
