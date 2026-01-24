@@ -31,13 +31,10 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    // Check if order exists
+    // Check if order exists (optional - may be a table booking instead)
     const order = await Order.findByPk(orderId);
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found',
-      });
+      console.warn(`Order with ID ${orderId} not found - this may be a table booking ID`);
     }
 
     // Check if restaurant exists
