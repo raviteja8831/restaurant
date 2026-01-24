@@ -116,27 +116,23 @@ exports.verifyPayment = async (req, res) => {
       signature
     );
 
-    // Update order status to CONFIRMED if needed
-    const transaction = result.transaction;
-    if (transaction.orderId) {
-      const order = await Order.findByPk(transaction.orderId);
-      if (order) {
-        await order.update({ status: 'CONFIRMED' });
-      }
+    // Update order/booking status if needed
+    const order = result.order;
+    if (order) {
+      await order.update({ status: 'completed' });
     }
 
     res.status(200).json({
       success: true,
       message: 'Payment verified and confirmed successfully',
       data: {
-        transactionId: transaction.id,
-        orderId: transaction.orderId,
-        restaurantId: transaction.restaurantId,
-        amount: transaction.amount,
-        status: transaction.status,
-        commission: transaction.commission,
-        commissionStatus: transaction.commissionStatus,
-        hasSubscription: transaction.hasSubscription,
+        orderId: order.id,
+        restaurantId: order.restaurantId,
+        amount: order.totalPrice || order.amount,
+        status: order.status,
+        commission: order.commission,
+        commissionStatus: order.commissionStatus,
+        hasSubscription: order.hasSubscription,
         paymentId: razorpayPaymentId,
       },
     });
