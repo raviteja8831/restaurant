@@ -188,6 +188,7 @@ exports.create = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Table bookings created successfully",
+      bookingId: bookings[0].id,  // Return the first booking ID for payment processing
       data: bookings,
     });
   } catch (error) {
