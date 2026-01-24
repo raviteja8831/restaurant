@@ -119,46 +119,80 @@ exports.getAvailableTables = async (req, res) => {
 // Create new table booking
 exports.create = async (req, res) => {
   try {
-    const { userId, selectedTables } = req.body;
+    console.log('=== TABLE BOOKING REQUEST ===');
+    console.log('Full Request Body:', JSON.stringify(req.body, null, 2));
+    
+    const { userId, selectedTables, status } = req.body;
 
-    if (
-      !userId ||
-      // !restaurantId ||
-      !selectedTables ||
-      !Array.isArray(selectedTables)
-    ) {
+    console.log('UserId:', userId, 'Type:', typeof userId);
+    console.log('SelectedTables:', JSON.stringify(selectedTables));
+    console.log('Status:', status);
+    
+    if (selectedTables && Array.isArray(selectedTables)) {
+      console.log('✓ SelectedTables Length:', selectedTables.length);
+      selectedTables.forEach((table, idx) => {
+        console.log(`  Table ${idx}:`, JSON.stringify(table));
+      });
+    }
+
+    // Validation
+    if (!userId) {
+      console.error('❌ UserId missing');
       return res.status(400).json({
         success: false,
-        message: "Missing required fields or invalid format",
+        message: "UserId is required",
+      });
+    }
+
+    if (!selectedTables || !Array.isArray(selectedTables) || selectedTables.length === 0) {
+      console.error('❌ SelectedTables validation failed');
+      return res.status(400).json({
+        success: false,
+        message: "selectedTables must be a non-empty array",
+        details: {
+          received: selectedTables,
+          isArray: Array.isArray(selectedTables),
+          length: Array.isArray(selectedTables) ? selectedTables.length : 0,
+        }
       });
     }
 
     const currentDate = new Date();
-    // Set booking end time to 45 minutes from now
-    console.log(currentDate.getTime());
-    const endTime = new Date(currentDate.getTime() + 45 * 60000);
-    console.log(endTime.getTime());
+    const startTime = currentDate.getTime();
+    const endTime = new Date(startTime + 45 * 60000).getTime();
+    
+    console.log('Booking times - Start:', startTime, 'End:', endTime);
+    
     // Create bookings for each selected table
     const bookingPromises = selectedTables.map((table) => {
-      return TableBooking.create({
+      if (!table.restaurantId || !table.id) {
+        throw new Error(`Invalid table data: missing restaurantId or id. Received: ${JSON.stringify(table)}`);
+      }
+      
+      const booking = {
         userId,
         restaurantId: table.restaurantId,
         tableId: table.id || table.tableId,
-        starttime: currentDate.getTime().toString(),
-        endtime: endTime.getTime().toString(),
+        starttime: startTime.toString(),
+        endtime: endTime.toString(),
         amount: 50,
-        status: "booked",
-      });
+        status: status || "booked",
+      };
+      console.log('Creating booking:', JSON.stringify(booking));
+      return TableBooking.create(booking);
     });
 
     const bookings = await Promise.all(bookingPromises);
 
+    console.log('✅ Bookings created successfully:', bookings.length);
     return res.status(201).json({
       success: true,
       message: "Table bookings created successfully",
       data: bookings,
     });
   } catch (error) {
+    console.error('❌ Table booking creation error:', error.message);
+    console.error('Stack:', error.stack);
     return res.status(500).json({
       success: false,
       message: "Error creating table bookings",

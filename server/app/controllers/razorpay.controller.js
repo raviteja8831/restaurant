@@ -66,11 +66,10 @@ exports.createOrder = async (req, res) => {
         amount: amount,
         currency: 'INR',
         restaurantId: restaurantId,
-        orderId: orderId,
+        orderId: result.orderId,
         hasSubscription: result.hasSubscription,
         commission: result.commission,
         commissionPercentage: 2.5,
-        transactionId: result.transaction.id,
       },
     });
   } catch (error) {
