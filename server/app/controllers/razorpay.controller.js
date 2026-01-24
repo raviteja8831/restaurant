@@ -137,7 +137,7 @@ exports.verifyPayment = async (req, res) => {
       data: {
         orderId: order.id,
         restaurantId: order.restaurantId,
-        amount: order.totalPrice || order.amount || order.total,
+        amount: order.total,
         status: order.status,
         commission: order.commission,
         commissionStatus: order.commissionStatus,

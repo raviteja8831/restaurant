@@ -84,14 +84,6 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.DATE,
         allowNull: true,
       },
-      totalPrice: {
-        type: Sequelize.FLOAT,
-        allowNull: true,
-      },
-      amount: {
-        type: Sequelize.FLOAT,
-        allowNull: true,
-      },
     },
     {
       tableName: "order",

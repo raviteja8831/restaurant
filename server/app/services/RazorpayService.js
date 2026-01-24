@@ -148,9 +148,9 @@ class RazorpayService {
   async splitPayment(order) {
     try {
       const commission = order.commission || 0;
-      const restaurantAmount = (order.totalPrice || order.amount || order.total || 0) - commission;
+      const restaurantAmount = (order.total || 0) - commission;
 
-      console.log(`Splitting payment for order ${order.id}: Total=${order.totalPrice || order.amount}, Commission=${commission}, Restaurant=${restaurantAmount}`);
+      console.log(`Splitting payment for order ${order.id}: Total=${order.total}, Commission=${commission}, Restaurant=${restaurantAmount}`);
 
       let restaurantTransfer = null;
       let appProviderTransfer = null;
