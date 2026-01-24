@@ -9,7 +9,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       userId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,  // Allow null for table booking orders
         references: {
           model: "user",
           key: "id",
@@ -47,7 +47,50 @@ module.exports = (sequelize, Sequelize) => {
       membercount: {
         type: Sequelize.INTEGER,
         allowNull: true,
-        // defaultValue: "UPI", // card, cash, upi, etc.
+      },
+      paymentMethod: {
+        type: Sequelize.STRING(50),
+        defaultValue: 'razorpay',
+      },
+      razorpayOrderId: {
+        type: Sequelize.STRING(100),
+        allowNull: true,
+      },
+      razorpayPaymentId: {
+        type: Sequelize.STRING(100),
+        allowNull: true,
+      },
+      razorpaySignature: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+      },
+      commission: {
+        type: Sequelize.FLOAT,
+        defaultValue: 0,
+      },
+      commissionPercentage: {
+        type: Sequelize.FLOAT,
+        defaultValue: 2.5,
+      },
+      commissionStatus: {
+        type: Sequelize.ENUM('none', 'pending', 'paid'),
+        defaultValue: 'none',
+      },
+      hasSubscription: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
+      paymentDate: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      totalPrice: {
+        type: Sequelize.FLOAT,
+        allowNull: true,
+      },
+      amount: {
+        type: Sequelize.FLOAT,
+        allowNull: true,
       },
     },
     {

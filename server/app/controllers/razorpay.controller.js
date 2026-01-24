@@ -118,9 +118,18 @@ exports.verifyPayment = async (req, res) => {
 
     // Update order/booking status if needed
     const order = result.order;
-    if (order) {
-      await order.update({ status: 'completed' });
+    if (!order) {
+      return res.status(400).json({
+        success: false,
+        message: 'Order not found after payment verification',
+      });
     }
+
+    // Update order status to completed
+    await order.update({ 
+      status: 'completed',
+      paymentDate: new Date(),
+    });
 
     res.status(200).json({
       success: true,
@@ -128,7 +137,7 @@ exports.verifyPayment = async (req, res) => {
       data: {
         orderId: order.id,
         restaurantId: order.restaurantId,
-        amount: order.totalPrice || order.amount,
+        amount: order.totalPrice || order.amount || order.total,
         status: order.status,
         commission: order.commission,
         commissionStatus: order.commissionStatus,
