@@ -67,6 +67,11 @@ exports.createOrderWithPayment = async (req, res) => {
         `Order for ${restaurant.name} - Order #${order.id}`
       );
 
+      // Save razorpayOrderId immediately
+      await order.update({
+        razorpayOrderId: result.razorpayOrder.id,
+      });
+
       res.status(201).json({
         success: true,
         message: 'Order created - proceed with payment',

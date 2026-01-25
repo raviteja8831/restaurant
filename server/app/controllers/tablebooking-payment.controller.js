@@ -58,10 +58,10 @@ exports.createTableBookingWithPayment = async (req, res) => {
         `Table Booking for ${restaurant.name} - ${selectedTables.length} table(s)`
       );
 
-      // Store razorpay order ID in first booking for tracking
-      await bookings[0].update({
-        comments: JSON.stringify({ razorpayOrderId: result.razorpayOrder.id }),
-      });
+      // Store razorpay order ID in all bookings for tracking
+      await Promise.all(bookings.map(b =>
+        b.update({ razorpayOrderId: result.razorpayOrder.id })
+      ));
 
       res.status(201).json({
         success: true,
@@ -133,10 +133,8 @@ exports.verifyTableBookingPayment = async (req, res) => {
     // Update booking status to confirmed
     await booking.update({
       status: 'booked',
-      comments: JSON.stringify({
-        razorpayOrderId: razorpayOrderId,
-        razorpayPaymentId: razorpayPaymentId,
-      }),
+      razorpayOrderId: razorpayOrderId,
+      razorpayPaymentId: razorpayPaymentId,
     });
 
     // Find all related bookings (same restaurant and user, same time)
@@ -154,10 +152,8 @@ exports.verifyTableBookingPayment = async (req, res) => {
       relatedBookings.map(b =>
         b.update({
           status: 'booked',
-          comments: JSON.stringify({
-            razorpayOrderId: razorpayOrderId,
-            razorpayPaymentId: razorpayPaymentId,
-          }),
+          razorpayOrderId: razorpayOrderId,
+          razorpayPaymentId: razorpayPaymentId,
         })
       )
     );
@@ -229,6 +225,47 @@ exports.tableBookingPaymentFailed = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to process payment failure',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get table booking payment status
+ * GET /api/tablebooking/:bookingId/payment-status
+ */
+exports.getTableBookingPaymentStatus = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await TableBooking.findByPk(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Table booking not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        bookingId: booking.id,
+        restaurantId: booking.restaurantId,
+        userId: booking.userId,
+        tableId: booking.tableId,
+        amount: booking.amount,
+        starttime: booking.starttime,
+        endtime: booking.endtime,
+        status: booking.status,
+        razorpayOrderId: booking.razorpayOrderId || null,
+        razorpayPaymentId: booking.razorpayPaymentId || null,
+      },
+    });
+  } catch (error) {
+    console.error('Error getting table booking payment status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get table booking payment status',
       error: error.message,
     });
   }

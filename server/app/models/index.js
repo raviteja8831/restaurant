@@ -56,6 +56,7 @@ db.appSettings = require("./appsettings.model.js")(sequelize, Sequelize);
 db.otp = require("./otp.model.js")(sequelize, Sequelize);
 db.transaction = require("./transaction.model.js")(sequelize, Sequelize);
 db.commission = require("./commission.model.js")(sequelize, Sequelize);
+db.payout = require("./payout.model.js")(sequelize, Sequelize);
 db.restaurantReview.belongsTo(db.restaurant, {
   foreignKey: "restaurantId",
   as: "restaurant",
@@ -341,5 +342,24 @@ db.transaction.belongsTo(db.restaurant, {
 db.restaurant.hasMany(db.transaction, {
   foreignKey: "restaurantId",
   as: "transactions",
+});
+
+// Payout associations
+db.payout.belongsTo(db.orders, {
+  foreignKey: "orderId",
+  as: "order",
+});
+db.orders.hasMany(db.payout, {
+  foreignKey: "orderId",
+  as: "payouts",
+});
+
+db.payout.belongsTo(db.restaurant, {
+  foreignKey: "restaurantId",
+  as: "restaurant",
+});
+db.restaurant.hasMany(db.payout, {
+  foreignKey: "restaurantId",
+  as: "payouts",
 });
 

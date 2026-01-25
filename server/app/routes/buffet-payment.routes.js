@@ -9,4 +9,7 @@ module.exports = app => {
 
   // Handle buffet order payment failure
   app.post("/api/buffet/payment-failed", buffetPaymentController.buffetOrderPaymentFailed);
+
+  // Get buffet order payment status
+  app.get("/api/buffet/:buffetOrderId/payment-status", buffetPaymentController.getBuffetOrderPaymentStatus);
 };

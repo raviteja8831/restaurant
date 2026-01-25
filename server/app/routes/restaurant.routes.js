@@ -19,5 +19,11 @@ module.exports = app => {
 	// Delete restaurant (manager only)
 	router.delete('/:id', verifyManager, restaurant.delete);
 
+	// Get bank account details (manager only)
+	router.get('/:id/bank-account', verifyManager, restaurant.getBankAccount);
+
+	// Update bank account details (manager only)
+	router.put('/:id/bank-account', verifyManager, restaurant.updateBankAccount);
+
 	app.use('/api/restaurants', router);
 };

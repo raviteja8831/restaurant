@@ -7,6 +7,7 @@ const Subscription = db.subscription;
 const Commission = db.commission;
 const Restaurant = db.restaurant;
 const AppSettings = db.appSettings;
+const Payout = db.payout;
 
 class RazorpayService {
   constructor() {
@@ -141,7 +142,149 @@ class RazorpayService {
   }
 
   /**
-   * Split payment between restaurant and app provider
+   * Create or get Razorpay fund account for restaurant
+   * @param {Object} restaurant - Restaurant object with UPI
+   * @returns {Promise<string>} - Fund account ID
+   */
+  async createOrGetFundAccount(restaurant) {
+    try {
+      // Check if fund account already exists
+      if (restaurant.razorpayFundAccountId) {
+        console.log(`Using existing fund account: ${restaurant.razorpayFundAccountId}`);
+        return restaurant.razorpayFundAccountId;
+      }
+
+      // Validate UPI
+      if (!restaurant.upi) {
+        throw new Error(`Restaurant ${restaurant.id} does not have UPI configured`);
+      }
+
+      console.log(`Creating fund account for restaurant ${restaurant.id} with UPI: ${restaurant.upi}`);
+
+      // Step 1: Create contact
+      const contact = await this.razorpay.contacts.create({
+        name: restaurant.name,
+        email: `restaurant${restaurant.id}@menutha.com`, // Use a dummy email if not available
+        contact: '9999999999', // Use actual phone if available in restaurant model
+        type: 'vendor',
+        reference_id: `restaurant_${restaurant.id}`,
+        notes: {
+          restaurantId: restaurant.id,
+          restaurantName: restaurant.name,
+        }
+      });
+
+      console.log(`Contact created: ${contact.id}`);
+
+      // Step 2: Create fund account with UPI
+      const fundAccount = await this.razorpay.fundAccount.create({
+        contact_id: contact.id,
+        account_type: 'vpa', // VPA = Virtual Payment Address (UPI)
+        vpa: {
+          address: restaurant.upi
+        }
+      });
+
+      console.log(`Fund account created: ${fundAccount.id}`);
+
+      // Step 3: Save to database
+      await restaurant.update({
+        razorpayContactId: contact.id,
+        razorpayFundAccountId: fundAccount.id,
+      });
+
+      console.log(`Saved fund account to database for restaurant ${restaurant.id}`);
+
+      return fundAccount.id;
+    } catch (error) {
+      console.error('Error creating fund account:', error);
+      throw new Error(`Failed to create fund account: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create payout to restaurant
+   * @param {number} restaurantId - Restaurant ID
+   * @param {number} amount - Amount in INR
+   * @param {number} orderId - Order ID
+   * @param {string} narration - Description
+   * @returns {Promise<Object>} - Payout result
+   */
+  async createPayout(restaurantId, amount, orderId, narration) {
+    try {
+      // Get restaurant with fund account
+      const restaurant = await Restaurant.findByPk(restaurantId);
+      if (!restaurant) {
+        throw new Error(`Restaurant ${restaurantId} not found`);
+      }
+
+      // Ensure fund account exists
+      const fundAccountId = await this.createOrGetFundAccount(restaurant);
+
+      // Create payout record in database (pending)
+      const payoutRecord = await Payout.create({
+        razorpayFundAccountId: fundAccountId,
+        orderId: orderId,
+        restaurantId: restaurantId,
+        amount: parseFloat(amount.toFixed(2)),
+        currency: 'INR',
+        mode: 'UPI',
+        status: 'pending',
+        purpose: 'payout',
+        referenceId: `order_${orderId}_${Date.now()}`,
+        narration: narration,
+        initiatedAt: new Date(),
+      });
+
+      console.log(`Payout record created in DB: ID=${payoutRecord.id}, Amount=${amount}`);
+
+      // Create actual Razorpay payout
+      try {
+        const payout = await this.razorpay.payouts.create({
+          account_number: process.env.RAZORPAY_ACCOUNT_NUMBER, // Your Razorpay account number
+          fund_account_id: fundAccountId,
+          amount: Math.round(amount * 100), // Convert to paise
+          currency: 'INR',
+          mode: 'UPI',
+          purpose: 'payout',
+          queue_if_low_balance: true, // Queue if insufficient balance
+          reference_id: payoutRecord.referenceId,
+          narration: narration,
+        });
+
+        console.log(`Razorpay payout created: ${payout.id}`);
+
+        // Update payout record with Razorpay ID and status
+        await payoutRecord.update({
+          razorpayPayoutId: payout.id,
+          status: payout.status, // processing, processed, etc.
+          processedAt: payout.status === 'processed' ? new Date() : null,
+        });
+
+        return {
+          success: true,
+          payoutId: payoutRecord.id,
+          razorpayPayoutId: payout.id,
+          amount: amount,
+          status: payout.status,
+        };
+      } catch (payoutError) {
+        // Update database with failure
+        await payoutRecord.update({
+          status: 'failed',
+          failureReason: payoutError.message,
+        });
+
+        throw payoutError;
+      }
+    } catch (error) {
+      console.error('Error creating payout:', error);
+      throw new Error(`Failed to create payout: ${error.message}`);
+    }
+  }
+
+  /**
+   * Split payment between restaurant and app provider (WITH ACTUAL PAYOUTS)
    * @param {Object} order - Order object with payment details
    * @returns {Promise<Object>} - Payment split result
    */
@@ -152,31 +295,42 @@ class RazorpayService {
 
       console.log(`Splitting payment for order ${order.id}: Total=${order.total}, Commission=${commission}, Restaurant=${restaurantAmount}`);
 
-      let restaurantTransfer = null;
-      let appProviderTransfer = null;
+      let restaurantPayout = null;
+      let commissionRecord = null;
 
-      // In production, perform actual Razorpay transfers
-      // For now, we'll create commission records
-      
-      // Try to create commission record if commission exists
+      // Create payout to restaurant
+      if (restaurantAmount > 0) {
+        try {
+          restaurantPayout = await this.createPayout(
+            order.restaurantId,
+            restaurantAmount,
+            order.id,
+            `Payment for order #${order.id}`
+          );
+          console.log(`Restaurant payout initiated: ${restaurantPayout.razorpayPayoutId}`);
+        } catch (payoutError) {
+          console.error('Error creating restaurant payout:', payoutError.message);
+          // Continue even if payout fails - we'll track it for retry
+        }
+      }
+
+      // Track commission (app provider keeps this automatically)
       if (commission > 0) {
         try {
-          if (Commission) {
-            const commissionRecord = await Commission.create({
-              orderId: order.id,
-              restaurantId: order.restaurantId,
-              amount: commission,
-              percentage: order.commissionPercentage || 2.5,
-              status: 'paid',
-              hasSubscription: order.hasSubscription,
-              paymentMethod: 'razorpay',
-              paidDate: new Date(),
-            });
-            console.log(`Commission record created: ID=${commissionRecord.id}, Amount=${commission}`);
-          }
+          commissionRecord = await Commission.create({
+            orderId: order.id,
+            restaurantId: order.restaurantId,
+            amount: commission,
+            percentage: order.commissionPercentage || 2.5,
+            status: 'paid',
+            hasSubscription: order.hasSubscription,
+            paymentMethod: 'razorpay',
+            paidDate: new Date(),
+            payoutStatus: 'not_applicable', // Commission stays with app owner
+          });
+          console.log(`Commission record created: ID=${commissionRecord.id}, Amount=${commission}`);
         } catch (commissionError) {
           console.error('Error creating commission record:', commissionError.message);
-          // Don't fail payment if commission creation fails
         }
 
         // Update order commission status
@@ -187,8 +341,8 @@ class RazorpayService {
 
       return {
         success: true,
-        restaurantTransfer: restaurantTransfer,
-        appProviderTransfer: appProviderTransfer,
+        restaurantPayout: restaurantPayout,
+        commission: commission,
         commissionCreated: commission > 0,
       };
     } catch (error) {

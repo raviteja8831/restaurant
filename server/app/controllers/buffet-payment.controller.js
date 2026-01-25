@@ -64,6 +64,11 @@ exports.createBuffetOrderWithPayment = async (req, res) => {
         `Buffet Order for ${restaurant.name} - ${persons} person(s)`
       );
 
+      // Save razorpayOrderId immediately
+      await buffetOrder.update({
+        razorpayOrderId: result.razorpayOrder.id,
+      });
+
       res.status(201).json({
         success: true,
         message: 'Buffet order created - proceed with payment',
@@ -196,6 +201,45 @@ exports.buffetOrderPaymentFailed = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to process payment failure',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get buffet order payment status
+ * GET /api/buffet/:buffetOrderId/payment-status
+ */
+exports.getBuffetOrderPaymentStatus = async (req, res) => {
+  try {
+    const { buffetOrderId } = req.params;
+
+    const buffetOrder = await BuffetOrder.findByPk(buffetOrderId);
+    if (!buffetOrder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Buffet order not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        buffetOrderId: buffetOrder.id,
+        restaurantId: buffetOrder.restaurantId,
+        userId: buffetOrder.userId,
+        persons: buffetOrder.persons,
+        totalAmount: buffetOrder.totalAmount,
+        status: buffetOrder.status,
+        razorpayOrderId: buffetOrder.razorpayOrderId || null,
+        razorpayPaymentId: buffetOrder.razorpayPaymentId || null,
+      },
+    });
+  } catch (error) {
+    console.error('Error getting buffet order payment status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get buffet order payment status',
       error: error.message,
     });
   }

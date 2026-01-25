@@ -9,4 +9,7 @@ module.exports = app => {
 
   // Handle table booking payment failure
   app.post("/api/tablebooking/payment-failed", tableBookingPaymentController.tableBookingPaymentFailed);
+
+  // Get table booking payment status
+  app.get("/api/tablebooking/:bookingId/payment-status", tableBookingPaymentController.getTableBookingPaymentStatus);
 };

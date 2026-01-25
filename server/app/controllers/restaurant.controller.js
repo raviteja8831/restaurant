@@ -215,3 +215,86 @@ exports.getupi = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Get bank account details for a restaurant
+exports.getBankAccount = async (req, res) => {
+  try {
+    const restaurant = await Restaurant.findByPk(req.params.id, {
+      attributes: [
+        "bankAccountName",
+        "bankAccountNumber",
+        "bankIfscCode",
+        "bankName",
+        "bankAccountType",
+        "razorpayFundAccountId",
+        "razorpayContactId",
+      ],
+    });
+    if (!restaurant) {
+      return res.status(404).json({ error: "Restaurant not found" });
+    }
+    res.json({
+      bankAccountName: restaurant.bankAccountName,
+      bankAccountNumber: restaurant.bankAccountNumber,
+      bankIfscCode: restaurant.bankIfscCode,
+      bankName: restaurant.bankName,
+      bankAccountType: restaurant.bankAccountType,
+      razorpayFundAccountId: restaurant.razorpayFundAccountId,
+      razorpayContactId: restaurant.razorpayContactId,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Update bank account details for a restaurant
+exports.updateBankAccount = async (req, res) => {
+  try {
+    const {
+      bankAccountName,
+      bankAccountNumber,
+      bankIfscCode,
+      bankName,
+      bankAccountType,
+    } = req.body;
+
+    // Validate required fields
+    if (!bankAccountName || !bankAccountNumber || !bankIfscCode) {
+      return res.status(400).json({
+        error: "Account holder name, account number, and IFSC code are required",
+      });
+    }
+
+    // Validate IFSC code format (should be 11 characters)
+    if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankIfscCode)) {
+      return res.status(400).json({
+        error: "Invalid IFSC code format",
+      });
+    }
+
+    const [updated] = await Restaurant.update(
+      {
+        bankAccountName,
+        bankAccountNumber,
+        bankIfscCode,
+        bankName,
+        bankAccountType,
+      },
+      {
+        where: { id: req.params.id },
+      }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "Restaurant not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Bank account details updated successfully",
+    });
+  } catch (err) {
+    console.error("Error updating bank account:", err);
+    res.status(500).json({ error: err.message });
+  }
+};

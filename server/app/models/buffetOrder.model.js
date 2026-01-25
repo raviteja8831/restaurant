@@ -44,9 +44,17 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: true,
       },
       status: {
-        type: Sequelize.ENUM('booked', 'payment_completed'),
+        type: Sequelize.ENUM('booked', 'payment_completed', 'payment_pending'),
         allowNull: false,
         defaultValue: 'booked',
+      },
+      razorpayOrderId: {
+        type: Sequelize.STRING(100),
+        allowNull: true,
+      },
+      razorpayPaymentId: {
+        type: Sequelize.STRING(100),
+        allowNull: true,
       },
       createdAt: {
         type: Sequelize.DATE,

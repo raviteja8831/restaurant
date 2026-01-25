@@ -43,26 +43,38 @@ exports.createSubscriptionWithPayment = async (req, res) => {
       transactionId: null,
     });
 
-    // Create Razorpay order for subscription
+    // Create Razorpay order for subscription (directly, without Order table)
     try {
-      const result = await razorpayService.createOrder(
-        restaurantId,
-        subscription.id, // Use subscription ID as order ID
-        amount,
-        `Subscription for ${restaurant.name}`
-      );
+      const razorpayOrder = await razorpayService.razorpay.orders.create({
+        amount: Math.round(amount * 100), // Convert to paise
+        currency: 'INR',
+        receipt: `subscription_${subscription.id}_${restaurantId}`,
+        description: `Subscription for ${restaurant.name}`,
+        notes: {
+          restaurantId: restaurantId,
+          subscriptionId: subscription.id,
+          type: 'subscription',
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      console.log(`Created Razorpay order ${razorpayOrder.id} for subscription ${subscription.id}`);
+
+      // Store razorpayOrderId in subscription for tracking
+      await subscription.update({
+        razorpayOrderId: razorpayOrder.id,
+      });
 
       res.status(201).json({
         success: true,
         message: 'Subscription created - proceed with payment',
         data: {
           subscriptionId: subscription.id,
-          razorpayOrderId: result.razorpayOrder.id,
+          razorpayOrderId: razorpayOrder.id,
           razorpayKeyId: process.env.RAZORPAY_KEY_ID,
           amount: amount,
           currency: 'INR',
           restaurantId: restaurantId,
-          transactionId: result.transaction.id,
         },
       });
     } catch (paymentError) {
@@ -86,15 +98,19 @@ exports.createSubscriptionWithPayment = async (req, res) => {
  */
 exports.verifySubscriptionPayment = async (req, res) => {
   try {
+    console.log('📝 Subscription payment verification request:', JSON.stringify(req.body, null, 2));
+
     const { subscriptionId, razorpayOrderId, razorpayPaymentId, signature } = req.body;
 
     if (!subscriptionId || !razorpayOrderId || !razorpayPaymentId || !signature) {
+      console.error('❌ Missing required fields:', { subscriptionId, razorpayOrderId, razorpayPaymentId, signature: signature ? 'present' : 'missing' });
       return res.status(400).json({
         success: false,
         message: 'All payment details are required',
       });
     }
 
+    console.log('🔐 Verifying payment signature...');
     // Verify payment signature
     const isSignatureValid = razorpayService.verifySignature(
       razorpayOrderId,
@@ -103,25 +119,33 @@ exports.verifySubscriptionPayment = async (req, res) => {
     );
 
     if (!isSignatureValid) {
+      console.error('❌ Invalid signature for subscription payment');
       return res.status(400).json({
         success: false,
         message: 'Invalid payment signature. Payment verification failed.',
       });
     }
 
+    console.log('✅ Signature valid, updating subscription...');
+
     // Update subscription with payment details
     const subscription = await Subscription.findByPk(subscriptionId);
     if (!subscription) {
+      console.error(`❌ Subscription not found: ${subscriptionId}`);
       return res.status(404).json({
         success: false,
         message: 'Subscription not found',
       });
     }
 
+    console.log(`📝 Found subscription: ${subscription.id}, current status: ${subscription.paymentStatus}`);
+
     await subscription.update({
       paymentStatus: 'completed',
       transactionId: razorpayPaymentId,
     });
+
+    console.log(`✅ Subscription ${subscription.id} payment verified and activated!`);
 
     res.status(200).json({
       success: true,
@@ -136,7 +160,8 @@ exports.verifySubscriptionPayment = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error verifying subscription payment:', error);
+    console.error('❌ Error verifying subscription payment:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Failed to verify subscription payment',

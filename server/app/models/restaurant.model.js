@@ -59,6 +59,41 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      razorpayFundAccountId: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        comment: 'Razorpay fund account ID for payouts'
+      },
+      razorpayContactId: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        comment: 'Razorpay contact ID for payouts'
+      },
+      bankAccountName: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        comment: 'Account holder name'
+      },
+      bankAccountNumber: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        comment: 'Bank account number'
+      },
+      bankIfscCode: {
+        type: Sequelize.STRING(20),
+        allowNull: true,
+        comment: 'IFSC code'
+      },
+      bankName: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        comment: 'Bank name'
+      },
+      bankAccountType: {
+        type: Sequelize.STRING(20),
+        allowNull: true,
+        comment: 'Account type: savings/current'
+      },
       logoImage: {
         type: Sequelize.STRING,
         allowNull: true,

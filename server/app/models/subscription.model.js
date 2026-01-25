@@ -41,6 +41,11 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: true,
     },
+    razorpayOrderId: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      comment: 'Razorpay order ID for tracking payment'
+    },
     createdAt: {
       type: Sequelize.DATE,
       allowNull: false,

@@ -55,9 +55,43 @@ exports.getItemsBasedOnMenu = async (req, res) => {
 };
 exports.create = async (req, res) => {
   try {
+    const { name, restaurantId, status, icon } = req.body;
+
+    // Validate required fields
+    if (!name || !restaurantId) {
+      return res.status(400).json({
+        error: 'Menu name and restaurantId are required'
+      });
+    }
+
+    // Check if a menu with the same name already exists for this restaurant
+    const existingMenu = await Menu.findOne({
+      where: {
+        name: name,
+        restaurantId: restaurantId
+      }
+    });
+
+    if (existingMenu) {
+      // Return the existing menu instead of creating a duplicate
+      console.log(`Menu type "${name}" already exists for restaurant ${restaurantId}, returning existing menu with id ${existingMenu.id}`);
+      return res.status(200).json({
+        message: 'Menu type already exists, using existing menu',
+        menu: existingMenu,
+        isExisting: true
+      });
+    }
+
+    // Create new menu if it doesn't exist
     const menu = await Menu.create(req.body);
-    res.status(201).json(menu);
+    console.log(`Created new menu type "${name}" with id ${menu.id} for restaurant ${restaurantId}`);
+    res.status(201).json({
+      message: 'Menu type created successfully',
+      menu: menu,
+      isExisting: false
+    });
   } catch (err) {
+    console.error('Error in menu.create:', err);
     res.status(500).json({ error: err.message });
   }
 };
