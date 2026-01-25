@@ -4,8 +4,9 @@ const RestaurantType = db.restaurantType;
 const RestaurantReview = db.restaurantReview;
 const RestaurantRating = db.restaurantRating;
 const Buffet = db.buffet; // Add Buffet model
+const DEFAULT_MENUS = require("../constants/defaultMenus");
 
-// Create a new restaurant and copy first 10 menus from the database
+// Create a new restaurant and copy default menus from constants
 exports.create = async (req, res) => {
   const sequelize = db.sequelize;
   try {
@@ -14,18 +15,12 @@ exports.create = async (req, res) => {
       const restaurant = await Restaurant.create(req.body, { transaction: t });
       console.log("✅ Restaurant created with ID:", restaurant.id);
 
-      // Fetch first 10 menus from the menu table (any menus, regardless of restaurantId)
-      const defaultMenus = await db.menu.findAll({
-        attributes: ["name", "status", "icon"], // Only select fields needed for copying
-        order: [["id", "ASC"]],
-        limit: 10,
-        raw: true, // Get plain objects instead of Sequelize instances
-        transaction: t,
-      });
+      // Use default menus from constants instead of fetching from database
+      const defaultMenus = DEFAULT_MENUS;
 
-      console.log(`📋 Found ${defaultMenus.length} default menus to copy`);
+      console.log(`📋 Using ${defaultMenus.length} default menus from constants`);
 
-      // If there are menus, duplicate them for the newly created restaurant
+      // Create menus for the newly created restaurant
       if (defaultMenus && defaultMenus.length > 0) {
         const menusToCreate = defaultMenus.map((m) => ({
           name: m.name,
@@ -35,9 +30,9 @@ exports.create = async (req, res) => {
         }));
 
         const createdMenus = await db.menu.bulkCreate(menusToCreate, { transaction: t });
-        console.log(`✅ Successfully copied ${createdMenus.length} menus for restaurant ID ${restaurant.id}`);
+        console.log(`✅ Successfully created ${createdMenus.length} menus for restaurant ID ${restaurant.id}`);
       } else {
-        console.log("⚠️ No default menus found in database to copy");
+        console.log("⚠️ No default menus defined in constants");
       }
 
       // Reload restaurant including its menus

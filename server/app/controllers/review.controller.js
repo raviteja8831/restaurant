@@ -79,6 +79,39 @@ exports.listReviews = async (req, res) => {
   }
 };
 
+// List all reviews (no filter)
+exports.listAllReviews = async (req, res) => {
+  try {
+    const reviews = await db.restaurantReview.findAll({
+      attributes: [
+        "id",
+        "userId",
+        "restaurantId",
+        "rating",
+        "review",
+        "createdAt",
+      ],
+      include: [
+        { model: db.users, as: "user", attributes: ["firstname", "lastname"] },
+        { model: db.restaurant, as: "restaurant", attributes: ["name"] },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+    res.json({
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        user: r.user ? `${r.user.firstname} ${r.user.lastname}` : "",
+        restaurant: r.restaurant ? r.restaurant.name : "",
+        rating: r.rating,
+        review: r.review,
+        createdAt: r.createdAt,
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Get all reviews for a specific user
 exports.getUserReviews = async (req, res) => {
   try {

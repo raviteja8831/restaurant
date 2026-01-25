@@ -64,6 +64,7 @@ ensureUploadDir(uploadDir);
 
 const User = db.users;
 const Role = db.roles;
+const DEFAULT_MENUS = require("../constants/defaultMenus");
 
 // Get recent orders for a user
 exports.getRecentOrders = async (req, res) => {
@@ -1079,18 +1080,12 @@ console.log(req.body);
 
       console.log("✅ Restaurant created with ID:", restaurant.id);
 
-      // Fetch first 10 menus from the menu table to copy
-      const defaultMenus = await db.menu.findAll({
-        attributes: ["name", "status", "icon"],
-        order: [["id", "ASC"]],
-        limit: 9,
-        raw: true,
-        transaction: t,
-      });
+      // Use default menus from constants instead of fetching from database
+      const defaultMenus = DEFAULT_MENUS;
 
-      console.log(`📋 Found ${defaultMenus.length} default menus to copy`);
+      console.log(`📋 Using ${defaultMenus.length} default menus from constants`);
 
-      // Copy menus for the newly created restaurant
+      // Create menus for the newly created restaurant
       if (defaultMenus && defaultMenus.length > 0) {
         const menusToCreate = defaultMenus.map((m) => ({
           name: m.name,
@@ -1100,9 +1095,9 @@ console.log(req.body);
         }));
 
         const createdMenus = await db.menu.bulkCreate(menusToCreate, { transaction: t });
-        console.log(`✅ Successfully copied ${createdMenus.length} menus for restaurant ID ${restaurant.id}`);
+        console.log(`✅ Successfully created ${createdMenus.length} menus for restaurant ID ${restaurant.id}`);
       } else {
-        console.log("⚠️ No default menus found in database to copy");
+        console.log("⚠️ No default menus defined in constants");
       }
 
       // Create manager user for the restaurant
