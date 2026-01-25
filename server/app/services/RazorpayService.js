@@ -74,13 +74,28 @@ class RazorpayService {
         // Try to find by ID
         order = await Order.findByPk(orderId);
       }
-      
+
       if (!order) {
-        // If no order exists (table booking scenario), create a new order record
+        // If no order exists (table booking scenario), try to get userId and tableId from booking
+        let userId = null;
+        let tableId = null;
+        try {
+          const TableBooking = db.tableBooking;
+          const booking = await TableBooking.findByPk(orderId);
+          if (booking) {
+            userId = booking.userId;
+            tableId = booking.tableId;
+            console.log(`Found table booking ${orderId} with userId: ${userId}, tableId: ${tableId}`);
+          }
+        } catch (bookingError) {
+          console.warn(`Could not find table booking with ID ${orderId}:`, bookingError.message);
+        }
+
         console.log(`Order ${orderId} not found - creating new order for table booking`);
         order = await Order.create({
-          userId: null, // Will be set from booking data if needed
+          userId: userId, // Get from booking if available
           restaurantId: restaurantId,
+          tableId: tableId, // Get from booking if available
           total: amount,
           status: 'pending',
           paymentMethod: 'razorpay',
@@ -91,7 +106,7 @@ class RazorpayService {
           hasSubscription: hasSubscription,
           paymentDate: new Date(),
         });
-        console.log(`Created new order record ${order.id} with Razorpay order ${razorpayOrder.id}`);
+        console.log(`Created new order record ${order.id} with Razorpay order ${razorpayOrder.id} for userId: ${userId}, tableId: ${tableId}`);
       } else {
         // Update existing order with Razorpay details
         await order.update({
