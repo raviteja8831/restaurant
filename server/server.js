@@ -76,8 +76,27 @@ const db = require("./app/models");
 
 db.sequelize
   .sync()
-  .then(() => {
+  .then(async () => {
     console.log("Synced db.");
+
+    // Validate timezone configuration
+    try {
+      const [results] = await db.sequelize.query("SELECT NOW() as server_time, @@session.time_zone as session_tz, @@global.time_zone as global_tz");
+      console.log("\n🕐 MySQL Timezone Configuration:");
+      console.log("   Session Timezone:", results[0].session_tz);
+      console.log("   Global Timezone:", results[0].global_tz);
+      console.log("   Current Server Time:", results[0].server_time);
+
+      // Verify IST offset
+      const istOffset = results[0].session_tz;
+      if (istOffset === '+05:30') {
+        console.log("✅ MySQL timezone is correctly set to IST (+05:30)\n");
+      } else {
+        console.warn("⚠️  WARNING: MySQL session timezone is not set to IST. Expected: +05:30, Got:", istOffset, "\n");
+      }
+    } catch (err) {
+      console.error("❌ Failed to validate timezone:", err.message);
+    }
   })
   .catch((err) => {
     console.log("Failed to sync db: " + err.message);

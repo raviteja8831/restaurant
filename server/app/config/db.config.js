@@ -4,9 +4,10 @@ module.exports = {
   PASSWORD: "oGO1pAtKTehM3rIyWndQ",
   DB: "restaurant_service",
   dialect: "mysql",
-  timezone: "+05:30", // sets the timezone to IST
+  timezone: "+05:30", // sets the timezone to IST (Indian Standard Time)
   dialectOptions: {
     useUTC: false,  // tell the MySQL driver not to convert dates to UTC
+    timezone: "+05:30", // Also set timezone in dialect options for MySQL2 driver
   },
   pool: {
     max: 5,

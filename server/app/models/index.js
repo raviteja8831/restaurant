@@ -4,6 +4,10 @@ const Sequelize = require("sequelize");
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   dialect: dbConfig.dialect,
+  timezone: dbConfig.timezone || "+05:30", // IST timezone
+  dialectOptions: dbConfig.dialectOptions || {
+    useUTC: false,  // Don't convert dates to UTC
+  },
   operatorsAliases: false,
   pool: {
     max: dbConfig.pool.max,
@@ -11,6 +15,26 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle,
   },
+  // Set session timezone on connection
+  hooks: {
+    beforeConnect: async (config) => {
+      console.log('📅 Connecting to MySQL with IST timezone (+05:30)');
+    },
+    afterConnect: (connection, config) => {
+      // Set MySQL session timezone to IST using callback
+      return new Promise((resolve, reject) => {
+        connection.query("SET time_zone = '+05:30'", (err) => {
+          if (err) {
+            console.error('❌ Failed to set MySQL timezone:', err);
+            reject(err);
+          } else {
+            console.log('✅ MySQL session timezone set to IST (+05:30)');
+            resolve();
+          }
+        });
+      });
+    }
+  }
 });
 
 const db = {};

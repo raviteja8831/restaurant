@@ -119,6 +119,7 @@ exports.getRecentOrders = async (req, res) => {
       restaurantAddress: order?.orderRestaurant?.address,
       date: new Date(order?.createdAt).toLocaleDateString(),
       time: new Date(order?.createdAt).toLocaleTimeString(),
+      createdAt: order?.createdAt, // Add raw timestamp for frontend parsing
       totalAmount: order?.total,
       status: order?.status,
       method: order?.paymentMethod,

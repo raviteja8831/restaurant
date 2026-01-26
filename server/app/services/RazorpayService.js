@@ -76,37 +76,41 @@ class RazorpayService {
       }
 
       if (!order) {
-        // If no order exists (table booking scenario), try to get userId and tableId from booking
-        let userId = null;
-        let tableId = null;
+        // Check if this is a table booking (not a food order)
+        let isTableBooking = false;
         try {
           const TableBooking = db.tableBooking;
           const booking = await TableBooking.findByPk(orderId);
           if (booking) {
-            userId = booking.userId;
-            tableId = booking.tableId;
-            console.log(`Found table booking ${orderId} with userId: ${userId}, tableId: ${tableId}`);
+            isTableBooking = true;
+            console.log(`Found table booking ${orderId} - skipping order creation`);
           }
         } catch (bookingError) {
           console.warn(`Could not find table booking with ID ${orderId}:`, bookingError.message);
         }
 
-        console.log(`Order ${orderId} not found - creating new order for table booking`);
-        order = await Order.create({
-          userId: userId, // Get from booking if available
-          restaurantId: restaurantId,
-          tableId: tableId, // Get from booking if available
-          total: amount,
-          status: 'pending',
-          paymentMethod: 'razorpay',
-          razorpayOrderId: razorpayOrder.id,
-          commission: parseFloat(commission.toFixed(2)),
-          commissionPercentage: 2.5,
-          commissionStatus: commissionStatus,
-          hasSubscription: hasSubscription,
-          paymentDate: new Date(),
-        });
-        console.log(`Created new order record ${order.id} with Razorpay order ${razorpayOrder.id} for userId: ${userId}, tableId: ${tableId}`);
+        // Only create Order record if it's NOT a table booking
+        // Table bookings should stay in tablebookings table, not orders table
+        if (!isTableBooking) {
+          console.log(`Order ${orderId} not found - creating new order record`);
+          order = await Order.create({
+            userId: null,
+            restaurantId: restaurantId,
+            tableId: null,
+            total: amount,
+            status: 'pending',
+            paymentMethod: 'razorpay',
+            razorpayOrderId: razorpayOrder.id,
+            commission: parseFloat(commission.toFixed(2)),
+            commissionPercentage: 2.5,
+            commissionStatus: commissionStatus,
+            hasSubscription: hasSubscription,
+            paymentDate: new Date(),
+          });
+          console.log(`Created new order record ${order.id} with Razorpay order ${razorpayOrder.id}`);
+        } else {
+          console.log(`Skipping order creation for table booking ${orderId} - will be handled by table booking controller`);
+        }
       } else {
         // Update existing order with Razorpay details
         await order.update({
