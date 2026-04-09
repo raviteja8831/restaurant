@@ -9,7 +9,7 @@ module.exports = (app) => {
   router.post("/create", orders.createOrder);
 
   // Get pending orders for a restaurant selected (restaurant users only)
-  router.get("/pending/:restaurantId/:userId", orders.getPendingOrders);
+  router.get("/pending/:restaurantId/:userId?", orders.getPendingOrders);
   router.get("/selected/items/:orderId", orders.getSelectedOrderItems);
 
   // Get PAID orders for a restaurant (manager only)

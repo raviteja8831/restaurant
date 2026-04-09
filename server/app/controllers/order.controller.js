@@ -213,50 +213,99 @@ exports.getPendingOrders = async (req, res) => {
   try {
     const { restaurantId, userId } = req.params;
 
-    // First, get the first pending order for this user and restaurant
-    const pendingOrder = await Order.findOne({
-      where: {
-        restaurantId: restaurantId,
-        userId: userId,
-        status: "PENDING",
-      },
-      attributes: ["id"],
-      order: [["createdAt", "DESC"]], // Get the most recent pending order
-    });
-
-    // If no pending order exists, return zeros
-    if (!pendingOrder) {
-      return res.status(200).json({
-        orderId: null,
-        totalOrders: 0,
-        totalOrdersAmount: 0,
+    // If userId is provided, get pending order for specific user
+    if (userId) {
+      // First, get the first pending order for this user and restaurant
+      const pendingOrder = await Order.findOne({
+        where: {
+          restaurantId: restaurantId,
+          userId: userId,
+          status: "PENDING",
+        },
+        attributes: ["id"],
+        order: [["createdAt", "DESC"]], // Get the most recent pending order
       });
+
+      // If no pending order exists, return zeros
+      if (!pendingOrder) {
+        return res.status(200).json({
+          orderId: null,
+          totalOrders: 0,
+          totalOrdersAmount: 0,
+        });
+      }
+
+      // Get the total items and amount for THIS specific order only
+      const totalStats = await db.sequelize.query(
+        `
+          SELECT
+            COALESCE(SUM(op.quantity), 0) as totalOrders,
+            COALESCE(SUM(op.quantity * mi.price), 0) as totalOrdersAmount
+          FROM ordersproduct op
+          INNER JOIN menuitem mi ON op.menuitemId = mi.id
+          WHERE op.orderId = :orderId
+        `,
+        {
+          replacements: { orderId: pendingOrder.id },
+          type: db.sequelize.QueryTypes.SELECT,
+        }
+      );
+
+      const stats = totalStats[0] || { totalOrders: 0, totalOrdersAmount: 0 };
+      const response = {
+        orderId: pendingOrder.id,
+        totalOrders: parseInt(stats.totalOrders) || 0,
+        totalOrdersAmount: parseFloat(stats.totalOrdersAmount) || 0,
+      };
+
+      return res.status(200).json(response);
     }
 
-    // Get the total items and amount for THIS specific order only
-    const totalStats = await db.sequelize.query(
-      `
-        SELECT
-          COALESCE(SUM(op.quantity), 0) as totalOrders,
-          COALESCE(SUM(op.quantity * mi.price), 0) as totalOrdersAmount
-        FROM ordersproduct op
-        INNER JOIN menuitem mi ON op.menuitemId = mi.id
-        WHERE op.orderId = :orderId
-      `,
-      {
-        replacements: { orderId: pendingOrder.id },
-        type: db.sequelize.QueryTypes.SELECT,
-      }
+    // If userId is NOT provided, get all pending orders for the restaurant
+    const pendingOrders = await Order.findAll({
+      where: {
+        restaurantId: restaurantId,
+        status: "PENDING",
+      },
+      attributes: ["id", "userId", "createdAt"],
+      order: [["createdAt", "DESC"]],
+    });
+
+    // If no pending orders exist, return empty array
+    if (!pendingOrders || pendingOrders.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // Get stats for each pending order
+    const ordersWithStats = await Promise.all(
+      pendingOrders.map(async (order) => {
+        const totalStats = await db.sequelize.query(
+          `
+            SELECT
+              COALESCE(SUM(op.quantity), 0) as totalOrders,
+              COALESCE(SUM(op.quantity * mi.price), 0) as totalOrdersAmount
+            FROM ordersproduct op
+            INNER JOIN menuitem mi ON op.menuitemId = mi.id
+            WHERE op.orderId = :orderId
+          `,
+          {
+            replacements: { orderId: order.id },
+            type: db.sequelize.QueryTypes.SELECT,
+          }
+        );
+
+        const stats = totalStats[0] || { totalOrders: 0, totalOrdersAmount: 0 };
+        return {
+          orderId: order.id,
+          userId: order.userId,
+          totalOrders: parseInt(stats.totalOrders) || 0,
+          totalOrdersAmount: parseFloat(stats.totalOrdersAmount) || 0,
+          createdAt: order.createdAt,
+        };
+      })
     );
 
-    const stats = totalStats[0] || { totalOrders: 0, totalOrdersAmount: 0 };
-    const response = {
-      orderId: pendingOrder.id,
-      totalOrders: parseInt(stats.totalOrders) || 0,
-      totalOrdersAmount: parseFloat(stats.totalOrdersAmount) || 0,
-    };
-
-    res.status(200).json(response);
+    res.status(200).json(ordersWithStats);
   } catch (err) {
     console.error("Error in getPendingOrders:", err);
     res.status(500).json({
