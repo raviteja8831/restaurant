@@ -1110,13 +1110,45 @@ console.log(req.body);
         role_id: 1, // 1 = manager
       }, { transaction: t });
 
-      return { restaurant, managerUser };
+      // Get admin UPI from app settings for subscription
+      let adminUpi = '8125226626-2@ybl'; // Default fallback
+      try {
+        const upiSetting = await db.appSettings.findOne({
+          where: { settingKey: 'admin_upi' },
+          transaction: t
+        });
+        if (upiSetting) {
+          adminUpi = upiSetting.settingValue;
+        }
+      } catch (error) {
+        console.warn("⚠️ Could not fetch admin UPI from settings, using default:", error.message);
+      }
+
+      // Create initial subscription for the restaurant (FREE for first time)
+      const subStartDate = new Date();
+      const subEndDate = new Date();
+      subEndDate.setMonth(subEndDate.getMonth() + 1); // 1 month subscription
+
+      const subscription = await db.subscription.create({
+        restaurantId: restaurant.id,
+        amount: 0.00, // First subscription is FREE
+        startDate: subStartDate,
+        endDate: subEndDate,
+        upiId: adminUpi,
+        paymentStatus: 'completed', // Mark as completed since it's free
+        transactionId: 'FREE_FIRST_SUBSCRIPTION',
+      }, { transaction: t });
+
+      console.log(`✅ FREE subscription created for restaurant ID ${restaurant.id} with status 'completed'`);
+
+      return { restaurant, managerUser, subscription };
     });
 
     res.status(201).send({
       message: "Manager and restaurant registered successfully!",
       managerUser: result.managerUser,
       restaurant: result.restaurant,
+      subscription: result.subscription,
     });
   } catch (error) {
     res.status(500).send({ message: error.message });

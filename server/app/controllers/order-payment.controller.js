@@ -142,9 +142,9 @@ exports.verifyOrderPayment = async (req, res) => {
       });
     }
 
-    // Update order status to confirmed
+    // Update order status to completed
     await order.update({
-      status: 'CONFIRMED',
+      status: 'COMPLETED',
       paymentMethod: 'razorpay',
       razorpayPaymentId: razorpayPaymentId,
       razorpayOrderId: razorpayOrderId,
@@ -157,14 +157,14 @@ exports.verifyOrderPayment = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Order payment verified and confirmed',
+      message: 'Order payment verified and completed',
       data: {
         orderId: order.id,
         restaurantId: order.restaurantId,
         userId: order.userId,
         total: order.total,
         itemCount: orderItems,
-        status: 'CONFIRMED',
+        status: 'COMPLETED',
         paymentMethod: 'razorpay',
       },
     });

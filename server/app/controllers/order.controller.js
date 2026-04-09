@@ -383,7 +383,11 @@ exports.updateOrderStatus = async (req, res) => {
       }
 
       // Determine order status: use provided status or default to COMPLETED
-      const orderStatus = status || "COMPLETED";
+      // Convert legacy "CONFIRMED" status to "COMPLETED" for backward compatibility
+      let orderStatus = status || "COMPLETED";
+      if (orderStatus === "CONFIRMED") {
+        orderStatus = "COMPLETED";
+      }
 
       const order = await Order.update(
         {

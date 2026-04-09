@@ -16,8 +16,8 @@ module.exports = (sequelize, Sequelize) => {
     amount: {
       type: Sequelize.DECIMAL(10, 2),
       allowNull: false,
-      defaultValue: 5000.00,
-      comment: 'Subscription amount per month (default: 5000 Rs/month)'
+      defaultValue: 7999.00,
+      comment: 'Subscription amount per month (default: 7999 Rs/month, first subscription is free)'
     },
     startDate: {
       type: Sequelize.DATEONLY,

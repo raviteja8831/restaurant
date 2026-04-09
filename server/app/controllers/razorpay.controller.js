@@ -126,8 +126,8 @@ exports.verifyPayment = async (req, res) => {
     }
 
     // Update order status to completed
-    await order.update({ 
-      status: 'completed',
+    await order.update({
+      status: 'COMPLETED',
       paymentDate: new Date(),
     });
 

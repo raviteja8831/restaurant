@@ -398,7 +398,7 @@ class RazorpayService {
 
       // Update order status
       await order.update({
-        status: 'completed',
+        status: 'COMPLETED',
         razorpayPaymentId: razorpayPaymentId,
         razorpaySignature: signature,
         paymentDate: new Date(),
@@ -442,7 +442,7 @@ class RazorpayService {
       }
 
       await order.update({
-        status: 'failed',
+        status: 'PAYMENT_FAILED',
       });
 
       return {

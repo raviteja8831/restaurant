@@ -82,3 +82,35 @@ exports.updateStatusBulk = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Get distinct types for a restaurant
+exports.getDistinctTypes = async (req, res) => {
+  try {
+    const restaurantId = req.params.restaurantId;
+
+    if (!restaurantId) {
+      return res.status(400).json({ error: 'Restaurant ID is required' });
+    }
+
+    // Get all menu items for this restaurant through menus
+    const types = await db.sequelize.query(
+      `SELECT DISTINCT mi.type
+       FROM menuitem mi
+       INNER JOIN menu m ON mi.menuId = m.id
+       WHERE m.restaurantId = :restaurantId
+       AND mi.type IS NOT NULL
+       AND mi.type != ''
+       ORDER BY mi.type`,
+      {
+        replacements: { restaurantId: Number(restaurantId) },
+        type: db.sequelize.QueryTypes.SELECT
+      }
+    );
+
+    // Extract just the type values
+    const typeList = types.map(t => t.type);
+    res.json(typeList);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

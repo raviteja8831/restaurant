@@ -47,7 +47,7 @@ exports.create = async (req, res) => {
     // Create subscription
     const subscription = await Subscription.create({
       restaurantId,
-      amount: amount || 5000.00,
+      amount: amount || 7999.00, // Renewal subscription is ₹7999
       startDate: subStartDate,
       endDate: subEndDate,
       upiId: adminUpi,
