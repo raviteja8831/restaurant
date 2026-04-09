@@ -11,6 +11,7 @@ module.exports = (app) => {
   // Get pending orders for a restaurant selected (restaurant users only)
   router.get("/pending/:restaurantId/:userId?", orders.getPendingOrders);
   router.get("/selected/items/:orderId", orders.getSelectedOrderItems);
+  router.get("/payment-pending/:restaurantId/:userId?", orders.getPendingOrders);
 
   // Get PAID orders for a restaurant (manager only)
   router.get("/paid/:restaurantId", orders.getPaidOrders);
