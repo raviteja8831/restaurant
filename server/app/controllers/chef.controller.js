@@ -423,13 +423,9 @@ chefController.chefMessages = async (req, res) => {
         [Op.or]: [
           {
             fromUserId: chefId,
-            // fromRoleId: chefRole.id,
-            // toRoleId: managerRole.id,
           },
           {
             toUserId: chefId,
-            // toRoleId: chefRole.id,
-            // fromRoleId: managerRole.id,
           },
         ],
       },
@@ -457,6 +453,83 @@ chefController.chefMessages = async (req, res) => {
     res.json({ messages: messagesList });
   } catch (e) {
     console.error("Error fetching chef messages:", e);
+    res.status(500).json({ message: "Server error", error: e.message });
+  }
+};
+
+chefController.chefTransactions = async (req, res) => {
+  try {
+    const chefId = req.params.id ? parseInt(req.params.id, 10) : req.user?.id;
+    if (!chefId) return res.status(400).json({ message: "Missing chef id" });
+
+    const chef = await restaurantUser.findByPk(chefId, {
+      include: [
+        {
+          model: MenuItem,
+          as: "allottedMenuItems",
+          attributes: ["id"],
+        },
+      ],
+    });
+
+    if (!chef) {
+      return res.status(404).json({ message: "Chef not found" });
+    }
+
+    const menuItemIds = chef.allottedMenuItems
+      ? chef.allottedMenuItems.map((item) => item.id)
+      : [];
+
+    if (menuItemIds.length === 0) {
+      return res.json({ transactions: [] });
+    }
+
+    const orderProducts = await db.orderProducts.findAll({
+      where: {
+        menuitemId: { [Op.in]: menuItemIds },
+        status: { [Op.in]: ["SERVED", "READY"] },
+      },
+      include: [
+        {
+          model: Order,
+          as: "order",
+          attributes: ["id", "status", "tableId", "createdAt"],
+          include: [
+            {
+              model: db.restaurantTable,
+              as: "table",
+              attributes: ["id", "name"],
+            },
+          ],
+        },
+        {
+          model: MenuItem,
+          as: "menuitem",
+          attributes: ["id", "name", "price"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit: 100,
+    });
+
+    const transactions = orderProducts.map((item) => ({
+      id: item.id,
+      orderId: item.order?.id || null,
+      tableName:
+        item.order?.table?.name ||
+        (item.order?.tableId ? `Table No ${item.order.tableId}` : "Unassigned"),
+      menuItemName: item.menuitem?.name || "Unknown Item",
+      quantity: item.quantity || 0,
+      status: item.status,
+      price: item.menuitem?.price || 0,
+      total: (item.quantity || 0) * (item.menuitem?.price || 0),
+      createdAt: item.createdAt,
+      orderStatus: item.order?.status || "",
+    }));
+
+    res.json({ transactions });
+  } catch (e) {
+    console.error("Error fetching chef transactions:", e);
     res.status(500).json({ message: "Server error", error: e.message });
   }
 };
@@ -558,15 +631,29 @@ chefController.updateOrderStatus = async (req, res) => {
   try {
     const { id, status } = req.body;
 
-    // Find the order and update its status
-    const order = await db.orderProducts.findByPk(id);
-    if (!order) {
+    const orderProduct = await db.orderProducts.findByPk(id);
+    if (!orderProduct) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Update the order status
-    order.status = status;
-    await order.save();
+    orderProduct.status = status;
+    await orderProduct.save();
+
+    if (orderProduct.orderId) {
+      const relatedProducts = await db.orderProducts.findAll({
+        where: { orderId: orderProduct.orderId },
+      });
+      if (
+        relatedProducts.length > 0 &&
+        relatedProducts.every((item) => item.status === "SERVED")
+      ) {
+        const parentOrder = await Order.findByPk(orderProduct.orderId);
+        if (parentOrder && parentOrder.status !== "COMPLETED") {
+          parentOrder.status = "COMPLETED";
+          await parentOrder.save();
+        }
+      }
+    }
 
     res.status(200).json({
       message: "Order status updated successfully",

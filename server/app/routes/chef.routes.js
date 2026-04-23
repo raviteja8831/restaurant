@@ -13,6 +13,7 @@ module.exports = (app) => {
   router.get("/profile", chefController.chefProfile);
   router.get("/dashboard/:id", chefController.chefDashboard);
   router.get("/messages/:userId", chefController.chefMessages);
+  router.get("/transactions/:id", chefController.chefTransactions);
   router.post("/messages", chefController.sendChefMessage);
   router.post("/logout", chefController.chefLogout); // Protected logout route
   router.post("/updateorders/status/", chefController.updateOrderStatus);
