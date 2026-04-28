@@ -168,7 +168,7 @@ chefController.chefDashboard = async (req, res) => {
 
     if (menuItemIds.length > 0) {
       try {
-        // Get active orders (not served) for chef home screen
+        // Get active orders (only ORDERED and PREPARING - exclude READY and SERVED) for chef home screen
         orders = await Order.findAll({
           include: [
             {
@@ -176,7 +176,7 @@ chefController.chefDashboard = async (req, res) => {
               as: "orderProducts",
               where: {
                 menuitemId: { [Op.in]: menuItemIds },
-                status: { [Op.ne]: 'SERVED' }, // Exclude served orders
+                status: { [Op.in]: ['ORDERED', 'PREPARING'] }, // Only show orders being prepared
               },
               required: true,
               include: [
@@ -236,11 +236,11 @@ chefController.chefDashboard = async (req, res) => {
           .json({ message: "Order query failed", error: err.message });
       }
 
-      // Count total order items with ORDERED, PREPARING, READY, and SERVED statuses
+      // Count total order items with ORDERED, PREPARING, READY, SERVED, PREPARED, and COMPLETED statuses
       totalOrders = await db.orderProducts.count({
         where: {
           menuitemId: { [Op.in]: menuItemIds },
-          status: { [Op.in]: ['ORDERED', 'PREPARING', 'READY', 'SERVED'] },
+          status: { [Op.in]: ['ORDERED', 'PREPARING', 'READY', 'SERVED', 'PREPARED', 'COMPLETED'] },
         },
       });
       console.log("Total order items (ORDERED/PREPARING/READY/SERVED) for chef:", totalOrders);

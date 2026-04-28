@@ -741,7 +741,7 @@ exports.getDashboardData = async (req, res) => {
       const periodOrderProducts = await db.orderProducts.findAll({
         where: {
           menuitemId: allottedMenuItemIds,
-          status: { [Op.in]: ["PREPARED", "SERVED", "COMPLETED"] }
+          status: { [Op.in]: ["ORDERED", "PREPARING", "READY", "SERVED", "PREPARED", "COMPLETED"] }
         },
         include: [
           {
@@ -772,7 +772,7 @@ exports.getDashboardData = async (req, res) => {
       const allTimeOrderProducts = await db.orderProducts.findAll({
         where: {
           menuitemId: allottedMenuItemIds,
-          status: { [Op.in]: ["PREPARED", "SERVED", "COMPLETED"] }
+          status: { [Op.in]: ["ORDERED", "PREPARING", "READY", "SERVED", "PREPARED", "COMPLETED"] }
           // No date filter - counting ALL orders ever for this chef
         },
         include: [
@@ -823,7 +823,7 @@ exports.getDashboardData = async (req, res) => {
         ],
         where: {
           menuitemId: allottedMenuItemIds,
-          status: { [Op.in]: ["PREPARED", "SERVED", "COMPLETED"] }
+          status: { [Op.in]: ["ORDERED", "PREPARING", "READY", "SERVED", "PREPARED", "COMPLETED"] }
         },
         group: ["menuitemId", "menuitem.id", "menuitem.name"],
         order: [[db.Sequelize.literal("count"), "DESC"]],
@@ -845,7 +845,7 @@ exports.getDashboardData = async (req, res) => {
             as: "orderProducts",
             where: {
               menuitemId: allottedMenuItemIds,
-              status: { [Op.in]: ["PREPARED", "SERVED", "COMPLETED"] }
+              status: { [Op.in]: ["ORDERED", "PREPARING", "READY", "SERVED", "PREPARED", "COMPLETED"] }
             },
             required: true,
             include: [

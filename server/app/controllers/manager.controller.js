@@ -57,11 +57,9 @@ exports.dashboard = async (req, res) => {
         break;
       case "day":
       default:
-        // Last 8 hours from current time
-        startDate = new Date(now);
-        startDate.setHours(now.getHours() - 8, 0, 0, 0);
-        endDate = new Date(now);
-        endDate.setHours(23, 59, 59, 999);
+        // Entire current calendar day (00:00:00 to 23:59:59)
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
         break;
     }
     // Get manager (first manager for this restaurant)
@@ -291,15 +289,11 @@ exports.dashboard = async (req, res) => {
     let salesData = [];
     let incomeData = [];
     if (dateFilter === "day") {
-      // Last 8 hours from current hour
-      const currentHour = now.getHours();
-      const startHour = currentHour - 8;
-
-      for (let i = 0; i < 8; i++) {
-        const h = (startHour + i + 24) % 24; // Handle negative hours by wrapping around
-        const found = salesIncomeRaw.find(r => Number(r.hour) === h);
-        salesData.push({ label: `${h}:00`, value: found ? Number(found.salesCount) : 0 });
-        incomeData.push({ label: `${h}:00`, value: found ? Number(found.incomeSum) : 0 });
+      // All 24 hours of the current day
+      for (let i = 0; i < 24; i++) {
+        const found = salesIncomeRaw.find(r => Number(r.hour) === i);
+        salesData.push({ label: `${i}:00`, value: found ? Number(found.salesCount) : 0 });
+        incomeData.push({ label: `${i}:00`, value: found ? Number(found.incomeSum) : 0 });
       }
     } else if (dateFilter === "week") {
       const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
