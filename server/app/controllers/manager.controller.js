@@ -36,16 +36,20 @@ exports.dashboard = async (req, res) => {
     }
     console.log("Fetching dashboard for restaurantId:", restaurantId, "dateFilter:", dateFilter);
 
-    // Date range logic
+    // Date range logic — all boundaries in IST (UTC+5:30)
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
     let startDate, endDate;
     const now = new Date();
+    // IST "today" midnight expressed as UTC
+    const istNow = new Date(now.getTime() + IST_OFFSET_MS);
+    const istTodayMidnightUTC = new Date(
+      Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate())
+    ) - IST_OFFSET_MS; // back to UTC
     switch (dateFilter) {
       case "week":
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 6);
-        startDate.setHours(0, 0, 0, 0);
-        endDate = new Date(now);
-        endDate.setHours(23, 59, 59, 999);
+        // Last 7 days: from IST midnight 6 days ago through end of IST today
+        startDate = new Date(istTodayMidnightUTC - 6 * 24 * 60 * 60 * 1000);
+        endDate   = new Date(istTodayMidnightUTC + 24 * 60 * 60 * 1000 - 1);
         break;
       case "month":
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -206,19 +210,19 @@ exports.dashboard = async (req, res) => {
         raw: true,
       });
     } else if (dateFilter === "week") {
-      // Group by day of week
+      // Group by IST date (YYYY-MM-DD) to avoid UTC/IST timezone shift mis-attribution
       salesIncomeRaw = await db.orders.findAll({
         where: {
           restaurantId,
           createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
         },
         attributes: [
-          [fn('DAYNAME', col('createdAt')), 'day'],
+          [fn('DATE', fn('CONVERT_TZ', col('createdAt'), '+00:00', '+05:30')), 'istDate'],
           [fn('COUNT', col('id')), 'salesCount'],
           [fn('SUM', col('total')), 'incomeSum'],
         ],
-        group: [literal('day')],
-        order: [[literal('day'), 'ASC']],
+        group: [literal('istDate')],
+        order: [[literal('istDate'), 'ASC']],
         raw: true,
       });
     } else if (dateFilter === "month") {
@@ -266,12 +270,21 @@ exports.dashboard = async (req, res) => {
         incomeData.push({ label: `${i}:00`, value: found ? Number(found.incomeSum) : 0 });
       }
     } else if (dateFilter === "week") {
-      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      days.forEach(day => {
-        const found = salesIncomeRaw.find(r => r.day === day);
-        salesData.push({ label: day.slice(0, 3), value: found ? Number(found.salesCount) : 0 });
-        incomeData.push({ label: day.slice(0, 3), value: found ? Number(found.incomeSum) : 0 });
-      });
+      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      // Build labels for the last 7 IST days, oldest first, today last
+      for (let i = 6; i >= 0; i--) {
+        const dayUTC = new Date(istTodayMidnightUTC - i * 24 * 60 * 60 * 1000);
+        // Convert back to IST to get the correct calendar date string (YYYY-MM-DD)
+        const istDay = new Date(dayUTC.getTime() + IST_OFFSET_MS);
+        const yyyy = istDay.getUTCFullYear();
+        const mm   = String(istDay.getUTCMonth() + 1).padStart(2, '0');
+        const dd   = String(istDay.getUTCDate()).padStart(2, '0');
+        const istDateStr = `${yyyy}-${mm}-${dd}`;
+        const label = dayNames[istDay.getUTCDay()];
+        const found = salesIncomeRaw.find(r => r.istDate === istDateStr);
+        salesData.push({ label, value: found ? Number(found.salesCount) : 0 });
+        incomeData.push({ label, value: found ? Number(found.incomeSum) : 0 });
+      }
     } else if (dateFilter === "month") {
       // Show fewer labels for better readability: 1, 5, 10, 15, 20, 25, 30
       const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();

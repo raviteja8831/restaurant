@@ -173,7 +173,7 @@ chefController.chefDashboard = async (req, res) => {
         const activeOrderIds = await db.orderProducts.findAll({
           where: {
             menuitemId: { [Op.in]: menuItemIds },
-            status: { [Op.in]: ['ORDERED', 'PREPARING', 'READY'] },
+            status: { [Op.in]: ['PLACED', 'ORDERED', 'PREPARING', 'READY'] },
           },
           attributes: ['orderId'],
           group: ['orderId'],
@@ -208,7 +208,6 @@ chefController.chefDashboard = async (req, res) => {
               },
             ],
             order: [["createdAt", "DESC"]],
-            limit: 20,
           });
         }
 
