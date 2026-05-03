@@ -831,36 +831,42 @@ exports.getDashboardData = async (req, res) => {
       });
     }
 
-    // Order list for the selected period (orders for this restaurant, with at least one product in allottedMenuItemIds)
-    let todaysOrders = [];
-    if (allottedMenuItemIds.length > 0) {
-      const orders = await db.orders.findAll({
-        where: {
-          restaurantId,
-          createdAt: { [Op.gte]: startDate },
-        },
+    // Order list for today specifically (always show today's orders regardless of period selector)
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+
+    const buildOrdersQuery = async (fromDate, toDate) => {
+      const whereClause = {
+        restaurantId,
+        createdAt: { [Op.gte]: fromDate, ...(toDate ? { [Op.lt]: toDate } : {}) },
+      };
+      const productWhere = allottedMenuItemIds.length > 0
+        ? {
+            menuitemId: allottedMenuItemIds,
+            status: { [Op.in]: ["ORDERED", "PREPARING", "READY", "SERVED", "PREPARED", "COMPLETED"] },
+          }
+        : {
+            status: { [Op.in]: ["ORDERED", "PREPARING", "READY", "SERVED", "PREPARED", "COMPLETED"] },
+          };
+      return db.orders.findAll({
+        where: whereClause,
         include: [
           {
             model: db.orderProducts,
             as: "orderProducts",
-            where: {
-              menuitemId: allottedMenuItemIds,
-              status: { [Op.in]: ["ORDERED", "PREPARING", "READY", "SERVED", "PREPARED", "COMPLETED"] }
-            },
+            where: productWhere,
             required: true,
-            include: [
-              {
-                model: db.menuItem,
-                as: "menuitem",
-                attributes: ["id", "name"],
-              },
-            ],
+            include: [{ model: db.menuItem, as: "menuitem", attributes: ["id", "name"] }],
           },
         ],
         order: [["createdAt", "DESC"]],
       });
-      todaysOrders = orders;
-    }
+    };
+
+    const todaysRaw = await buildOrdersQuery(startOfToday, null);
+    const yesterdaysRaw = await buildOrdersQuery(startOfYesterday, startOfToday);
+    const todaysOrders = todaysRaw;
+    const yesterdaysOrders = yesterdaysRaw;
 
     res.json({
       user: {
@@ -883,17 +889,18 @@ exports.getDashboardData = async (req, res) => {
         id: order.id,
         time: order.createdAt,
         items: (order.orderProducts || []).map((op) => {
-          console.log("Order Product:", op);
-          const opPlain =
-            typeof op.get === "function" ? op.get({ plain: true }) : op;
-          console.log("Order Product Plain:", opPlain);
-          // Ensure op and op.menuitem are plain objects
+          const opPlain = typeof op.get === "function" ? op.get({ plain: true }) : op;
           const menuitem = op.menuitem || {};
-          return {
-            id: menuitem.id,
-            name: menuitem.name,
-            qty: opPlain.quantity || 1,
-          };
+          return { id: menuitem.id, name: menuitem.name, qty: opPlain.quantity || 1 };
+        }),
+      })),
+      yesterdaysOrders: yesterdaysOrders.map((order) => ({
+        id: order.id,
+        time: order.createdAt,
+        items: (order.orderProducts || []).map((op) => {
+          const opPlain = typeof op.get === "function" ? op.get({ plain: true }) : op;
+          const menuitem = op.menuitem || {};
+          return { id: menuitem.id, name: menuitem.name, qty: opPlain.quantity || 1 };
         }),
       })),
     });

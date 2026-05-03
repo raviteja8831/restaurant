@@ -168,11 +168,12 @@ chefController.chefDashboard = async (req, res) => {
 
     if (menuItemIds.length > 0) {
       try {
-        // Find order IDs that contain at least one of this chef's active items
+        // Find order IDs that contain at least one of this chef's active/pending items
+        // Include READY so chef sees items they marked ready but order not yet cleared
         const activeOrderIds = await db.orderProducts.findAll({
           where: {
             menuitemId: { [Op.in]: menuItemIds },
-            status: { [Op.in]: ['ORDERED', 'PREPARING'] },
+            status: { [Op.in]: ['ORDERED', 'PREPARING', 'READY'] },
           },
           attributes: ['orderId'],
           group: ['orderId'],

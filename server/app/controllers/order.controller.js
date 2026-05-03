@@ -450,6 +450,20 @@ exports.updateOrderStatus = async (req, res) => {
         }
       );
 
+      // When order is cleared/completed, auto-update any unfinished chef items to SERVED
+      if (orderStatus === 'CLEARED' || orderStatus === 'COMPLETED') {
+        await OrderProduct.update(
+          { status: 'SERVED' },
+          {
+            where: {
+              orderId,
+              status: { [db.Sequelize.Op.in]: ['ORDERED', 'PREPARING', 'READY'] },
+            },
+            transaction: t,
+          }
+        );
+      }
+
       // Fetch updated order to return
       const updatedOrder = await Order.findByPk(orderId, { transaction: t });
 
