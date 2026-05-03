@@ -84,7 +84,7 @@ exports.getRecentOrders = async (req, res) => {
       where: {
         userId,
         status: {
-          [Op.in]: ["PENDING", "PLACED", "PREPARING", "PREPARED", "SERVED", "PAID", "COMPLETED", "PAYMENT_PENDING"]
+          [Op.in]: ["PENDING", "PLACED", "PREPARING", "PREPARED", "SERVED", "PAID", "COMPLETED", "PAYMENT_PENDING", "CLEARED"]
         }
       },
       include: [
@@ -214,7 +214,7 @@ exports.getUserProfile = async (req, res) => {
       where: {
         userId,
         status: {
-          [Op.in]: ["PENDING", "PLACED", "PREPARING", "PREPARED", "SERVED", "PAID", "COMPLETED", "PAYMENT_PENDING"]
+          [Op.in]: ["PENDING", "PLACED", "PREPARING", "PREPARED", "SERVED", "PAID", "COMPLETED", "PAYMENT_PENDING", "CLEARED"]
         }
       },
       include: [

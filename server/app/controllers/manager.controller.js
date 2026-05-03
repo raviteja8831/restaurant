@@ -79,55 +79,42 @@ exports.dashboard = async (req, res) => {
     });
 
   // Get chef login statistics
-  const todayFormatted = formatIndianDateTime(startDate).split(" ")[0]; // Get only the date part
+  // Pre-fetch all chef IDs (role_id=2) for this restaurant to avoid include+count Sequelize issues
+  const chefUsers = await db.restaurantUser.findAll({
+    where: { restaurantId, role_id: 2 },
+    attributes: ['id'],
+    raw: true,
+  });
+  const chefUserIds = chefUsers.map(u => u.id);
 
-    // 1. Total login sessions (events) in date range - count all records, not distinct
-    const totalLoginSessions = await db.chefLogin.count({
+    // 1. Total login sessions (events) in date range - count all records for chef users
+    const totalLoginSessions = chefUserIds.length === 0 ? 0 : await db.chefLogin.count({
       where: {
         restaurantId,
+        chefId: { [Op.in]: chefUserIds },
         createdAt: {
           [Op.gte]: startDate,
           [Op.lte]: endDate,
         },
       },
-      include: [
-        {
-          model: db.restaurantUser,
-          as: "chef",
-          where: {
-            role_id: "2", // Chef role
-          },
-          required: true,
-        },
-      ],
     });
 
-    // 2. Currently logged in chefs (chefs with active session - logOutTime is null)
-    // No date filter - we want to know who is CURRENTLY logged in regardless of when they logged in
-    const currentlyLoggedIn = await db.chefLogin.count({
+    // 2. Currently logged in chefs (active session = logOutTime is null), distinct by chefId
+    const currentlyLoggedIn = chefUserIds.length === 0 ? 0 : await db.chefLogin.count({
       where: {
         restaurantId,
-        logOutTime: null, // Active session
+        chefId: { [Op.in]: chefUserIds },
+        logOutTime: null,
       },
-      include: [
-        {
-          model: db.restaurantUser,
-          as: "chef",
-          where: {
-            role_id: 2,
-          },
-          required: true,
-        },
-      ],
       distinct: true,
       col: "chefId",
     });
 
-    // 3. Chefs who logged out in the date range but haven't logged back in (not currently active)
-    // First, get all distinct chefs who logged out in the range
-    const loggedOutChefIds = await db.chefLogin.findAll({
+    // 3. Chefs who logged out in the date range
+    const loggedOutChefIds = chefUserIds.length === 0 ? [] : await db.chefLogin.findAll({
       where: {
         restaurantId,
+        chefId: { [Op.in]: chefUserIds },
         logOutTime: { [Op.ne]: null },
         updatedAt: {
           [Op.gte]: startDate,
@@ -135,35 +122,18 @@ exports.dashboard = async (req, res) => {
         },
       },
       attributes: ['chefId'],
-      include: [
-        {
-          model: db.restaurantUser,
-          as: "chef",
-          where: { role_id: "2" },
-          required: true,
-          attributes: []
-        },
-      ],
       group: ['chefId'],
       raw: true,
     });
 
     // Get chefs with active sessions (logOutTime = null)
-    const activeChefIds = await db.chefLogin.findAll({
+    const activeChefIds = chefUserIds.length === 0 ? [] : await db.chefLogin.findAll({
       where: {
         restaurantId,
+        chefId: { [Op.in]: chefUserIds },
         logOutTime: null,
       },
       attributes: ['chefId'],
-      include: [
-        {
-          model: db.restaurantUser,
-          as: "chef",
-          where: { role_id: 2 },
-          required: true,
-          attributes: []
-        },
-      ],
       group: ['chefId'],
       raw: true,
     });
@@ -554,7 +524,7 @@ exports.getChefActivityReport = async (req, res) => {
       if (!loginTime) return 0;
 
       try {
-        // Parse Indian format date time: "DD/MM/YYYY HH:MM:SS AM/PM"
+        // Parse Indian format date time: "DD/MM/YYYY HH:MM:SS am/pm" as IST
         const parseIndianDateTime = (dateTimeStr) => {
           const parts = dateTimeStr.trim().split(' ');
           if (parts.length < 3) return null;
@@ -567,7 +537,10 @@ exports.getChefActivityReport = async (req, res) => {
           if (period && period.toLowerCase() === 'pm' && hour !== 12) hour += 12;
           if (period && period.toLowerCase() === 'am' && hour === 12) hour = 0;
 
-          return new Date(year, month - 1, day, hour, parseInt(minutes), parseInt(seconds || 0));
+          // Build as UTC then subtract IST offset (5h30m) so the result is correct UTC
+          const istOffsetMs = 5.5 * 60 * 60 * 1000;
+          const utcMs = Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), hour, parseInt(minutes), parseInt(seconds || 0));
+          return new Date(utcMs - istOffsetMs);
         };
 
         const startTime = parseIndianDateTime(loginTime);

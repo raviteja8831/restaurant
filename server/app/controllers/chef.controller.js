@@ -168,65 +168,87 @@ chefController.chefDashboard = async (req, res) => {
 
     if (menuItemIds.length > 0) {
       try {
-        // Get active orders (only ORDERED and PREPARING - exclude READY and SERVED) for chef home screen
-        orders = await Order.findAll({
-          include: [
-            {
-              model: db.orderProducts,
-              as: "orderProducts",
-              where: {
-                menuitemId: { [Op.in]: menuItemIds },
-                status: { [Op.in]: ['ORDERED', 'PREPARING'] }, // Only show orders being prepared
-              },
-              required: true,
-              include: [
-                {
-                  model: MenuItem,
-                  as: "menuitem",
-                  attributes: ["id", "name", "price"],
-                },
-              ],
-            },
-            {
-              model: db.restaurantTable,
-              as: "table",
-              attributes: ["id", "name"],
-              required: false, // LEFT JOIN - some orders may not have a table
-            },
-          ],
-          order: [["createdAt", "DESC"]],
-          limit: 20,
+        // Find order IDs that contain at least one of this chef's active items
+        const activeOrderIds = await db.orderProducts.findAll({
+          where: {
+            menuitemId: { [Op.in]: menuItemIds },
+            status: { [Op.in]: ['ORDERED', 'PREPARING'] },
+          },
+          attributes: ['orderId'],
+          group: ['orderId'],
+          raw: true,
         });
+        const activeOrderIdList = activeOrderIds.map(r => r.orderId);
+
+        // Fetch full orders with ALL their orderProducts (not just this chef's)
+        // so the frontend can display the complete order with per-item status
+        if (activeOrderIdList.length > 0) {
+          orders = await Order.findAll({
+            where: { id: { [Op.in]: activeOrderIdList } },
+            include: [
+              {
+                model: db.orderProducts,
+                as: "orderProducts",
+                where: { menuitemId: { [Op.in]: menuItemIds } }, // only this chef's items
+                required: true,
+                include: [
+                  {
+                    model: MenuItem,
+                    as: "menuitem",
+                    attributes: ["id", "name", "price"],
+                  },
+                ],
+              },
+              {
+                model: db.restaurantTable,
+                as: "table",
+                attributes: ["id", "name"],
+                required: false,
+              },
+            ],
+            order: [["createdAt", "DESC"]],
+            limit: 20,
+          });
+        }
 
         console.log("Active orders fetched:", orders.length);
 
-        // Get all orders (including served) for statistics
-        allOrders = await Order.findAll({
-          include: [
-            {
-              model: db.orderProducts,
-              as: "orderProducts",
-              where: {
-                menuitemId: { [Op.in]: menuItemIds },
-              },
-              required: true,
-              include: [
-                {
-                  model: MenuItem,
-                  as: "menuitem",
-                  attributes: ["id", "name", "price"],
-                },
-              ],
-            },
-            {
-              model: db.restaurantTable,
-              as: "table",
-              attributes: ["id", "name"],
-              required: false, // LEFT JOIN - some orders may not have a table
-            },
-          ],
-          order: [["createdAt", "DESC"]],
+        // Find all order IDs that ever had this chef's items (for stats)
+        const allOrderIds = await db.orderProducts.findAll({
+          where: { menuitemId: { [Op.in]: menuItemIds } },
+          attributes: ['orderId'],
+          group: ['orderId'],
+          raw: true,
         });
+        const allOrderIdList = allOrderIds.map(r => r.orderId);
+
+        if (allOrderIdList.length > 0) {
+          allOrders = await Order.findAll({
+            where: { id: { [Op.in]: allOrderIdList } },
+            include: [
+              {
+                model: db.orderProducts,
+                as: "orderProducts",
+                where: { menuitemId: { [Op.in]: menuItemIds } }, // only this chef's items
+                required: true,
+                include: [
+                  {
+                    model: MenuItem,
+                    as: "menuitem",
+                    attributes: ["id", "name", "price"],
+                  },
+                ],
+              },
+              {
+                model: db.restaurantTable,
+                as: "table",
+                attributes: ["id", "name"],
+                required: false,
+              },
+            ],
+            order: [["createdAt", "DESC"]],
+          });
+        }
 
         console.log("Total orders (all time):", allOrders.length);
       } catch (err) {
@@ -291,11 +313,12 @@ chefController.chefDashboard = async (req, res) => {
       console.warn("No menu items allotted to this chef");
     }
 
-    // Get today's date range (similar to manager controller approach)
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+    // Get today's IST date range using IST midnight (server runs UTC)
+    const _istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const _istNow = new Date(Date.now() + _istOffsetMs);
+    const _istMidnight = new Date(Date.UTC(_istNow.getUTCFullYear(), _istNow.getUTCMonth(), _istNow.getUTCDate()));
+    const todayStart = new Date(_istMidnight.getTime() - _istOffsetMs);
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
 
     // Find today's login record using date range instead of string matching
     // First try to get active session (no logout)
@@ -333,7 +356,7 @@ chefController.chefDashboard = async (req, res) => {
       // Parse login time (Indian format or use createdAt as fallback)
       loginTime = loginRecord.loginTime || formatShortTime(loginRecord.createdAt);
 
-      // Helper to parse Indian date time format (consistent with manager controller)
+      // Helper to parse Indian date time format ("DD/MM/YYYY HH:MM:SS am/pm") as IST
       const parseIndianDateTime = (dateTimeStr) => {
         if (!dateTimeStr) return null;
 
@@ -349,7 +372,10 @@ chefController.chefDashboard = async (req, res) => {
           if (period && period.toLowerCase() === 'pm' && hour !== 12) hour += 12;
           if (period && period.toLowerCase() === 'am' && hour === 12) hour = 0;
 
-          return new Date(year, month - 1, day, hour, parseInt(minutes), parseInt(seconds || 0));
+          // Build as UTC then subtract IST offset (5h30m) so the result is correct UTC
+          const istOffsetMs = 5.5 * 60 * 60 * 1000;
+          const utcMs = Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), hour, parseInt(minutes), parseInt(seconds || 0));
+          return new Date(utcMs - istOffsetMs);
         } catch (err) {
           console.error("Error parsing date time:", err);
           return null;
@@ -468,24 +494,23 @@ chefController.chefLogout = async (req, res) => {
       return res.status(400).json({ message: "Chef ID is required" });
     }
     const chefId = parseInt(id, 10);
-    const currentDate = new Date();
-    const formattedTime = formatIndianDateTime(currentDate);
+    const formattedTime = formatIndianDateTime(new Date());
 
-    // Get today's date as a string in Indian format
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayFormatted = formatIndianDateTime(todayStart).split(" ")[0]; // Get only the date part
+    // Use IST midnight as the start of today to correctly find today's session
+    const now = new Date();
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(now.getTime() + istOffsetMs);
+    const istMidnight = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate()));
+    const todayStart = new Date(istMidnight.getTime() - istOffsetMs); // back to UTC
 
-    // Find today's login record for this chef that doesn't have a logout time
+    // Find today's active login record using createdAt (real DATE column, not string)
     const loginRecord = await db.chefLogin.findOne({
       where: {
         chefId: chefId,
         logOutTime: null,
-        loginTime: {
-          [Op.like]: `${todayFormatted}%`, // Match any login time from today
-        },
+        createdAt: { [Op.gte]: todayStart },
       },
-      order: [["loginTime", "DESC"]],
+      order: [["createdAt", "DESC"]],
     });
 
     if (!loginRecord) {
@@ -495,10 +520,7 @@ chefController.chefLogout = async (req, res) => {
       });
     }
 
-    // Update the logout time
-    await loginRecord.update({
-      logOutTime: formattedTime,
-    });
+    await loginRecord.update({ logOutTime: formattedTime });
 
     res.json({
       message: "Logged out successfully",
