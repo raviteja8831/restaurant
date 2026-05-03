@@ -50,7 +50,10 @@ chefController.chefLogin = async (req, res) => {
     console.log("Login attempt for phone:", phone, password);
     const chef = await restaurantUser.findOne({
       where: { phone },
-      include: [{ model: roles, as: "role" }],
+      include: [
+        { model: roles, as: "role" },
+        { model: db.restaurant, as: "restaurant", attributes: ["id", "name"] },
+      ],
     });
     console.log("Chef found:", chef);
     if (!chef || !chef.role || chef.role.id != "2") {
@@ -92,6 +95,7 @@ chefController.chefLogin = async (req, res) => {
       restaurantId,
       profileImage,
       image_url,
+      restaurant,
     } = chef;
     res.json({
       token,
@@ -102,6 +106,7 @@ chefController.chefLogin = async (req, res) => {
         lastname,
         role,
         restaurantId,
+        restaurant: restaurant || null,
         profileImage: profileImage || image_url || null,
         loginAT: formatShortTime(new Date()),
       },
