@@ -51,10 +51,16 @@ exports.dashboard = async (req, res) => {
         startDate = new Date(istTodayMidnightUTC - 6 * 24 * 60 * 60 * 1000);
         endDate   = new Date(istTodayMidnightUTC + 24 * 60 * 60 * 1000 - 1);
         break;
-      case "month":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      case "month": {
+        // IST first day of current month midnight expressed as UTC
+        const istFirstDay = new Date(
+          Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), 1)
+        ) - IST_OFFSET_MS;
+        const daysInCurMonth = new Date(istNow.getUTCFullYear(), istNow.getUTCMonth() + 1, 0).getDate();
+        startDate = new Date(istFirstDay);
+        endDate = new Date(istFirstDay + daysInCurMonth * 24 * 60 * 60 * 1000 - 1);
         break;
+      }
       case "year":
         startDate = new Date(now.getFullYear(), 0, 1);
         endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
@@ -114,38 +120,38 @@ exports.dashboard = async (req, res) => {
       col: "chefId",
     });
 
-    // 3. Chefs who logged out in the date range
-    const loggedOutChefIds = chefUserIds.length === 0 ? [] : await db.chefLogin.findAll({
+    // 3. Chef status counts (not date-filtered — reflects current state right now)
+    // One record per chef (GROUP BY chefId)
+    const chefsWithAnySession = chefUserIds.length === 0 ? [] : await db.chefLogin.findAll({
       where: {
         restaurantId,
         chefId: { [Op.in]: chefUserIds },
-        logOutTime: { [Op.ne]: null },
-        updatedAt: {
-          [Op.gte]: startDate,
-          [Op.lte]: endDate,
+      },
+      attributes: ['chefId'],
+      group: ['chefId'],
+      raw: true,
+    });
+
+    const activeChefIdsSet = new Set(
+      (chefUserIds.length === 0 ? [] : await db.chefLogin.findAll({
+        where: {
+          restaurantId,
+          chefId: { [Op.in]: chefUserIds },
+          logOutTime: null,
         },
-      },
-      attributes: ['chefId'],
-      group: ['chefId'],
-      raw: true,
-    });
+        attributes: ['chefId'],
+        group: ['chefId'],
+        raw: true,
+      })).map(c => c.chefId)
+    );
 
-    // Get chefs with active sessions (logOutTime = null)
-    const activeChefIds = chefUserIds.length === 0 ? [] : await db.chefLogin.findAll({
-      where: {
-        restaurantId,
-        chefId: { [Op.in]: chefUserIds },
-        logOutTime: null,
-      },
-      attributes: ['chefId'],
-      group: ['chefId'],
-      raw: true,
-    });
+    // Chefs currently logged out = have a session but no active (logOutTime IS NULL) session
+    const loggedOutNotActiveCount = chefsWithAnySession.filter(
+      c => !activeChefIdsSet.has(c.chefId)
+    ).length;
 
-    // Filter out active chefs from logged out chefs
-    const activeChefIdsSet = new Set(activeChefIds.map(c => c.chefId));
-    const loggedOutNotActive = loggedOutChefIds.filter(c => !activeChefIdsSet.has(c.chefId));
-    const loggedOutNotActiveCount = loggedOutNotActive.length;
+    // Total distinct chefs who have ever logged in for this restaurant
+    const totalChefs = chefsWithAnySession.length;
 
     // Tables served in range (distinct tableId in orders)
     const tablesServed = await db.orders.count({
@@ -226,14 +232,14 @@ exports.dashboard = async (req, res) => {
         raw: true,
       });
     } else if (dateFilter === "month") {
-      // Group by day of month
+      // Group by IST day of month to avoid UTC/IST timezone shift
       salesIncomeRaw = await db.orders.findAll({
         where: {
           restaurantId,
           createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
         },
         attributes: [
-          [fn('DAY', col('createdAt')), 'day'],
+          [fn('DAY', fn('CONVERT_TZ', col('createdAt'), '+00:00', '+05:30')), 'day'],
           [fn('COUNT', col('id')), 'salesCount'],
           [fn('SUM', col('total')), 'incomeSum'],
         ],
@@ -242,14 +248,14 @@ exports.dashboard = async (req, res) => {
         raw: true,
       });
     } else if (dateFilter === "year") {
-      // Group by month
+      // Group by IST month
       salesIncomeRaw = await db.orders.findAll({
         where: {
           restaurantId,
           createdAt: { [Op.gte]: startDate, [Op.lte]: endDate },
         },
         attributes: [
-          [fn('MONTH', col('createdAt')), 'month'],
+          [fn('MONTH', fn('CONVERT_TZ', col('createdAt'), '+00:00', '+05:30')), 'month'],
           [fn('COUNT', col('id')), 'salesCount'],
           [fn('SUM', col('total')), 'incomeSum'],
         ],
@@ -286,12 +292,10 @@ exports.dashboard = async (req, res) => {
         incomeData.push({ label, value: found ? Number(found.incomeSum) : 0 });
       }
     } else if (dateFilter === "month") {
-      // Show fewer labels for better readability: 1, 5, 10, 15, 20, 25, 30
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      // Show fewer labels for better readability: 1, 5, 10, 15, 20, 25, last day
+      const daysInMonth = new Date(istNow.getUTCFullYear(), istNow.getUTCMonth() + 1, 0).getDate();
       const displayDays = [1, 5, 10, 15, 20, 25];
-      if (daysInMonth === 31) {
-        displayDays.push(30);
-      } else if (daysInMonth >= 28) {
+      if (!displayDays.includes(daysInMonth)) {
         displayDays.push(daysInMonth);
       }
 
@@ -340,9 +344,10 @@ exports.dashboard = async (req, res) => {
       salesData,
       incomeData,
       // Chef login statistics
-      chefLogins: totalLoginSessions, // Total login sessions/events in date range
-      currentlyLoggedIn: currentlyLoggedIn, // Chefs currently logged in (active sessions)
-      chefLogouts: loggedOutNotActiveCount, // Chefs who logged out but haven't logged back in
+      chefLogins: totalLoginSessions,          // Total login sessions in date range (for reference)
+      currentlyLoggedIn: currentlyLoggedIn,    // Chefs currently logged in right now
+      chefLogouts: loggedOutNotActiveCount,    // Chefs currently logged out right now
+      totalChefs: totalChefs,                  // Total distinct chefs who have ever logged in
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
