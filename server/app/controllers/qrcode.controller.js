@@ -31,6 +31,10 @@ exports.deleteQRCode = async (req, res) => {
     if (!id) return res.status(400).json({ message: 'Missing id' });
     const table = await db.restaurantTable.findByPk(id);
     if (!table) return res.status(404).json({ message: 'Table not found' });
+    const orderCount = await db.orders.count({ where: { tableId: id } });
+    if (orderCount > 0) {
+      return res.status(400).json({ message: 'This table has existing orders and cannot be deleted.' });
+    }
     await table.destroy();
     res.json({ message: 'Table deleted' });
   } catch (err) {

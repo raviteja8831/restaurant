@@ -41,8 +41,13 @@ exports.update = async (req, res) => {
 
 exports.delete = async (req, res) => {
   try {
-    const deleted = await Table.destroy({ where: { id: req.params.id } });
-    if (!deleted) return res.status(404).json({ error: 'Not found' });
+    const table = await Table.findByPk(req.params.id);
+    if (!table) return res.status(404).json({ error: 'Not found' });
+    const orderCount = await db.orders.count({ where: { tableId: req.params.id } });
+    if (orderCount > 0) {
+      return res.status(400).json({ error: 'This table has existing orders and cannot be deleted.' });
+    }
+    await table.destroy();
     res.json({ message: 'Deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });

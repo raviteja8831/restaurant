@@ -88,70 +88,64 @@ exports.dashboard = async (req, res) => {
       },
     });
 
-  // Get chef login statistics
-  // Pre-fetch all chef IDs (role_id=2) for this restaurant to avoid include+count Sequelize issues
+  // Chef login/logout counts — based on each chef's latest login record (any date).
+  // Logic per chef:
+  //   - Latest record (ever) has logOutTime = null → still logged IN (session ongoing, even from yesterday)
+  //   - Latest record (ever) has logOutTime set    → logged OUT
+  //   - No record at all                           → logged OUT (never logged in)
+
+  // All chef user IDs registered for this restaurant
   const chefUsers = await db.restaurantUser.findAll({
     where: { restaurantId, role_id: 2 },
     attributes: ['id'],
     raw: true,
   });
   const chefUserIds = chefUsers.map(u => u.id);
+  const totalChefs = chefUserIds.length;
 
-    // 1. Total login sessions (events) in date range - count all records for chef users
-    const totalLoginSessions = chefUserIds.length === 0 ? 0 : await db.chefLogin.count({
-      where: {
-        restaurantId,
-        chefId: { [Op.in]: chefUserIds },
-        createdAt: {
-          [Op.gte]: startDate,
-          [Op.lte]: endDate,
-        },
-      },
-    });
+  // Today's IST boundaries (UTC-stored) — used only for totalLoginSessions count
+  const todayStartIST = new Date(istTodayMidnightUTC);
+  const todayEndIST   = new Date(istTodayMidnightUTC + 24 * 60 * 60 * 1000 - 1);
 
-    // 2. Currently logged in chefs (active session = logOutTime is null), distinct by chefId
-    const currentlyLoggedIn = chefUserIds.length === 0 ? 0 : await db.chefLogin.count({
-      where: {
-        restaurantId,
-        chefId: { [Op.in]: chefUserIds },
-        logOutTime: null,
-      },
-      distinct: true,
-      col: "chefId",
-    });
+  // Fetch the latest chefLogin record per chef across ALL time (to catch carry-over sessions)
+  const allLatestRecords = chefUserIds.length === 0 ? [] : await db.chefLogin.findAll({
+    where: {
+      restaurantId,
+      chefId: { [Op.in]: chefUserIds },
+    },
+    order: [['createdAt', 'DESC']],
+    raw: true,
+  });
 
-    // 3. Chef status counts (not date-filtered — reflects current state right now)
-    // One record per chef (GROUP BY chefId)
-    const chefsWithAnySession = chefUserIds.length === 0 ? [] : await db.chefLogin.findAll({
-      where: {
-        restaurantId,
-        chefId: { [Op.in]: chefUserIds },
-      },
-      attributes: ['chefId'],
-      group: ['chefId'],
-      raw: true,
-    });
+  // Keep only the single latest record per chef
+  const latestByChef = {};
+  for (const record of allLatestRecords) {
+    if (!latestByChef[record.chefId]) {
+      latestByChef[record.chefId] = record;
+    }
+  }
 
-    const activeChefIdsSet = new Set(
-      (chefUserIds.length === 0 ? [] : await db.chefLogin.findAll({
-        where: {
-          restaurantId,
-          chefId: { [Op.in]: chefUserIds },
-          logOutTime: null,
-        },
-        attributes: ['chefId'],
-        group: ['chefId'],
-        raw: true,
-      })).map(c => c.chefId)
-    );
+  // A chef is logged IN if their latest record (ever) has no logOutTime
+  let currentlyLoggedIn = 0;
+  for (const chefId of chefUserIds) {
+    const rec = latestByChef[chefId];
+    if (rec && !rec.logOutTime) {
+      currentlyLoggedIn++;
+    }
+  }
+  const loggedOutNotActiveCount = totalChefs - currentlyLoggedIn;
 
-    // Chefs currently logged out = have a session but no active (logOutTime IS NULL) session
-    const loggedOutNotActiveCount = chefsWithAnySession.filter(
-      c => !activeChefIdsSet.has(c.chefId)
-    ).length;
-
-    // Total distinct chefs who have ever logged in for this restaurant
-    const totalChefs = chefsWithAnySession.length;
+  // totalLoginSessions = distinct chefs who have a record created today
+  const todayLoginCount = chefUserIds.length === 0 ? 0 : await db.chefLogin.count({
+    where: {
+      restaurantId,
+      chefId: { [Op.in]: chefUserIds },
+      createdAt: { [Op.gte]: todayStartIST, [Op.lte]: todayEndIST },
+    },
+    distinct: true,
+    col: 'chefId',
+  });
+  const totalLoginSessions = todayLoginCount;
 
     // Tables served in range (distinct tableId in orders)
     const tablesServed = await db.orders.count({
